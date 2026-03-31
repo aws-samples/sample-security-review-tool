@@ -2,7 +2,8 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -28,14 +29,15 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION="v$(node -p "require('./package.json').version")"
+          VERSION="${GITHUB_REF_NAME}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
-      - name: Check version is not already tagged
+      - name: Validate tag matches package.json
         run: |
-          if git tag -l | grep -qx "${{ steps.version.outputs.version }}"; then
-            echo "::error::Tag ${{ steps.version.outputs.version }} already exists. Bump the version in package.json before merging."
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$PKG_VERSION" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version $PKG_VERSION"
             exit 1
           fi
 
@@ -51,6 +53,9 @@ jobs:
       - name: Build CLI - Linux x64
         run: npm run build:cli:linux-x64:prod
 
+      - name: Build CLI - Linux ARM64
+        run: npm run build:cli:linux-arm64:prod
+
       - name: Build CLI - macOS x64
         run: npm run build:cli:osx-x64:prod
 
@@ -63,6 +68,7 @@ jobs:
       - name: Set execute permissions
         run: |
           chmod +x build/linux-x64/srt
+          chmod +x build/linux-arm64/srt
           chmod +x build/osx-x64/srt
           chmod +x build/osx-arm64/srt
 
@@ -70,6 +76,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           tar -czf "srt-cli-${VERSION}-linux-x64.tar.gz" -C build/linux-x64 srt
+          tar -czf "srt-cli-${VERSION}-linux-arm64.tar.gz" -C build/linux-arm64 srt
           tar -czf "srt-cli-${VERSION}-macos-x64.tar.gz" -C build/osx-x64 srt
           tar -czf "srt-cli-${VERSION}-macos-arm64.tar.gz" -C build/osx-arm64 srt
           cd build/win-x64 && zip "../../srt-cli-${VERSION}-windows-x64.zip" srt.exe

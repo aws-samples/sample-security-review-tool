@@ -74,7 +74,7 @@ export class UpdateCommand {
     }
 
     private static showManualDownloadInstructions(): void {
-        //TODO Log out the releases URL
+        console.log(chalk.gray(`Visit: ${ReleaseChecker.getReleasesPageUrl()}`));
         console.log();
 
         const platformKey = ReleaseChecker.getPlatformBinaryKey();
