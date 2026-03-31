@@ -22,21 +22,6 @@ cd security-review-tool
 npm ci
 ```
 
-### Environment Configuration
-
-API endpoints are injected at build time via Bun's `--define` flags. Copy `.env.example` to `.env` and fill in real values:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Description |
-|---|---|
-| `COGNITO_APP_CLIENT_ID` | Cognito user pool app client ID for authentication |
-| `COGNITO_DOMAIN` | Cognito hosted UI domain URL |
-
-The `.env` file is gitignored. These values are baked into the CLI binary at build time — they are not read at runtime.
-
 ### Build and Verify
 
 ```bash
@@ -85,14 +70,15 @@ Test organization:
 
 ## Building CLI Binaries
 
-Bun compiles the TypeScript source into standalone executables for each platform. The `.env` values are injected at compile time via `--define` flags.
+Bun compiles the TypeScript source into standalone executables for each platform.
 
 ```bash
-npm run build:cli:all          # All platforms
-npm run build:cli:linux-x64    # Linux x64
-npm run build:cli:osx-x64      # macOS Intel
-npm run build:cli:osx-arm64    # macOS ARM
-npm run build:cli:win-x64      # Windows
+npm run build:cli:all            # All platforms
+npm run build:cli:linux-x64      # Linux x64
+npm run build:cli:linux-arm64    # Linux ARM64
+npm run build:cli:osx-x64        # macOS Intel
+npm run build:cli:osx-arm64      # macOS ARM
+npm run build:cli:win-x64        # Windows
 ```
 
 Output is written to `build/<platform>/srt` (or `srt.exe` on Windows). Use the `:prod` script variants (e.g., `npm run build:cli:all:prod`) for production builds with minification and sourcemaps.
@@ -135,85 +121,39 @@ Claude: [Gathers requirements, generates S3-011 rule and tests]
 
 Rules are created at `src/assess/scanning/security-matrix/rules/{service}/` with corresponding tests at `tests/core/scanners/srt/rules/{service}/`.
 
-## GitLab MCP Server
-
-The project includes a `.mcp.json.example` template for configuring the GitLab MCP server, which enables Claude Code to interact with the GitLab project directly — creating issues, merge requests, and more.
-
-### Setup
-
-1. **Copy the example configuration:**
-
-   ```bash
-   cp .mcp.json.example .mcp.json
-   ```
-
-2. **Edit `.mcp.json`** and fill in your GitLab instance URL and project ID:
-
-   | Field | Description |
-   |---|---|
-   | `GITLAB_API_URL` | Your GitLab instance API URL (e.g., `https://gitlab.example.com/api/v4`) |
-   | `GITLAB_PROJECT_ID` | Numeric project ID (found on the project's main page in GitLab) |
-
-3. **Generate a GitLab personal access token** from your GitLab instance under **User Settings > Access Tokens** with `api` scope.
-
-4. **Export the token** as an environment variable before launching Claude Code:
-
-   ```bash
-   export GITLAB_TOKEN=glpat-xxxxxxxxxxxxxxxxxxxxx
-   ```
-
-   The `.mcp.json` references `${GITLAB_TOKEN}`, which Claude Code resolves from your environment at startup.
-
-5. **Launch Claude Code** from the project root. The MCP server starts automatically — no additional install is needed.
-
-### Creating Issues
-
-Ask Claude Code to create an issue in natural language:
-
-```
-Create an issue titled "Add S3 lifecycle policy rule" with description
-"Implement a new security rule that checks S3 buckets have lifecycle
-policies configured."
-```
-
-Claude Code uses the GitLab MCP server to call `create_issue` with the title, description, and any labels you specify.
-
-### Adding Issues to the Backlog Board Column
-
-GitLab issue boards organize issues into columns based on labels. To place a new issue in the **Backlog** column, include the `Backlog` label when creating it:
-
-```
-Create an issue titled "Add RDS encryption rule" with label "Backlog"
-```
-
-You can also add the label to an existing issue:
-
-```
-Add the "Backlog" label to issue #42
-```
-
-To move an issue out of Backlog into another column, ask Claude Code to swap the label:
-
-```
-Remove the "Backlog" label from issue #42 and add "In Progress"
-```
-
-### Other Common Operations
-
-| Task | Example prompt |
-|---|---|
-| List open issues | `List open issues in the project` |
-| View an issue | `Show me issue #15` |
-| Add a comment | `Add a comment to issue #15: "Fixed in MR !23"` |
-| Create a merge request | `Create an MR from branch feature/s3-lifecycle targeting develop` |
-| List labels | `List all labels in the project` |
-
 ## CI/CD
 
-The project uses GitLab CI with five stages. See `.gitlab-ci.yml` for full configuration.
+The project uses GitHub Actions. Workflow files are in `.github/workflows/`.
 
-| Stage | Trigger | Description |
+| Workflow | Trigger | Description |
 |---|---|---|
-| **test** | All branches | TypeScript build + Vitest coverage |
-| **version** | `main` branch | Version validation and release prep |
-| **release** | `main` branch | Builds all platform binaries and creates a GitLab release |
+| **ci.yml** | Reusable | TypeScript build + Vitest test suite |
+| **main-ci.yml** | Push to `main` | Runs CI on main branch |
+| **pr-checks.yml** | PRs to `main` | Runs CI and posts a coverage report comment |
+| **auto-tag.yml** | Release PR merged | Creates a version tag from `package.json` |
+| **release.yml** | Version tag (`v*`) | Builds all platform binaries and creates a GitHub Release |
+
+## Branching Strategy & Releases
+
+### Branches
+
+- **main** — production branch (protected, requires PRs)
+- **develop** — integration branch for feature work
+- **feature/** — feature branches, typically targeting `develop` or `main`
+- **release/v*** — short-lived release branches, created by the release script
+
+### Creating a Release
+
+Run the release script from the repository root:
+
+```bash
+./scripts/release.sh patch   # or minor, major
+```
+
+The script automates the full release pipeline:
+
+1. Bumps the version in `package.json` on a new `release/v*` branch
+2. Pushes the branch and opens a PR with auto-merge enabled
+3. CI runs; once it passes, the PR is squash-merged into `main`
+4. The **auto-tag** workflow detects the merged release PR and creates a `v*` tag
+5. The **release** workflow triggers on the tag, builds binaries for all five platforms, and publishes a GitHub Release with the archives
