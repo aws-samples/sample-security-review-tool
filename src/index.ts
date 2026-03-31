@@ -3,12 +3,15 @@ import { AssessCommand } from "./assess/command.js";
 import { ConfigCommand } from "./config/command.js";
 import { FixCommand } from "./fix/command.js";
 import { ConfigLoader } from "./shared/app-config/config-loader.js";
+import { PostHogClient } from "./shared/analytics/posthog-client.js";
 import { SrtLogger } from "./shared/logging/srt-logger.js";
 import { StatusCommand } from "./status/command.js";
 import { UpdateCommand } from "./update/command.js";
 import { ReleaseChecker } from "./update/release/release-checker.js";
 
 SrtLogger.initialize();
+PostHogClient.initialize();
+PostHogClient.capture('cli-user', 'test_event', { property: 'value' });
 
 const program = new Command();
 
@@ -49,3 +52,4 @@ program.hook("postAction", async (_thisCommand, actionCommand) => {
 });
 
 await program.parseAsync();
+await PostHogClient.shutdown();
