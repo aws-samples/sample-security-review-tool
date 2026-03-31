@@ -1,0 +1,14 @@
+name: Main CI
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: main-ci-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
