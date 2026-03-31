@@ -5,7 +5,7 @@ export default defineConfig({
         coverage: {
             include: ["src/**/*.ts"],
             exclude: ["src/**/*.d.ts"],
-            reporter: ["text", "text-summary"],
+            reporter: ["text", "text-summary", "json-summary", "json"],
             thresholds: {
                 perFile: false,
             },
