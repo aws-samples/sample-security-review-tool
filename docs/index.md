@@ -1,3 +1,7 @@
+---
+title: User Guide
+---
+
 # Security Review Tool User Guide
 
 A guide for using the SRT CLI tool to perform security reviews on AWS CDK and CloudFormation projects.
