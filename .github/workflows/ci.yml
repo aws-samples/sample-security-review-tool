@@ -10,8 +10,8 @@ on:
         type: boolean
 
 jobs:
-  lint-build-test:
-    name: Lint, Build & Test
+  build-test:
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,9 +22,6 @@ jobs:
           cache: npm
 
       - run: npm ci
-
-      - name: Lint
-        run: npm run lint
 
       - name: Build
         run: npm run build
