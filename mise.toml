@@ -1,0 +1,64 @@
+[tools]
+node = "22"
+bun = "latest"
+pre-commit = "latest"
+
+[env]
+_.path = ['{{config_root}}/node_modules/.bin']
+
+[tasks.install]
+alias = "i"
+run = "npm install"
+
+[tasks.build]
+run = "bun run build"
+
+[tasks."build:cli:all"]
+run = "bun run build:cli:all"
+
+[tasks."build:cli:all:prod"]
+run = "bun run build:cli:all:prod"
+
+[tasks."build:cli:linux-x64"]
+run = "bun run build:cli:linux-x64"
+
+[tasks."build:cli:linux-x64:prod"]
+run = "bun run build:cli:linux-x64:prod"
+
+[tasks."build:cli:osx-arm64"]
+alias = "b"
+run = "bun run build:cli:osx-arm64"
+
+[tasks."build:cli:osx-arm64:prod"]
+run = "bun run build:cli:osx-arm64:prod"
+
+[tasks."build:cli:osx-x64"]
+run = "bun run build:cli:osx-x64"
+
+[tasks."build:cli:osx-x64:prod"]
+run = "bun run build:cli:osx-x64:prod"
+
+[tasks."build:cli:win-x64"]
+run = "bun run build:cli:win-x64"
+
+[tasks."build:cli:win-x64:prod"]
+run = "bun run build:cli:win-x64:prod"
+
+[tasks.test]
+alias = "t"
+run = "bun run test"
+
+[tasks."test:watch"]
+run = "bun run test:watch"
+
+[tasks."test:coverage"]
+run = "bun run test:coverage"
+
+[tasks.lint]
+run = "bun run lint"
+
+[tasks."lint:fix"]
+run = "bun run lint:fix"
+
+[tasks.format]
+run = "bun run format"

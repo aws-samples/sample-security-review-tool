@@ -1,0 +1,1 @@
+export { default as Sns001Rule } from './001-sns-topic-policy-restriction.js';

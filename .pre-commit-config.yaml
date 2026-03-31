@@ -1,0 +1,53 @@
+exclude: '^(tmp/|\.kiro/|\.bun-builds/|node_modules/)'
+
+repos:
+  # General file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, develop]
+
+  # Secrets detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  # Linting and formatting
+  - repo: https://github.com/biomejs/pre-commit
+    rev: "v2.4.4"
+    hooks:
+      - id: biome-check
+      - id: biome-format
+      - id: biome-lint
+
+  # TypeScript type checking and tests
+  - repo: local
+    hooks:
+      - id: tsc
+        name: TypeScript build
+        entry: npm run build
+        language: system
+        pass_filenames: false
+        types_or: [ts, tsx]
+      - id: vitest
+        name: Run tests
+        entry: npm test
+        language: system
+        pass_filenames: false
+        types_or: [ts, tsx]
