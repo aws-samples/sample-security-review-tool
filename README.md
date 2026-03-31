@@ -138,8 +138,7 @@ The project uses GitHub Actions. Workflow files are in `.github/workflows/`.
 ### Branches
 
 - **main** — production branch (protected, requires PRs)
-- **develop** — integration branch for feature work
-- **feature/** — feature branches, typically targeting `develop` or `main`
+- **feature branches** — short-lived branches for features and fixes, merged directly into `main`
 - **release/v*** — short-lived release branches, created by the release script
 
 ### Creating a Release
