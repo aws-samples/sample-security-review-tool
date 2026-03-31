@@ -6,6 +6,7 @@ import { SrtLogger } from '../logging/srt-logger.js';
 export interface SRTConfig {
     AWS_REGION: string;
     AWS_PROFILE: string;
+    TELEMETRY_ENABLED: boolean;
 }
 
 export class ConfigManager {
@@ -20,7 +21,7 @@ export class ConfigManager {
             const configData = await fs.readFile(this.configPath, 'utf8');
             const config = JSON.parse(configData) as SRTConfig;
 
-            if (!config.AWS_REGION || !config.AWS_PROFILE) {
+            if (!config.AWS_REGION || !config.AWS_PROFILE || config.TELEMETRY_ENABLED === undefined) {
                 return null;
             }
 

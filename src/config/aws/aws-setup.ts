@@ -24,13 +24,14 @@ export class AwsEnvironmentSetup {
     return this.configRepository.loadConfig();
   }
 
-  public async validateAndSave(profile: string, region: string): Promise<ValidationResult> {
+  public async validateAndSave(profile: string, region: string, telemetryEnabled: boolean): Promise<ValidationResult> {
     const validationResult = await this.bedrockValidator.validate(profile, region);
 
     if (validationResult.isValid) {
       const config: SRTConfig = {
         AWS_PROFILE: profile,
-        AWS_REGION: region
+        AWS_REGION: region,
+        TELEMETRY_ENABLED: telemetryEnabled
       };
       await this.configRepository.saveConfig(config);
     }

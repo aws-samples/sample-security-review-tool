@@ -44,8 +44,8 @@ export class ConfigCoordinator {
         return this.pathSetup.getRestartInstructions();
     }
 
-    public async validateAndSave(profile: string, region: string): Promise<ValidationResult> {
-        const result = await this.awsSetup.validateAndSave(profile, region);
+    public async validateAndSave(profile: string, region: string, telemetryEnabled: boolean): Promise<ValidationResult> {
+        const result = await this.awsSetup.validateAndSave(profile, region, telemetryEnabled);
         return result;
     }
 

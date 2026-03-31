@@ -11,7 +11,7 @@ import { ReleaseChecker } from "./update/release/release-checker.js";
 
 SrtLogger.initialize();
 PostHogClient.initialize();
-PostHogClient.capture('cli-user', 'test_event', { property: 'value' });
+//PostHogClient.capture('cli-user', 'test_event', { property: 'value' });
 
 const program = new Command();
 
@@ -36,7 +36,11 @@ UpdateCommand.register(program);
 program.hook("preAction", async (_thisCommand, actionCommand) => {
     const commandName = actionCommand.name();
 
-    await ConfigLoader.load();
+    const config = await ConfigLoader.load();
+
+    if (config.TELEMETRY_ENABLED === false || process.env.SRT_TELEMETRY_DISABLED === '1') {
+        PostHogClient.setEnabled(false);
+    }
 
     if (commandName !== "update") {
         await ReleaseChecker.startBackgroundCheck();
