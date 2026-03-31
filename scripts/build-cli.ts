@@ -4,6 +4,10 @@ import { join, resolve } from "node:path";
 
 const TARGETS: Record<string, { bunTarget: string; outfile: string }> = {
     "linux-x64": { bunTarget: "bun-linux-x64", outfile: "build/linux-x64/srt" },
+    "linux-arm64": {
+        bunTarget: "bun-linux-arm64",
+        outfile: "build/linux-arm64/srt",
+    },
     "osx-x64": { bunTarget: "bun-darwin-x64", outfile: "build/osx-x64/srt" },
     "osx-arm64": {
         bunTarget: "bun-darwin-arm64",
