@@ -1,14 +1,28 @@
 import { readJsonFile, fileExists } from '../../shared/file-system/file-utils.js';
 import { ScanResult } from '../scanning/types.js';
-import { ReportingOptions } from './types.js';
+import { ReportingOptions, AssessmentSummary } from './types.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
+import { PostHogClient } from '../../shared/analytics/posthog-client.js';
 
 type IssueMatcher = (existing: ScanResult, newIssue: ScanResult) => boolean;
 
+export interface AggregationResult {
+    issues: ScanResult[];
+    summary: AssessmentSummary;
+}
+
 export class IssueAggregator {
+    private newIssueCount = 0;
+    private resolvedIssueCount = 0;
+    private reopenedIssueCount = 0;
+
     constructor(private readonly context: ProjectContext) { }
 
-    public async aggregateResults(options: ReportingOptions): Promise<ScanResult[]> {
+    public async aggregateResults(options: ReportingOptions): Promise<AggregationResult> {
+        this.newIssueCount = 0;
+        this.resolvedIssueCount = 0;
+        this.reopenedIssueCount = 0;
+
         const issues = await this.loadExistingIssues();
         const existingIssueCount = issues.length;
         const matchedIndices = new Set<number>();
@@ -19,7 +33,36 @@ export class IssueAggregator {
 
         this.markUnmatchedIssuesAsResolved(issues, existingIssueCount, matchedIndices);
 
-        return issues;
+        const summary = this.calculateSummary(issues);
+        return { issues, summary };
+    }
+
+    private calculateSummary(issues: ScanResult[]): AssessmentSummary {
+        const bySource: Record<string, number> = {};
+        let highPriority = 0;
+        let mediumPriority = 0;
+        let lowPriority = 0;
+
+        for (const issue of issues) {
+            const source = issue.source.toLowerCase().replace('-', '_');
+            bySource[source] = (bySource[source] || 0) + 1;
+
+            const priority = issue.priority?.toUpperCase();
+            if (priority === 'HIGH') highPriority++;
+            else if (priority === 'MEDIUM') mediumPriority++;
+            else if (priority === 'LOW') lowPriority++;
+        }
+
+        return {
+            totalIssues: issues.length,
+            newIssues: this.newIssueCount,
+            resolvedIssues: this.resolvedIssueCount,
+            reopenedIssues: this.reopenedIssueCount,
+            highPriority,
+            mediumPriority,
+            lowPriority,
+            bySource
+        };
     }
 
     private async loadExistingIssues(): Promise<ScanResult[]> {
@@ -100,28 +143,85 @@ export class IssueAggregator {
             const existingIndex = issues.findIndex(existing => matcher(existing, newIssue));
 
             if (existingIndex === -1) {
+                newIssue.firstDetectedAt = new Date().toISOString();
+                newIssue.assessmentCount = 1;
+                newIssue.status = newIssue.status || 'open';
                 issues.push(newIssue);
+                this.newIssueCount++;
+                this.captureIssueDetected(newIssue);
             } else {
+                const existingIssue = issues[existingIndex];
+                existingIssue.assessmentCount = (existingIssue.assessmentCount || 1) + 1;
                 matchedIndices.add(existingIndex);
-                this.reopenIfPreviouslyFixed(issues[existingIndex]);
+                this.reopenIfPreviouslyFixed(existingIssue);
             }
         }
     }
 
+    private captureIssueDetected(issue: ScanResult): void {
+        PostHogClient.captureIssueDetected({
+            check_id: issue.check_id || 'unknown',
+            description: issue.issue || 'No description',
+            priority: issue.priority || 'unknown',
+            source: issue.source,
+            resource_type: issue.resourceType
+        });
+    }
+
     private reopenIfPreviouslyFixed(issue: ScanResult): void {
         if (issue.status === 'fixed' || issue.status === 'resolved') {
+            const daysResolved = this.calculateDaysSince(issue.resolvedAt);
             issue.status = 'reopened';
+            issue.resolvedAt = undefined;
+            this.reopenedIssueCount++;
+            this.captureIssueReopened(issue, daysResolved);
         }
+    }
+
+    private captureIssueReopened(issue: ScanResult, daysResolved: number): void {
+        PostHogClient.captureIssueReopened({
+            check_id: issue.check_id || 'unknown',
+            description: issue.issue || 'No description',
+            priority: issue.priority || 'unknown',
+            source: issue.source,
+            resource_type: issue.resourceType,
+            days_resolved: daysResolved
+        });
     }
 
     private markUnmatchedIssuesAsResolved(issues: ScanResult[], existingIssueCount: number, matchedIndices: Set<number>): void {
         for (let i = 0; i < existingIssueCount; i++) {
             if (matchedIndices.has(i)) continue;
 
-            const status = issues[i].status?.toLowerCase();
+            const issue = issues[i];
+            const status = issue.status?.toLowerCase();
             if (status === 'open' || status === 'suppressed' || status === 'reopened') {
-                issues[i].status = 'resolved';
+                issue.status = 'resolved';
+                issue.resolvedAt = new Date().toISOString();
+                this.resolvedIssueCount++;
+                this.captureIssueResolved(issue);
             }
         }
+    }
+
+    private captureIssueResolved(issue: ScanResult): void {
+        const daysOpen = this.calculateDaysSince(issue.firstDetectedAt);
+        PostHogClient.captureIssueResolved({
+            check_id: issue.check_id || 'unknown',
+            description: issue.issue || 'No description',
+            priority: issue.priority || 'unknown',
+            source: issue.source,
+            resource_type: issue.resourceType,
+            days_open: daysOpen,
+            assessments_open: issue.assessmentCount || 1
+        });
+    }
+
+    private calculateDaysSince(isoDateString?: string): number {
+        if (!isoDateString) return 0;
+        const pastDate = new Date(isoDateString);
+        const now = new Date();
+        const diffMs = now.getTime() - pastDate.getTime();
+        return Math.floor(diffMs / (1000 * 60 * 60 * 24));
     }
 }

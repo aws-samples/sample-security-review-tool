@@ -3,6 +3,7 @@ import { BedrockValidator } from './bedrock-validator.js';
 import { AwsCredentialsFileReader } from './credentials-reader.js';
 import { ConfigManager, SRTConfig } from '../../shared/app-config/config-manager.js';
 import { AwsProfile, ValidationResult } from './types.js';
+import { PostHogClient } from '../../shared/analytics/posthog-client.js';
 
 export interface AwsEnvironmentSetupResult {
   profiles: AwsProfile[];
@@ -30,13 +31,19 @@ export class AwsEnvironmentSetup {
 
     if (validationResult.isValid) {
       const existingConfig = await this.configRepository.loadConfig();
+      const installationId = existingConfig?.INSTALLATION_ID ?? randomUUID();
       const config: SRTConfig = {
         AWS_PROFILE: profile,
         AWS_REGION: region,
         TELEMETRY_ENABLED: telemetryEnabled,
-        INSTALLATION_ID: existingConfig?.INSTALLATION_ID ?? randomUUID()
+        INSTALLATION_ID: installationId
       };
       await this.configRepository.saveConfig(config);
+
+      if (telemetryEnabled) {
+        PostHogClient.initialize(installationId);
+        PostHogClient.captureConfigCompleted({ telemetry_enabled: telemetryEnabled });
+      }
     }
 
     return validationResult;

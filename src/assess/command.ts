@@ -44,7 +44,7 @@ export class AssessCommand {
         const version = ReleaseChecker.getCurrentVersion();
         console.log('\n' + chalk.blue.bold('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓'));
         console.log(chalk.blue.bold('┃                                                  ┃'));
-        console.log(chalk.blue.bold('┃   ') + chalk.white.bold('🔒 SRT - Security Review Tool ') + chalk.green.bold(`v${version}`) + chalk.blue.bold('    ┃'));
+        console.log(chalk.blue.bold('┃   ') + chalk.white.bold('🔒 SRT - Security Review Tool ') + chalk.green.bold(`v${version}`) + chalk.blue.bold('          ┃'));
         console.log(chalk.blue.bold('┃                                                  ┃'));
         console.log(chalk.blue.bold('┃   ') + chalk.white('Security assessment for AWS infrastructure     ') + chalk.blue.bold('┃'));
         console.log(chalk.blue.bold('┃   ') + chalk.white('templates, configs, and deployment artifacts   ') + chalk.blue.bold('┃'));
