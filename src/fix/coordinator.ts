@@ -67,6 +67,7 @@ export class FixCoordinator {
     private captureFixGenerated(issue: ScanResult): void {
         PostHogClient.captureFixGenerated({
             check_id: issue.check_id || 'unknown',
+            description: issue.issue || 'unknown',
             priority: issue.priority || 'unknown',
             source: issue.source,
             resource_type: issue.resourceType,
@@ -84,6 +85,7 @@ export class FixCoordinator {
     private captureFixApplied(issue: ScanResult): void {
         PostHogClient.captureFixApplied({
             check_id: issue.check_id || 'unknown',
+            description: issue.issue || 'unknown',
             priority: issue.priority || 'unknown',
             source: issue.source,
             resource_type: issue.resourceType
@@ -101,6 +103,7 @@ export class FixCoordinator {
         const daysOpen = this.calculateDaysOpen(issue.firstDetectedAt);
         PostHogClient.captureIssueSuppressed({
             check_id: issue.check_id || 'unknown',
+            description: issue.issue || 'unknown',
             priority: issue.priority || 'unknown',
             source: issue.source,
             resource_type: issue.resourceType,
