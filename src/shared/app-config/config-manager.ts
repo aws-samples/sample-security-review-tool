@@ -7,6 +7,7 @@ export interface SRTConfig {
     AWS_REGION: string;
     AWS_PROFILE: string;
     TELEMETRY_ENABLED: boolean;
+    INSTALLATION_ID: string;
 }
 
 export class ConfigManager {

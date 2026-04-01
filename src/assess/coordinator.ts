@@ -11,6 +11,8 @@ import { ReportGenerator } from './reporting/report-generator.js';
 import { ProjectSettingsManager } from '../shared/project/project-settings-manager.js';
 import { ProjectSummarizer } from './summarization/project-summarizer.js';
 import { IgnorePatternService } from '../shared/file-system/ignore-pattern-service.js';
+import { PostHogClient } from '../shared/analytics/posthog-client.js';
+import { AppConfig } from '../shared/app-config/app-config.js';
 
 export class AssessCoordinator {
     private context!: ProjectContext;
@@ -26,6 +28,12 @@ export class AssessCoordinator {
         const ignorePatternService = await IgnorePatternService.create(this.projectRootFolderPath);
         this.context = new ProjectContext(this.projectRootFolderPath, ignorePatternService, this.cdkOutPaths);
         this.projectSettingsManager = new ProjectSettingsManager(this.context);
+
+        const projectId = await this.projectSettingsManager.ensureProjectId();
+        const installationId = AppConfig.getInstallationId();
+        if (installationId && AppConfig.isTelemetryEnabled()) {
+            PostHogClient.initialize(installationId, projectId);
+        }
 
         try {
             await this.initializeProject();

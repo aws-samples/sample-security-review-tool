@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { AssessCommand } from "./assess/command.js";
 import { ConfigCommand } from "./config/command.js";
 import { FixCommand } from "./fix/command.js";
-import { ConfigLoader } from "./shared/app-config/config-loader.js";
+import { AppConfig } from "./shared/app-config/app-config.js";
 import { PostHogClient } from "./shared/analytics/posthog-client.js";
 import { SrtLogger } from "./shared/logging/srt-logger.js";
 import { StatusCommand } from "./status/command.js";
@@ -10,8 +10,6 @@ import { UpdateCommand } from "./update/command.js";
 import { ReleaseChecker } from "./update/release/release-checker.js";
 
 SrtLogger.initialize();
-PostHogClient.initialize();
-//PostHogClient.capture('cli-user', 'test_event', { property: 'value' });
 
 const program = new Command();
 
@@ -36,10 +34,11 @@ UpdateCommand.register(program);
 program.hook("preAction", async (_thisCommand, actionCommand) => {
     const commandName = actionCommand.name();
 
-    const config = await ConfigLoader.load();
-
-    if (config.TELEMETRY_ENABLED === false || process.env.SRT_TELEMETRY_DISABLED === '1') {
-        PostHogClient.setEnabled(false);
+    if (commandName !== 'config' && commandName !== 'update' && commandName !== '--help' && commandName !== '-h') {
+        const config = await AppConfig.load();
+        if (!config) {
+            throw new Error('Configuration not found. Run: srt config');
+        }
     }
 
     if (commandName !== "update") {

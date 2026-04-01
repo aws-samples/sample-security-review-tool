@@ -2,12 +2,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import { SrtLogger } from '../logging/srt-logger.js';
 import { ProjectContext } from './project-context.js';
+import { ProjectIdGenerator, ProjectIdSource } from './project-id-generator.js';
 
 export interface ProjectSettings {
     LICENSE?: string;
     LAST_SCAN_DATE?: string;
     PROJECT_ID?: string;
-    PROJECT_ID_SOURCE?: 'Git' | 'RootContent' | 'RootBase';
+    PROJECT_ID_SOURCE?: ProjectIdSource;
 }
 
 export class ProjectSettingsManager {
@@ -49,5 +50,22 @@ export class ProjectSettingsManager {
         } catch (error) {
             // Silent fail on last scan date update
         }
+    }
+
+    public async ensureProjectId(): Promise<string> {
+        const settings = await this.loadSettings();
+
+        if (settings.PROJECT_ID) {
+            return settings.PROJECT_ID;
+        }
+
+        const generator = new ProjectIdGenerator();
+        const result = await generator.generate(this.context.getProjectRootFolderPath());
+
+        settings.PROJECT_ID = result.id;
+        settings.PROJECT_ID_SOURCE = result.source;
+        await this.saveSettings(settings);
+
+        return result.id;
     }
 }

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { BedrockValidator } from './bedrock-validator.js';
 import { AwsCredentialsFileReader } from './credentials-reader.js';
 import { ConfigManager, SRTConfig } from '../../shared/app-config/config-manager.js';
@@ -28,10 +29,12 @@ export class AwsEnvironmentSetup {
     const validationResult = await this.bedrockValidator.validate(profile, region);
 
     if (validationResult.isValid) {
+      const existingConfig = await this.configRepository.loadConfig();
       const config: SRTConfig = {
         AWS_PROFILE: profile,
         AWS_REGION: region,
-        TELEMETRY_ENABLED: telemetryEnabled
+        TELEMETRY_ENABLED: telemetryEnabled,
+        INSTALLATION_ID: existingConfig?.INSTALLATION_ID ?? randomUUID()
       };
       await this.configRepository.saveConfig(config);
     }

@@ -101,7 +101,7 @@ export class ConfigCommand {
 
         const telemetryEnabled = await confirm({
             message: 'Allow anonymous usage telemetry? (helps improve SRT)',
-            default: existingConfig?.TELEMETRY_ENABLED ?? true
+            default: true
         });
 
         const scannerStatus = await coordinator.installPrerequisites(reinstallScanners);
