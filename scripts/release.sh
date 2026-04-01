@@ -15,10 +15,10 @@ git pull origin main
 CURRENT_VERSION=$(node -p "require('./package.json').version")
 NEW_VERSION=$(node -p "
   const [major, minor, patch] = '${CURRENT_VERSION}'.split('.').map(Number);
-  if ('${BUMP_TYPE}' === 'major') console.log(\`\${major+1}.0.0\`);
-  else if ('${BUMP_TYPE}' === 'minor') console.log(\`\${major}.\${minor+1}.0\`);
-  else console.log(\`\${major}.\${minor}.\${patch+1}\`);
-" | tail -1)
+  if ('${BUMP_TYPE}' === 'major') \`\${major+1}.0.0\`;
+  else if ('${BUMP_TYPE}' === 'minor') \`\${major}.\${minor+1}.0\`;
+  else \`\${major}.\${minor}.\${patch+1}\`;
+")
 
 BRANCH="release/v${NEW_VERSION}"
 
