@@ -24,5 +24,7 @@ jobs:
 
       - name: Create and push tag
         run: |
+          git config user.name "${{ github.event.pull_request.user.login }}"
+          git config user.email "${{ github.event.pull_request.user.id }}+${{ github.event.pull_request.user.login }}@users.noreply.github.com"
           git tag -a "${{ steps.version.outputs.version }}" -m "Release ${{ steps.version.outputs.version }}"
           git push origin "${{ steps.version.outputs.version }}"
