@@ -99,11 +99,16 @@ export class ConfigCommand {
             }
         }
 
+        const telemetryEnabled = await confirm({
+            message: 'Allow anonymous usage telemetry? (helps improve SRT)',
+            default: true
+        });
+
         const scannerStatus = await coordinator.installPrerequisites(reinstallScanners);
 
         // Validate and display results as sequential spinners
         const validationSpin = ui.spinner('Validating credentials...').start();
-        const validationResult = await coordinator.validateAndSave(awsProfile as string, awsRegion);
+        const validationResult = await coordinator.validateAndSave(awsProfile as string, awsRegion, telemetryEnabled);
 
         // Region
         validationSpin.succeed('AWS Region: ' + awsRegion);
@@ -131,6 +136,13 @@ export class ConfigCommand {
             console.log(ui.hint('PATH: ') + 'Disabled');
         } else if (pathUpdateStatus.status === 'ERROR') {
             console.log(ui.error('PATH: ') + 'Failed');
+        }
+
+        // Telemetry
+        if (telemetryEnabled) {
+            console.log(ui.success('Telemetry: ') + 'Enabled');
+        } else {
+            console.log(ui.hint('Telemetry: ') + 'Disabled');
         }
 
         // Only show prerequisites error (success already shown by installer spinner)

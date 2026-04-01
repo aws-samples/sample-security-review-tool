@@ -2,7 +2,8 @@ import { Command } from "commander";
 import { AssessCommand } from "./assess/command.js";
 import { ConfigCommand } from "./config/command.js";
 import { FixCommand } from "./fix/command.js";
-import { ConfigLoader } from "./shared/app-config/config-loader.js";
+import { AppConfig } from "./shared/app-config/app-config.js";
+import { PostHogClient } from "./shared/analytics/posthog-client.js";
 import { SrtLogger } from "./shared/logging/srt-logger.js";
 import { StatusCommand } from "./status/command.js";
 import { UpdateCommand } from "./update/command.js";
@@ -33,7 +34,12 @@ UpdateCommand.register(program);
 program.hook("preAction", async (_thisCommand, actionCommand) => {
     const commandName = actionCommand.name();
 
-    await ConfigLoader.load();
+    if (commandName !== 'config' && commandName !== 'update' && commandName !== '--help' && commandName !== '-h') {
+        const config = await AppConfig.load();
+        if (!config) {
+            throw new Error('Configuration not found. Run: srt config');
+        }
+    }
 
     if (commandName !== "update") {
         await ReleaseChecker.startBackgroundCheck();
@@ -49,3 +55,4 @@ program.hook("postAction", async (_thisCommand, actionCommand) => {
 });
 
 await program.parseAsync();
+await PostHogClient.shutdown();

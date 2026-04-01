@@ -1,7 +1,9 @@
+import { randomUUID } from 'crypto';
 import { BedrockValidator } from './bedrock-validator.js';
 import { AwsCredentialsFileReader } from './credentials-reader.js';
 import { ConfigManager, SRTConfig } from '../../shared/app-config/config-manager.js';
 import { AwsProfile, ValidationResult } from './types.js';
+import { PostHogClient } from '../../shared/analytics/posthog-client.js';
 
 export interface AwsEnvironmentSetupResult {
   profiles: AwsProfile[];
@@ -24,15 +26,24 @@ export class AwsEnvironmentSetup {
     return this.configRepository.loadConfig();
   }
 
-  public async validateAndSave(profile: string, region: string): Promise<ValidationResult> {
+  public async validateAndSave(profile: string, region: string, telemetryEnabled: boolean): Promise<ValidationResult> {
     const validationResult = await this.bedrockValidator.validate(profile, region);
 
     if (validationResult.isValid) {
+      const existingConfig = await this.configRepository.loadConfig();
+      const installationId = existingConfig?.INSTALLATION_ID ?? randomUUID();
       const config: SRTConfig = {
         AWS_PROFILE: profile,
-        AWS_REGION: region
+        AWS_REGION: region,
+        TELEMETRY_ENABLED: telemetryEnabled,
+        INSTALLATION_ID: installationId
       };
       await this.configRepository.saveConfig(config);
+
+      if (telemetryEnabled) {
+        PostHogClient.initialize(installationId);
+        PostHogClient.captureConfigCompleted({ telemetry_enabled: telemetryEnabled });
+      }
     }
 
     return validationResult;

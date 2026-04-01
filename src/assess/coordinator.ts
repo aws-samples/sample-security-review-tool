@@ -11,6 +11,9 @@ import { ReportGenerator } from './reporting/report-generator.js';
 import { ProjectSettingsManager } from '../shared/project/project-settings-manager.js';
 import { ProjectSummarizer } from './summarization/project-summarizer.js';
 import { IgnorePatternService } from '../shared/file-system/ignore-pattern-service.js';
+import { PostHogClient } from '../shared/analytics/posthog-client.js';
+import { AppConfig } from '../shared/app-config/app-config.js';
+import { AssessmentSummary } from './reporting/types.js';
 
 export class AssessCoordinator {
     private context!: ProjectContext;
@@ -27,6 +30,12 @@ export class AssessCoordinator {
         this.context = new ProjectContext(this.projectRootFolderPath, ignorePatternService, this.cdkOutPaths);
         this.projectSettingsManager = new ProjectSettingsManager(this.context);
 
+        const projectId = await this.projectSettingsManager.ensureProjectId();
+        const installationId = AppConfig.getInstallationId();
+        if (installationId && AppConfig.isTelemetryEnabled()) {
+            PostHogClient.initialize(installationId, projectId);
+        }
+
         try {
             await this.initializeProject();
             await this.checkLicenseCompliance(license, updateLicenses);
@@ -34,12 +43,16 @@ export class AssessCoordinator {
             const templateResults = await this.processTemplates(generateDiagrams, generateThreatModels);
             const projectSummary = await this.generateProjectSummary(templateResults);
 
-            await this.generateReports(
+            const assessmentSummary = await this.generateReports(
                 codeScanResult,
                 templateResults,
                 generateXlsx,
                 projectSummary
             );
+
+            if (assessmentSummary) {
+                this.captureAssessmentCompleted(assessmentSummary);
+            }
 
             await this.projectSettingsManager.updateLastScanDate();
         } catch (error) {
@@ -102,15 +115,29 @@ export class AssessCoordinator {
         templateResults: TemplateResult[],
         generateXlsx: boolean,
         projectSummary: string | null
-    ) {
+    ): Promise<AssessmentSummary | null> {
         const spin = ui.spinner('Creating SRT report...').start();
         const reportGenerator = new ReportGenerator(this.context, (msg) => this.spinProgress(spin, msg));
-        await reportGenerator.generateReports({
+        const summary = await reportGenerator.generateReports({
             codeScanResult,
             templateResults,
             generateXlsx,
             projectSummary
         });
         spin.succeed('Created SRT report');
+        return summary;
+    }
+
+    private captureAssessmentCompleted(summary: AssessmentSummary): void {
+        PostHogClient.captureAssessmentCompleted({
+            total_issues: summary.totalIssues,
+            new_issues: summary.newIssues,
+            resolved_issues: summary.resolvedIssues,
+            reopened_issues: summary.reopenedIssues,
+            high_priority: summary.highPriority,
+            medium_priority: summary.mediumPriority,
+            low_priority: summary.lowPriority,
+            by_source: summary.bySource
+        });
     }
 }

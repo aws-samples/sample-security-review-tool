@@ -7,6 +7,8 @@ import { BinaryInstaller } from './binary/binary-installer.js';
 import { ReleaseCheckResult } from './release/types.js';
 import { AppPaths } from '../shared/app-config/app-paths.js';
 import { SrtLogger } from '../shared/logging/srt-logger.js';
+import { PostHogClient } from '../shared/analytics/posthog-client.js';
+import { AppConfig } from '../shared/app-config/app-config.js';
 
 export interface UpdateResult {
     status: 'success' | 'up_to_date' | 'download_failed' | 'install_failed' | 'test_failed';
@@ -16,7 +18,20 @@ export interface UpdateResult {
 
 export class UpdateCoordinator {
     public async checkForUpdate(): Promise<ReleaseCheckResult> {
-        return await ReleaseChecker.getLatestRelease();
+        const result = await ReleaseChecker.getLatestRelease();
+        this.captureUpdateChecked(result);
+        return result;
+    }
+
+    private captureUpdateChecked(result: ReleaseCheckResult): void {
+        const installationId = AppConfig.getInstallationId();
+        if (!installationId || !AppConfig.isTelemetryEnabled()) return;
+
+        PostHogClient.initialize(installationId);
+        PostHogClient.captureUpdateChecked({
+            current_version: ReleaseChecker.getCurrentVersion(),
+            update_available: result.status === 'update_available'
+        });
     }
 
     public async performUpdate(): Promise<UpdateResult> {

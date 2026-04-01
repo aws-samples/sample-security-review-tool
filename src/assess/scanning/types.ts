@@ -15,6 +15,9 @@ export interface ScanResult {
     resourceName?: string;
     cdkPath?: string;
     isCustomResource?: boolean;
+    firstDetectedAt?: string;
+    assessmentCount?: number;
+    resolvedAt?: string;
 }
 
 export interface Scanner {

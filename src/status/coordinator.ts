@@ -5,6 +5,8 @@ import { ProjectSettingsManager } from '../shared/project/project-settings-manag
 import { DashboardGenerator } from './dashboard/dashboard-generator.js';
 import { ProjectContext } from '../shared/project/project-context.js';
 import { IgnorePatternService } from '../shared/file-system/ignore-pattern-service.js';
+import { PostHogClient } from '../shared/analytics/posthog-client.js';
+import { AppConfig } from '../shared/app-config/app-config.js';
 
 export interface StatusResult {
     license: string;
@@ -37,7 +39,15 @@ export class StatusCoordinator {
     public static async create(projectRootFolderPath: string): Promise<StatusCoordinator> {
         const ignorePatternService = await IgnorePatternService.create(projectRootFolderPath);
         const context = new ProjectContext(projectRootFolderPath, ignorePatternService);
-        return new StatusCoordinator(context);
+        const coordinator = new StatusCoordinator(context);
+
+        const projectId = await coordinator.settingsManager.ensureProjectId();
+        const installationId = AppConfig.getInstallationId();
+        if (installationId && AppConfig.isTelemetryEnabled()) {
+            PostHogClient.initialize(installationId, projectId);
+        }
+
+        return coordinator;
     }
 
     public async getStatus(options?: GetStatusOptions): Promise<StatusResult> {
@@ -53,6 +63,12 @@ export class StatusCoordinator {
         const completionRate = totalIssues === 0 ? 100 : Math.round(((fixedIssues + suppressedIssues) / totalIssues) * 100);
 
         const dashboardPath = await this.generateDashboard(this.context.getSrtOutputFolderPath(), projectRootFolderPath, settings?.LAST_SCAN_DATE, showAll);
+
+        const hasBlocking = openIssues > 0 || reopenedIssues > 0;
+        PostHogClient.captureStatusViewed({
+            open_issues: openIssues + reopenedIssues,
+            has_blocking: hasBlocking
+        });
 
         return {
             license: settings?.LICENSE || 'None',
