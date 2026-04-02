@@ -1,26 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUMP_TYPE="${1:-patch}"
-
-if [[ ! "$BUMP_TYPE" =~ ^(patch|minor|major)$ ]]; then
-  echo "Usage: $0 [patch|minor|major]"
-  exit 1
-fi
+INPUT="${1:-patch}"
 
 git fetch origin main
 git checkout main
 git pull origin main
 
 CURRENT_VERSION=$(node -p "require('./package.json').version")
-NEW_VERSION=$(node -p "
-  const [major, minor, patch] = '${CURRENT_VERSION}'.split('.').map(Number);
-  if ('${BUMP_TYPE}' === 'major') \`\${major+1}.0.0\`;
-  else if ('${BUMP_TYPE}' === 'minor') \`\${major}.\${minor+1}.0\`;
-  else \`\${major}.\${minor}.\${patch+1}\`;
-")
 
-BRANCH="release/v${NEW_VERSION}"
+if [[ "$INPUT" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  NEW_VERSION="$INPUT"
+elif [[ "$INPUT" =~ ^(patch|minor|major)$ ]]; then
+  NEW_VERSION=$(node -p "
+    const [major, minor, patch] = '${CURRENT_VERSION}'.split('.').map(Number);
+    if ('${INPUT}' === 'major') \`\${major+1}.0.0\`;
+    else if ('${INPUT}' === 'minor') \`\${major}.\${minor+1}.0\`;
+    else \`\${major}.\${minor}.\${patch+1}\`;
+  ")
+else
+  echo "Usage: $0 [patch|minor|major|X.Y.Z]"
+  exit 1
+fi
+
+TAG="v${NEW_VERSION}"
+BRANCH="release/${TAG}"
+
+if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
+  echo "Error: Tag $TAG already exists"
+  exit 1
+fi
 
 git checkout -b "$BRANCH"
 
@@ -32,13 +41,14 @@ node -e "
 "
 
 git add package.json
-git commit -m "chore: bump version to v${NEW_VERSION}"
+git commit -m "chore: bump version to ${TAG}"
 git push -u origin "$BRANCH"
+
 gh pr create \
-  --title "Release v${NEW_VERSION}" \
-  --body "Bumps version to v${NEW_VERSION}. Auto-merges after CI passes, then automatically tags and releases."
+  --title "Release ${TAG}" \
+  --body "Bumps version to ${TAG}. Merge to trigger release."
+
 gh pr merge --auto --squash
 
 echo ""
-echo "Release v${NEW_VERSION} initiated."
-echo "CI will run, PR will auto-merge, and the release will be published automatically."
+echo "PR created. Once merged, release will build automatically."
