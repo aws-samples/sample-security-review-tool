@@ -69,6 +69,10 @@ jobs:
         run: |
           gh release create "${{ steps.version.outputs.version }}" \
             --title "SRT ${{ steps.version.outputs.version }}" \
-            --generate-notes \
             srt-cli-*.tar.gz \
             srt-cli-*.zip
+
+      - name: Delete release branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api -X DELETE repos/${{ github.repository }}/git/refs/heads/${{ github.event.pull_request.head.ref }}
