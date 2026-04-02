@@ -127,11 +127,8 @@ The project uses GitHub Actions. Workflow files are in `.github/workflows/`.
 
 | Workflow | Trigger | Description |
 |---|---|---|
-| **ci.yml** | Reusable | TypeScript build + Vitest test suite |
-| **main-ci.yml** | Push to `main` | Runs CI on main branch |
-| **pr-checks.yml** | PRs to `main` | Runs CI and posts a coverage report comment |
-| **auto-tag.yml** | Release PR merged | Creates a version tag from `package.json` |
-| **release.yml** | Version tag (`v*`) | Builds all platform binaries and creates a GitHub Release |
+| **pr.yml** | PRs to `main` (non-release) | Build, test, coverage report comment |
+| **release.yml** | Release PR merged | Build, test, build binaries, create GitHub Release, delete branch |
 
 ## Branching Strategy & Releases
 
@@ -139,20 +136,18 @@ The project uses GitHub Actions. Workflow files are in `.github/workflows/`.
 
 - **main** — production branch (protected, requires PRs)
 - **feature branches** — short-lived branches for features and fixes, merged directly into `main`
-- **release/v*** — short-lived release branches, created by the release script
+- **release/v*** — short-lived release branches, created and deleted automatically by the release workflow
 
 ### Creating a Release
 
 Run the release script from the repository root:
 
 ```bash
-./scripts/release.sh patch   # or minor, major
+./scripts/release.sh patch   # or minor, major, or explicit version (e.g., 1.2.3)
 ```
 
 The script automates the full release pipeline:
 
 1. Bumps the version in `package.json` on a new `release/v*` branch
 2. Pushes the branch and opens a PR with auto-merge enabled
-3. CI runs; once it passes, the PR is squash-merged into `main`
-4. The **auto-tag** workflow detects the merged release PR and creates a `v*` tag
-5. The **release** workflow triggers on the tag, builds binaries for all five platforms, and publishes a GitHub Release with the archives
+3. Once the PR merges, the **release** workflow builds binaries for all platforms, creates a GitHub Release with the archives, and deletes the release branch
