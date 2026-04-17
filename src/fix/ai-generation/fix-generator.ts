@@ -5,6 +5,8 @@ import { CdkConstructResolver } from '../cdk/cdk-construct-resolver.js';
 import { CdkFixPrompter } from './cdk-fix-prompter.js';
 import { CfnFixPrompter } from './cfn-fix-prompter.js';
 import { CodeFixPrompter } from './code-fix-prompter.js';
+import { FixAgent } from '../agent/fix-agent.js';
+import { getBedrockClient } from '../../shared/ai/bedrock-client.js';
 import { Fix } from '../types.js';
 import * as path from 'path';
 
@@ -24,40 +26,63 @@ export class FixGenerator {
                 return null;
             }
 
-            // Handle Bandit and Semgrep issues (code-level security findings)
-            if (issue.source === 'Bandit' || issue.source === 'Semgrep') {
-                return await this.codeFixPrompter.generateFix(
-                    this.context.getProjectRootFolderPath(),
-                    issue
-                );
-            }
+            return await this.generateFixWithAgent(issue);
 
-            const isCloudFormationTemplate = await this.context.isCloudFormationTemplate(
-                path.join(this.context.getProjectRootFolderPath(), issue.path)
-            );
+            // if (this.isAgentEnabled()) {
+            //     return await this.generateFixWithAgent(issue);
+            // }
 
-            const isCdkProject = await this.context.isCdkProject();
+            // // Handle Bandit and Semgrep issues (code-level security findings)
+            // if (issue.source === 'Bandit' || issue.source === 'Semgrep') {
+            //     return await this.codeFixPrompter.generateFix(
+            //         this.context.getProjectRootFolderPath(),
+            //         issue
+            //     );
+            // }
 
-            // Handle CDK projects
-            if (isCloudFormationTemplate && isCdkProject && issue.cdkPath) {
-                const templateFilePath = path.join(this.context.getProjectRootFolderPath(), issue.path);
-                const cdkConstruct = await this.cdkConstructResolver.findConstructForIssue(issue.cdkPath, templateFilePath);
+            // const isCloudFormationTemplate = await this.context.isCloudFormationTemplate(
+            //     path.join(this.context.getProjectRootFolderPath(), issue.path)
+            // );
 
-                if (cdkConstruct) {
-                    return await this.cdkFixPrompter.generateFix(cdkConstruct, issue);
-                }
-            }
+            // const isCdkProject = await this.context.isCdkProject();
 
-            // Handle non-CDK CloudFormation projects
-            if (isCloudFormationTemplate && !isCdkProject && issue.resourceName) {
-                return await this.cfnFixPrompter.generateFix(this.context.getProjectRootFolderPath(), issue);
-            }
+            // // Handle CDK projects
+            // if (isCloudFormationTemplate && isCdkProject && issue.cdkPath) {
+            //     const templateFilePath = path.join(this.context.getProjectRootFolderPath(), issue.path);
+            //     const cdkConstruct = await this.cdkConstructResolver.findConstructForIssue(issue.cdkPath, templateFilePath);
 
-            return null;
+            //     if (cdkConstruct) {
+            //         return await this.cdkFixPrompter.generateFix(cdkConstruct, issue);
+            //     }
+            // }
+
+            // // Handle non-CDK CloudFormation projects
+            // if (isCloudFormationTemplate && !isCdkProject && issue.resourceName) {
+            //     return await this.cfnFixPrompter.generateFix(this.context.getProjectRootFolderPath(), issue);
+            // }
+
+            // return null;
 
         } catch (error) {
             SrtLogger.logError('Fix generation failed', error as Error, { checkId: issue.check_id, path: issue.path });
             return null;
         }
+    }
+
+    // private isAgentEnabled(): boolean {
+    //     return process.env.SRT_FIX_AGENT === '1';
+    // }
+
+    private async generateFixWithAgent(issue: ScanResult): Promise<Fix | null> {
+        const agent = new FixAgent(getBedrockClient(), this.context);
+        const result = await agent.run(issue);
+        if (result.stopReason !== 'finished' && result.stopReason !== 'end_turn') {
+            SrtLogger.logError(
+                `FixAgent did not complete cleanly (stopReason: ${result.stopReason})`,
+                new Error(`Turns: ${result.turns}, edits: ${result.edits.length}`),
+                { checkId: issue.check_id, path: issue.path },
+            );
+        }
+        return agent.toFix(result);
     }
 }

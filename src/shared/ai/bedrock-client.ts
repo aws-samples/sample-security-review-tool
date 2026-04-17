@@ -4,7 +4,7 @@ import { FetchHttpHandler } from '@aws-sdk/fetch-http-handler';
 import { BedrockConfig } from '../../config/aws/bedrock-config.js';
 import { SrtLogger } from '../logging/srt-logger.js';
 
-function getBedrockClient(): BedrockRuntimeClient {
+export function getBedrockClient(): BedrockRuntimeClient {
 	const profile = BedrockConfig.getProfile();
 	const region = BedrockConfig.getRegion();
 

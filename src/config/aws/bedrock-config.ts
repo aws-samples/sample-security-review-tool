@@ -2,8 +2,8 @@ export class BedrockConfig {
     private static instance: BedrockConfig;
     private static errorMessage = 'BedrockConfig not initialized. Call BedrockConfig.initialize() first.';
     private static readonly DEFAULT_MODEL = {
-        id: 'anthropic.claude-opus-4-5-20251101-v1:0',
-        name: 'Claude Opus 4.5',
+        id: 'anthropic.claude-opus-4-7',
+        name: 'Claude Opus 4.7',
         crossRegionInference: true,
         promptCaching: true
     };
