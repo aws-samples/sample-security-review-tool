@@ -140,6 +140,8 @@ The project uses GitHub Actions. Workflow files are in `.github/workflows/`.
 
 ### Creating a Release
 
+> **Before running the script, merge your changes into `main`.** The release script operates entirely off `origin/main` — it checks out and pulls `main`, then cuts the `release/v*` branch from there. Any commits that live only on a feature branch will **not** be included in the release. Ensure your feature PRs are merged (and `main` is green) before invoking it.
+
 Run the release script from the repository root:
 
 ```bash
@@ -148,6 +150,6 @@ Run the release script from the repository root:
 
 The script automates the full release pipeline:
 
-1. Bumps the version in `package.json` on a new `release/v*` branch
+1. Checks out the latest `origin/main` and cuts a new `release/v*` branch from it, then bumps the version in `package.json`
 2. Pushes the branch and opens a PR with auto-merge enabled
 3. Once the PR merges, the **release** workflow builds binaries for all platforms, creates a GitHub Release with the archives, and deletes the release branch
