@@ -2,11 +2,15 @@ import { ProjectContext } from '../../shared/project/project-context.js';
 import { ProjectInitializer } from './project-initializer.js';
 import { GitInitializer } from './git-initializer.js';
 import { CdkInitializer } from './cdk-initializer.js';
+import { DsrMigrator } from '../../shared/project/dsr-migrator.js';
 
 export class InitializationCoordinator {
     constructor(private context: ProjectContext, private readonly onProgress: (progress: string) => void = () => { }) { }
 
     public async initialize(): Promise<void> {
+        const dsrMigrator = new DsrMigrator(this.context.getProjectRootFolderPath(), this.onProgress);
+        await dsrMigrator.migrate();
+
         const projectInit = new ProjectInitializer(this.context, this.onProgress);
         await projectInit.initialize();
 

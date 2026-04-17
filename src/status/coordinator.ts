@@ -7,6 +7,7 @@ import { ProjectContext } from '../shared/project/project-context.js';
 import { IgnorePatternService } from '../shared/file-system/ignore-pattern-service.js';
 import { PostHogClient } from '../shared/analytics/posthog-client.js';
 import { AppConfig } from '../shared/app-config/app-config.js';
+import { DsrMigrator } from '../shared/project/dsr-migrator.js';
 
 export interface StatusResult {
     license: string;
@@ -37,6 +38,8 @@ export class StatusCoordinator {
     }
 
     public static async create(projectRootFolderPath: string): Promise<StatusCoordinator> {
+        await new DsrMigrator(projectRootFolderPath).migrate();
+
         const ignorePatternService = await IgnorePatternService.create(projectRootFolderPath);
         const context = new ProjectContext(projectRootFolderPath, ignorePatternService);
         const coordinator = new StatusCoordinator(context);

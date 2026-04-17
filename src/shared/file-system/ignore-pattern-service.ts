@@ -4,6 +4,7 @@ import { GitIgnoreToGlob } from './gitignore-to-glob.js';
 
 const STANDARD_IGNORE_DIRS = [
   '.srt',
+  '.dsr',
   'node_modules',
   'vendor',
   'bin',
