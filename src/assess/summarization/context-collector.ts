@@ -5,7 +5,7 @@ import { TemplateResult } from '../types.js';
 
 export class ContextCollector {
     private static readonly MAX_README_LENGTH = 3000;
-    private static readonly EXCLUDED_DIRS = ['node_modules', '.git', '.srt', '.venv', '.srt-venv', 'cdk.out', 'dist', 'build', '__pycache__'];
+    private static readonly EXCLUDED_DIRS = ['node_modules', '.git', '.srt', '.dsr', '.venv', '.srt-venv', 'cdk.out', 'dist', 'build', '__pycache__'];
 
     public async collect(projectPath: string, templateResults: TemplateResult[]): Promise<string> {
         const sections: string[] = [];

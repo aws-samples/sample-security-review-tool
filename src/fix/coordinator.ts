@@ -12,6 +12,7 @@ import { PostHogClient } from '../shared/analytics/posthog-client.js';
 import { AppConfig } from '../shared/app-config/app-config.js';
 import { ProjectSettingsManager } from '../shared/project/project-settings-manager.js';
 import { BedrockConfig } from '../config/aws/bedrock-config.js';
+import { DsrMigrator } from '../shared/project/dsr-migrator.js';
 
 export class FixCoordinator {
     private readonly issueReader: IssueReader;
@@ -31,6 +32,8 @@ export class FixCoordinator {
     }
 
     public static async create(projectRootFolderPath: string, onProgress: (progress: Progress) => void): Promise<FixCoordinator> {
+        await new DsrMigrator(projectRootFolderPath).migrate();
+
         const ignorePatternService = await IgnorePatternService.create(projectRootFolderPath);
         const context = new ProjectContext(projectRootFolderPath, ignorePatternService);
 
