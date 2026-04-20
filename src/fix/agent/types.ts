@@ -1,5 +1,6 @@
 import { Message, Tool } from '@aws-sdk/client-bedrock-runtime';
 import { FixChange } from '../types.js';
+import { ValidationResult } from './validation/types.js';
 
 export interface ToolInvocation {
     toolUseId: string;
@@ -24,4 +25,5 @@ export interface AgentResult {
     comments: string;
     turns: number;
     stopReason: 'finished' | 'end_turn' | 'max_turns' | 'error';
+    validation: ValidationResult | null;
 }

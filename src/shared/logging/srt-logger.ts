@@ -75,6 +75,16 @@ export class SrtLogger {
         instance.logger.error(message, { ...context, ...errorDetails });
     }
 
+    public static logDebug(message: string, context?: LogContext): void {
+        const instance = SrtLogger.getInstance();
+        instance.logger.debug(message, context ?? {});
+    }
+
+    public static logInfo(message: string, context?: LogContext): void {
+        const instance = SrtLogger.getInstance();
+        instance.logger.info(message, context ?? {});
+    }
+
     private ensureLogsDirectoryExists(): void {
         try {
             if (!fs.existsSync(this.logsFolderPath)) {
