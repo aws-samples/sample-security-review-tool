@@ -1,10 +1,10 @@
 import * as path from 'path';
 import { SrtLogger } from '../../shared/logging/srt-logger.js';
-import { ScanResult, Scanner } from './types.js';
+import type { ScanResult, Scanner } from './types.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
 
 // Re-export ScanResult so it can be imported by rule files
-export { ScanResult };
+export type { ScanResult };
 
 export abstract class BaseScanner implements Scanner {
     abstract scan(projectRootFolderPath: string, outputFilePath: string): Promise<void>;

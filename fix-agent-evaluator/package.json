@@ -1,0 +1,15 @@
+{
+  "name": "fix-agent-evaluator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Test harness that evaluates the effectiveness and efficiency of fixes produced by the SRT FixAgent.",
+  "scripts": {
+    "evaluate": "bun src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^22.16.5"
+  }
+}
