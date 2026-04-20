@@ -19,8 +19,11 @@ Given a target project folder, the evaluator:
    the fix on two axes:
      - **Effectiveness** (HIGH / MEDIUM / LOW) — does the change actually
        mitigate the risk, or is it a minimal-compliance workaround?
-     - **Efficiency** (HIGH / MEDIUM / LOW) — turn count and validate_fix
-       retry count, derived from the agent log.
+     - **Efficiency** (HIGH / MEDIUM / LOW) — number of **retries** derived
+       from the agent log. A retry is any failed `validate_fix`, `edit_file`,
+       or `apply_edits` invocation. HIGH = 0 retries, MEDIUM = 1 retry,
+       LOW = 2+ retries. Turn count is reported as context only; different
+       rules legitimately need different numbers of turns.
    When either rating is below HIGH, the reviewer returns a **drop-in
    replacement for the rule's `fix` text** so you can paste it straight back
    into the rule source.
@@ -100,7 +103,7 @@ example:
 
 - Effectiveness: LOW — the added rule only aborts incomplete multipart
   uploads; it does not manage the lifetime of stored objects.
-- Efficiency: LOW — 12 turns, 3 validate_fix failures.
+- Efficiency: LOW — 3 retries (12 turns, 3 validate_fix failures).
 - Root cause: vague-fix-guidance
 
 **Current fix guidance:**

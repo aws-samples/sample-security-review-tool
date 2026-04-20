@@ -29,6 +29,12 @@ export interface AgentSession {
     stopReason: string;
     validateFixInvocations: number;
     validateFixFailures: number;
+    /**
+     * Count of tool invocations that represent a retry: any failed
+     * validate_fix, edit_file, or apply_edits call. These indicate the agent
+     * attempted to produce or commit a fix and had to try again.
+     */
+    retries: number;
     toolInvocations: ToolInvocationSummary[];
     finalComments: string;
     rawLogLines: string[];
@@ -53,6 +59,7 @@ export interface ReviewVerdict {
     efficiency: Rating;
     efficiencyReasoning: string;
     turns: number;
+    retries: number;
     validateFixFailures: number;
     rootCause: string;
     currentFixGuidance: string;

@@ -18,7 +18,6 @@ export class CdkConstructFinder {
             return null;
         }
 
-        const stackName = pathParts[0];
         const topLevelConstructId = pathParts[1];
         const targetConstructId = pathParts.length > 2 ? pathParts[2] : topLevelConstructId;
 

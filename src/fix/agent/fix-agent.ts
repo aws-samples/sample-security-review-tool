@@ -36,14 +36,15 @@ const DEFAULT_MAX_TURNS = 20;
  */
 export class FixAgent {
     private readonly agentLogger = new AgentLogger();
-    private readonly registry: ToolRegistry;
+    private registry!: ToolRegistry;
 
-    constructor(private readonly bedrockClient: BedrockRuntimeClient, context: ProjectContext) {
-        this.registry = new ToolRegistry(context, this.agentLogger);
-    }
+    constructor(private readonly bedrockClient: BedrockRuntimeClient, private readonly context: ProjectContext) {}
 
     public async run(issue: ScanResult, maxTurns: number = DEFAULT_MAX_TURNS): Promise<AgentResult> {
+        this.registry = new ToolRegistry(this.context, this.agentLogger, issue);
         const userPrompt = buildUserPrompt(issue);
+
+
         this.agentLogger.sessionStarted(issue, SYSTEM_PROMPT.length, userPrompt);
 
         const messages: Message[] = [{ role: 'user', content: [{ text: userPrompt }] }];

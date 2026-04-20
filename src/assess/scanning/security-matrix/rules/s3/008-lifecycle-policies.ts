@@ -43,7 +43,19 @@ export class S3008Rule extends BaseRule {
       resource,
       stackName,
       `${this.description}`,
-      `Configure a lifecycle policy to manage S3 objects during their lifetime.`
+      [
+        `Add the following LifecycleConfiguration to the S3 bucket:`,
+        ``,
+        `  new s3.Bucket(this, '<id>', {`,
+        `    lifecycleRules: [{`,
+        `      transitions: [`,
+        `        { storageClass: s3.StorageClass.INFREQUENT_ACCESS, transitionAfter: Duration.days(30) },`,
+        `      ],`,
+        `    }],`,
+        `  });`,
+        ``,
+        `For CDK projects, edit the CDK source (not cdk.out/*); for raw CloudFormation, add the equivalent LifecycleConfiguration.Rules entry: Transitions=[{StorageClass:STANDARD_IA,Days:30}], Status=Enabled.`,
+      ].join('\n')
     );
   }
 }

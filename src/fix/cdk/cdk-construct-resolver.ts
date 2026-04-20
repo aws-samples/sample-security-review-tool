@@ -1,7 +1,7 @@
 import { SrtLogger } from '../../shared/logging/srt-logger.js';
 import { CdkDetector } from '../../shared/cdk/cdk-detector.js';
-import { CdkStackFinder } from '../../shared/cdk/cdk-stack-finder.js';
-import { CdkConstructFinder } from '../../shared/cdk/cdk-construct-finder.js';
+import { CdkStackFinder } from './cdk-stack-finder.js';
+import { CdkConstructFinder } from './cdk-construct-finder.js';
 import type { CdkConstructInfo, CdkProjectConfig } from '../../shared/cdk/types.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
 

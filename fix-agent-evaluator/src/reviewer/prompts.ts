@@ -22,10 +22,13 @@ Evaluation criteria:
    - MEDIUM = addresses the intent partially, or is correct but narrow.
    - LOW  = workaround that only satisfies the scanner check (e.g. adds a no-op rule, disables the check, or adds a property with a value that does not mitigate the risk).
 
-2. EFFICIENCY — how many turns and validate_fix retries did it take?
-   - HIGH   = <= 5 turns, 0 validate_fix failures.
-   - MEDIUM = 6-8 turns OR 1 validate_fix failure.
-   - LOW    = > 8 turns OR >= 2 validate_fix failures.
+2. EFFICIENCY — how many retries did the agent need? A retry is any failed
+   invocation of a fix-producing tool: validate_fix (proposed fix didn't pass),
+   edit_file, or apply_edits (the edit was rejected). Turn count is NOT the
+   metric — different rules legitimately need different numbers of turns.
+   - HIGH   = 0 retries.
+   - MEDIUM = exactly 1 retry.
+   - LOW    = 2 or more retries.
 
 3. ROOT CAUSE — if either rating is not HIGH, identify the single most likely cause. Common categories:
    - "vague-fix-guidance": rule's fix text does not specify what a valid mitigation looks like.
@@ -62,7 +65,8 @@ export function buildReviewerUserPrompt(record: FixRunRecord, ruleSourceSnippet:
     lines.push('');
     lines.push(`FixAgent session summary`);
     lines.push(`========================`);
-    lines.push(`Turns:                    ${record.session.turns}`);
+    lines.push(`Retries (failed validate_fix/edit_file/apply_edits): ${record.session.retries}`);
+    lines.push(`Turns (context only):     ${record.session.turns}`);
     lines.push(`Stop reason:              ${record.session.stopReason}`);
     lines.push(`validate_fix invocations: ${record.session.validateFixInvocations}`);
     lines.push(`validate_fix failures:    ${record.session.validateFixFailures}`);

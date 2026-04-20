@@ -48,7 +48,7 @@ export class ReportWriter {
         lines.push(`### ${icon} ${verdict.checkId} — ${verdict.path}${verdict.resourceName ? ` (${verdict.resourceName})` : ''}`);
         lines.push('');
         lines.push(`- Effectiveness: **${verdict.effectiveness}** — ${verdict.effectivenessReasoning}`);
-        lines.push(`- Efficiency: **${verdict.efficiency}** — ${verdict.efficiencyReasoning} (turns: ${verdict.turns}, validate_fix failures: ${verdict.validateFixFailures})`);
+        lines.push(`- Efficiency: **${verdict.efficiency}** — ${verdict.efficiencyReasoning} (retries: ${verdict.retries}, turns: ${verdict.turns}, validate_fix failures: ${verdict.validateFixFailures})`);
         lines.push(`- Root cause: ${verdict.rootCause}`);
         lines.push('');
         lines.push(`**Current fix guidance:**`);

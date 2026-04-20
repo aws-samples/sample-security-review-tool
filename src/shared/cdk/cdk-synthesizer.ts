@@ -21,9 +21,24 @@ export class CdkSynthesizer {
         } catch (firstError: any) {
             await this.cleanOutput(cdkDirectory);
             SrtLogger.logError('CDK synthesis failed', firstError, { cdkDirectory: absCdkDir });
-            throw new Error(`CDK synthesis failed. Please manually run 'cdk synth' in '${absCdkDir}' to diagnose the issue.`);
+            throw new Error(this.formatSynthFailure(absCdkDir, firstError));
         }
     }
+
+    private formatSynthFailure(absCdkDir: string, error: unknown): string {
+        const header = `CDK synthesis failed in '${absCdkDir}'.`;
+        const details = this.extractCommandOutput(error);
+        return details ? `${header}\n${details}` : header;
+    }
+
+    private extractCommandOutput(error: unknown): string {
+        const anyError = error as { stderr?: unknown; stdout?: unknown; message?: unknown };
+        const stderr = (anyError.stderr ?? '').toString().trim();
+        const stdout = (anyError.stdout ?? '').toString().trim();
+        const message = (anyError.message ?? '').toString().trim();
+        return [stderr, stdout, message].filter(part => part.length > 0).join('\n');
+    }
+
 
     private async getVenvOverrides(): Promise<Record<string, string> | undefined> {
         const hasVenv = await this.context.hasPythonVenv();

@@ -1,4 +1,5 @@
 import { Tool } from '@aws-sdk/client-bedrock-runtime';
+import { ScanResult } from '../../assess/scanning/types.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
 import { AgentTool, ToolOutput } from './types.js';
 import { WorkspaceGuard } from './workspace-guard.js';
@@ -11,6 +12,7 @@ import { EditFileTool } from './tools/edit-file-tool.js';
 import { WriteFileTool } from './tools/write-file-tool.js';
 import { ValidateFixTool } from './tools/validate-fix-tool.js';
 import { FinishTool } from './tools/finish-tool.js';
+import { FindCdkConstructTool } from './tools/find-cdk-construct-tool.js';
 import { FixValidator } from './validation/fix-validator.js';
 import { ValidationState } from './validation/validation-state.js';
 
@@ -20,7 +22,7 @@ export class ToolRegistry {
     public readonly editRecorder = new EditRecorder(this.validationState);
     public readonly finishTool: FinishTool;
 
-    constructor(context: ProjectContext, private readonly agentLogger: AgentLogger) {
+    constructor(context: ProjectContext, private readonly agentLogger: AgentLogger, issue?: ScanResult) {
         const guard = new WorkspaceGuard(context.getProjectRootFolderPath());
         const validator = new FixValidator(context, this.editRecorder);
         this.finishTool = new FinishTool(this.editRecorder, this.validationState);
@@ -31,8 +33,12 @@ export class ToolRegistry {
         this.register(new EditFileTool(guard, this.editRecorder));
         this.register(new WriteFileTool(guard, this.editRecorder));
         this.register(new ValidateFixTool(this.editRecorder, validator, this.validationState));
+        if (issue?.cdkPath) {
+            this.register(new FindCdkConstructTool(context, issue.path));
+        }
         this.register(this.finishTool);
     }
+
 
     public describe(): Tool[] {
         return Array.from(this.tools.values()).map(tool => tool.definition as Tool);

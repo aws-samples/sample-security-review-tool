@@ -33,6 +33,7 @@ export class AgentSessionParser {
         const toolInvocations = this.extractToolInvocations(block);
         const validateFixInvocations = toolInvocations.filter(t => t.tool === 'validate_fix').length;
         const validateFixFailures = toolInvocations.filter(t => t.tool === 'validate_fix' && t.isError).length;
+        const retries = this.countRetries(toolInvocations);
 
         return {
             sessionId: this.toNumber(startedFields.sessionId),
@@ -40,6 +41,7 @@ export class AgentSessionParser {
             stopReason: endedFields.stopReason ?? 'unknown',
             validateFixInvocations,
             validateFixFailures,
+            retries,
             toolInvocations,
             finalComments: this.stripQuotes(endedFields.comments ?? ''),
             rawLogLines: block,
@@ -73,6 +75,17 @@ export class AgentSessionParser {
         if (issue.check_id && fields.checkId !== issue.check_id) return false;
         if (issue.path && fields.path && fields.path !== issue.path) return false;
         return true;
+    }
+
+    /**
+     * A retry is any failed invocation of a tool whose purpose is to produce
+     * or commit the fix: validate_fix (the fix didn't pass), edit_file /
+     * apply_edits (the proposed edit was rejected). Exploratory tool errors
+     * (grep, list_files, read_file) are not counted.
+     */
+    private countRetries(invocations: ToolInvocationSummary[]): number {
+        const retryTools = new Set(['validate_fix', 'edit_file', 'apply_edits']);
+        return invocations.filter(t => t.isError && retryTools.has(t.tool)).length;
     }
 
     private extractToolInvocations(block: string[]): ToolInvocationSummary[] {
@@ -160,6 +173,7 @@ export class AgentSessionParser {
             stopReason: 'no-session-found',
             validateFixInvocations: 0,
             validateFixFailures: 0,
+            retries: 0,
             toolInvocations: [],
             finalComments: '',
             rawLogLines: [],
