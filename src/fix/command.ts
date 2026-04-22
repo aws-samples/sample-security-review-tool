@@ -13,14 +13,9 @@ export class FixCommand {
             .command('fix', { hidden: true })
             .description('Fix issues in the SRT project')
             .option('-p, --path <project-path>', 'Project root folder path')
-            .option('-e, --experimental', 'Enable experimental features')
             .action(async (options): Promise<void> => {
                 try {
                     const projectRootFolderPath = options?.path || process.cwd();
-
-                    if (options.experimental) {
-                        console.log(chalk.yellowBright('Experimental features enabled: \'Generate fix\' option is available.\n'));
-                    }
 
                     const coordinator = await FixCoordinator.create(projectRootFolderPath, () => {});
                     const issues = await coordinator.getIssues("high", "open");
@@ -51,14 +46,11 @@ export class FixCommand {
                         if (issue.fix) console.log(`${chalk.blueBright('Fix:')} ${issue.fix}`);
 
                         const choices = [
+                            { name: 'Generate fix', value: 'generate' },
                             { name: 'Suppress this finding', value: 'dontfix' },
                             { name: 'Skip for now', value: 'skipped' },
                             { name: 'Exit', value: 'exit' }
                         ];
-
-                        if (options.experimental) {
-                            choices.unshift({ name: 'Generate fix', value: 'generate' });
-                        }
 
                         let issueHandled = false;
                         while (!issueHandled) {
