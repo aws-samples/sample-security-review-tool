@@ -84,7 +84,7 @@ const CheckovPolicies: Record<string, PolicyInfo> = {
     "CKV_AWS_28": {
         policy: "DynamoDB PITR is disabled",
         severity: "HIGH",
-        fix: "Enable DynamoDB Point-in-Time Recovery by setting 'PointInTimeRecoveryEnabled: true' in the PointInTimeRecoverySpecification property of AWS::DynamoDB::Table resource."
+        fix: "Enable DynamoDB Point-in-Time Recovery by setting 'PointInTimeRecovery: true' in the PointInTimeRecoverySpecification property of AWS::DynamoDB::Table resource."
     },
     "CKV_AWS_271": {
         policy: "DynamoDB table replica does not use CMK KMS encryption",
