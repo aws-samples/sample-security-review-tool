@@ -1,29 +1,24 @@
-import { Message, Tool } from '@aws-sdk/client-bedrock-runtime';
 import { FixChange } from '../types.js';
 import { ValidationResult } from './validation/types.js';
+import { EditSession } from './staging/edit-session.js';
+import { LoadedContext } from './prompts/context-loader.js';
 
-export interface ToolInvocation {
-    toolUseId: string;
-    name: string;
-    input: Record<string, unknown>;
-}
+export type StrandsStopReason = 'finished' | 'gave_up' | 'max_turns' | 'end_turn' | 'error';
 
-export interface ToolOutput {
-    json?: unknown;
-    text?: string;
-    isError?: boolean;
-}
-
-export interface AgentTool {
-    definition: Tool;
-    invoke(input: Record<string, unknown>): Promise<ToolOutput>;
-}
-
-export interface AgentResult {
-    finalMessage: Message;
+export interface StrandsAgentResult {
     edits: FixChange[];
     comments: string;
-    turns: number;
-    stopReason: 'finished' | 'end_turn' | 'max_turns' | 'error';
+    stopReason: StrandsStopReason;
+    gaveUpReason?: string;
     validation: ValidationResult | null;
+}
+
+export interface AgentSession {
+    editSession: EditSession;
+    loadedContext: LoadedContext;
+    projectRootFolderPath: string;
+    comments: string;
+    gaveUp: { reason: string } | null;
+    finished: boolean;
+    lastValidation: ValidationResult | null;
 }

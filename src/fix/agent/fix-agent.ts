@@ -1,150 +1,120 @@
-import {
-    BedrockRuntimeClient,
-    ConverseCommand,
-    ContentBlock,
-    Message,
-    ToolResultContentBlock,
-    ToolUseBlock,
-} from '@aws-sdk/client-bedrock-runtime';
+import { Agent, BedrockModel } from '@strands-agents/sdk';
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+import { FetchHttpHandler } from '@aws-sdk/fetch-http-handler';
 import { ScanResult } from '../../assess/scanning/types.js';
-import { BedrockConfig } from '../../config/aws/bedrock-config.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
+import { BedrockConfig } from '../../config/aws/bedrock-config.js';
 import { SrtLogger } from '../../shared/logging/srt-logger.js';
 import { Fix } from '../types.js';
-import { ToolRegistry } from './tool-registry.js';
-import { AgentResult, ToolOutput } from './types.js';
-import { SYSTEM_PROMPT, buildUserPrompt } from './prompts.js';
-import { AgentLogger } from './agent-logger.js';
+import { SYSTEM_PROMPT } from './prompts/system-prompt.js';
+import { buildUserPrompt } from './prompts/user-prompt-builder.js';
+import { ContextLoader } from './prompts/context-loader.js';
+import { EditSession } from './staging/edit-session.js';
+import { WorkspaceGuard } from './staging/workspace-guard.js';
+import { createApplyFixTool } from './tools/apply-fix-tool.js';
+import { createGiveUpTool } from './tools/give-up-tool.js';
+import { AgentLogger } from './logging/agent-logger.js';
+import { bridgeStrandsLoggingToSrt } from './logging/strands-log-bridge.js';
+import { LoggingPlugin } from './plugins/logging-plugin.js';
+import { ApplyFixLimitPlugin } from './plugins/tool-call-limit-plugin.js';
+import { AgentSession, StrandsAgentResult, StrandsStopReason } from './types.js';
 
-const DEFAULT_MAX_TURNS = 20;
+const MAX_APPLY_FIX_CALLS = 5;
 
 /**
- * Agent loop built on top of the Bedrock Converse API tool-use protocol.
- *
- * Each turn:
- *   1. Send accumulated messages + tool schemas to the model.
- *   2. If the model asks to use tools, invoke them locally and append the
- *      results to the conversation.
- *   3. Stop when the model stops requesting tools or calls finish().
- *
- * The agent stages edits in memory (via the ToolRegistry's EditRecorder) and
- * returns them so the caller can preview + commit them separately.
- *
- * Every turn, tool invocation, and tool result is written to the SRT debug
- * log via AgentLogger, so the exchange can be inspected by tailing the
- * log file at ~/.srt/logs/srt-tool.log.
+ * Fix agent built on @strands-agents/sdk. Given a single ScanResult, loads the
+ * relevant source into the prompt, runs a two-tool agent loop (apply_fix,
+ * give_up), and returns the staged edits as a Fix.
  */
-export class FixAgent {
-    private readonly agentLogger = new AgentLogger();
-    private registry!: ToolRegistry;
+export class StrandsFixAgent {
+    private readonly logger = new AgentLogger();
 
-    constructor(private readonly bedrockClient: BedrockRuntimeClient, private readonly context: ProjectContext) {}
-
-    public async run(issue: ScanResult, maxTurns: number = DEFAULT_MAX_TURNS): Promise<AgentResult> {
-        this.registry = new ToolRegistry(this.context, this.agentLogger, issue);
-        const userPrompt = buildUserPrompt(issue);
-
-
-        this.agentLogger.sessionStarted(issue, SYSTEM_PROMPT.length, userPrompt);
-
-        const messages: Message[] = [{ role: 'user', content: [{ text: userPrompt }] }];
-
-        for (let turn = 0; turn < maxTurns; turn++) {
-            this.agentLogger.turnStarted(messages.length);
-
-            const response = await this.bedrockClient.send(new ConverseCommand({
-                modelId: BedrockConfig.getModelIdWithInferenceProfilePrefix(),
-                system: [{ text: SYSTEM_PROMPT }],
-                messages,
-                toolConfig: { tools: this.registry.describe() }
-            }));
-
-            const assistantMessage = response.output?.message;
-            if (!assistantMessage) {
-                this.agentLogger.assistantMessageReceived({ role: 'assistant', content: [] }, 'empty-response');
-                return this.endSession({ role: 'assistant', content: [] }, turn + 1, 'error');
-            }
-
-            this.agentLogger.assistantMessageReceived(assistantMessage, response.stopReason, {
-                inputTokens: response.usage?.inputTokens,
-                outputTokens: response.usage?.outputTokens,
-            });
-
-            messages.push(assistantMessage);
-
-            if (this.registry.finishTool.wasCalled()) {
-                return this.endSession(assistantMessage, turn + 1, 'finished');
-            }
-
-            if (response.stopReason !== 'tool_use') {
-                return this.endSession(assistantMessage, turn + 1, 'end_turn');
-            }
-
-            const toolResultContent = await this.runToolCalls(assistantMessage);
-            messages.push({ role: 'user', content: toolResultContent });
-        }
-
-        SrtLogger.logError(
-            'FixAgent exceeded max turns',
-            new Error(`Max turns: ${maxTurns}`),
-            { checkId: issue.check_id, path: issue.path },
-        );
-        return this.endSession({ role: 'assistant', content: [] }, maxTurns, 'max_turns');
+    constructor(private readonly context: ProjectContext) {
+        bridgeStrandsLoggingToSrt();
     }
 
-    public toFix(result: AgentResult): Fix | null {
+    public async run(issue: ScanResult): Promise<StrandsAgentResult> {
+        const loadedContext = await new ContextLoader(this.context).load(issue);
+        const guard = new WorkspaceGuard(this.context.getProjectRootFolderPath());
+        const session: AgentSession = {
+            editSession: new EditSession(guard),
+            loadedContext,
+            projectRootFolderPath: this.context.getProjectRootFolderPath(),
+            comments: '',
+            gaveUp: null,
+            finished: false,
+            lastValidation: null,
+        };
+
+        const userPrompt = buildUserPrompt(issue, this.context.getProjectRootFolderPath(), loadedContext);
+        this.logger.sessionStarted(issue, SYSTEM_PROMPT.length, userPrompt);
+
+        const agent = this.createAgent(session);
+        const stopReason = await this.invokeAgent(agent, userPrompt, session, issue);
+
+        const result: StrandsAgentResult = {
+            edits: session.editSession.getChanges(),
+            comments: session.comments,
+            stopReason,
+            gaveUpReason: session.gaveUp?.reason,
+            validation: session.lastValidation,
+        };
+        this.logger.sessionEnded(stopReason, result.edits.length, result.comments);
+        return result;
+    }
+
+    public toFix(result: StrandsAgentResult): Fix | null {
         if (result.edits.length === 0) return null;
         return { changes: result.edits, comments: result.comments };
     }
 
-    private async runToolCalls(assistantMessage: Message): Promise<ContentBlock[]> {
-        const toolUses = this.extractToolUses(assistantMessage);
-        const results: ContentBlock[] = [];
+    private createAgent(session: AgentSession): Agent {
+        const profile = BedrockConfig.getProfile();
+        const region = BedrockConfig.getRegion();
+        const model = new BedrockModel({
+            modelId: BedrockConfig.getModelIdWithInferenceProfilePrefix(),
+            clientConfig: {
+                region,
+                credentials: fromNodeProviderChain(profile !== 'default' ? { profile } : {}),
+                requestHandler: new FetchHttpHandler(),
+            },
+        });
 
-        for (const toolUse of toolUses) {
-            const output = await this.safeInvoke(toolUse);
-            results.push({
-                toolResult: {
-                    toolUseId: toolUse.toolUseId!,
-                    content: this.formatOutput(output),
-                    status: output.isError ? 'error' : 'success',
-                },
-            });
-        }
-
-        return results;
+        return new Agent({
+            model,
+            systemPrompt: SYSTEM_PROMPT,
+            tools: [
+                createApplyFixTool(session, this.context),
+                createGiveUpTool(session),
+            ],
+            plugins: [
+                new LoggingPlugin(this.logger),
+                new ApplyFixLimitPlugin(MAX_APPLY_FIX_CALLS),
+            ],
+            printer: false,
+        });
     }
 
-    private extractToolUses(message: Message): ToolUseBlock[] {
-        return (message.content ?? [])
-            .map(block => block.toolUse)
-            .filter((tu): tu is ToolUseBlock => Boolean(tu));
-    }
-
-    private async safeInvoke(toolUse: ToolUseBlock): Promise<ToolOutput> {
+    private async invokeAgent(
+        agent: Agent,
+        userPrompt: string,
+        session: AgentSession,
+        issue: ScanResult,
+    ): Promise<StrandsStopReason> {
         try {
-            const input = (toolUse.input ?? {}) as Record<string, unknown>;
-            return await this.registry.invoke(toolUse.name!, input);
+            const result = await agent.invoke(userPrompt);
+            if (session.finished) return 'finished';
+            if (session.gaveUp) return 'gave_up';
+            if (result.stopReason === 'end_turn') return 'end_turn';
+            if (result.stopReason === 'max_tokens') return 'max_turns';
+            return 'error';
         } catch (error) {
-            return { text: `Tool threw: ${(error as Error).message}`, isError: true };
+            SrtLogger.logError(
+                'StrandsFixAgent invocation failed',
+                error as Error,
+                { checkId: issue.check_id, path: issue.path },
+            );
+            return 'error';
         }
-    }
-
-    private formatOutput(output: ToolOutput): ToolResultContentBlock[] {
-        if (output.json !== undefined) return [{ json: output.json as any }];
-        return [{ text: output.text ?? '' }];
-    }
-
-    private endSession(finalMessage: Message, turns: number, stopReason: AgentResult['stopReason']): AgentResult {
-        const result: AgentResult = {
-            finalMessage,
-            edits: this.registry.editRecorder.toFixChanges(),
-            comments: this.registry.finishTool.getComments(),
-            turns,
-            stopReason,
-            validation: this.registry.validationState.getLastResult(),
-        };
-        this.agentLogger.sessionEnded(stopReason, turns, result.edits.length, result.comments);
-        return result;
     }
 }

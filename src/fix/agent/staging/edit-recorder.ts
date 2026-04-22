@@ -1,24 +1,21 @@
 import * as fs from 'fs/promises';
-import { FixChange } from '../types.js';
-import { ValidationState } from './validation/validation-state.js';
+import { FixChange } from '../../types.js';
 
 /**
- * Tracks in-memory edits proposed by the agent's editing tools so that the
- * FixCoordinator can present them to the user before they are written to disk.
+ * Tracks in-memory edits proposed by the agent so the coordinator can present
+ * them to the user before they are written to disk.
  *
  * Edits are accumulated per-file; the most recent proposed content wins.
  *
- * Supports a transactional flush/revert pattern used by the ValidateFixTool:
- * apply the staged edits to disk, run validation commands (cdk synth, tsc,
- * etc.), and then restore the original on-disk bytes regardless of the
- * outcome. The user-facing apply happens later, via the FixCoordinator.
+ * Supports a transactional apply/revert pattern used during validation: the
+ * staged edits are flushed to disk, validation commands (cdk synth, tsc, etc.)
+ * run against them, and then the original on-disk bytes are restored. The
+ * user-facing apply happens later.
  */
 export class EditRecorder {
     private readonly proposedContent = new Map<string, string>();
     private readonly originalContent = new Map<string, string>();
     private readonly originalFileExisted = new Map<string, boolean>();
-
-    constructor(private readonly validationState?: ValidationState) {}
 
     public recordOriginal(filePath: string, original: string, fileExisted: boolean = true): void {
         if (!this.originalContent.has(filePath)) {
@@ -29,7 +26,6 @@ export class EditRecorder {
 
     public recordUpdate(filePath: string, updated: string): void {
         this.proposedContent.set(filePath, updated);
-        this.validationState?.bumpEditVersion();
     }
 
     public toFixChanges(): FixChange[] {
@@ -47,6 +43,10 @@ export class EditRecorder {
 
     public getCurrentContent(filePath: string): string | undefined {
         return this.proposedContent.get(filePath);
+    }
+
+    public getOriginalContent(filePath: string): string | undefined {
+        return this.originalContent.get(filePath);
     }
 
     public hasEdits(): boolean {

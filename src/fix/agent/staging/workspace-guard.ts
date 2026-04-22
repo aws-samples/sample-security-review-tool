@@ -4,11 +4,9 @@ import * as path from 'path';
  * Ensures that every path the agent touches stays inside the project root.
  *
  * Models emit paths with varying conventions (forward slashes, backslashes,
- * occasionally absolute paths). We:
- *   1. Normalise backslashes to forward slashes so Windows-style paths from
- *      the model work on POSIX hosts.
- *   2. Resolve to an absolute path rooted at the project root.
- *   3. Reject anything that escapes the root via "..".
+ * occasionally absolute paths). We normalise separators, resolve to an
+ * absolute path rooted at the project root, and reject anything that escapes
+ * the root via "..".
  */
 export class WorkspaceGuard {
     constructor(private readonly rootFolderPath: string) {}

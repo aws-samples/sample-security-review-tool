@@ -1,6 +1,6 @@
 import { FixChange } from '../../types.js';
 import { ProjectContext } from '../../../shared/project/project-context.js';
-import { EditRecorder } from '../edit-recorder.js';
+import { EditRecorder } from '../staging/edit-recorder.js';
 import { CdkSynthStrategy } from './strategies/cdk-synth-strategy.js';
 import { CfnTemplateStrategy } from './strategies/cfn-template-strategy.js';
 import { LanguageCheckStrategy } from './strategies/language-check-strategy.js';

@@ -48,7 +48,7 @@ export class ReportWriter {
         lines.push(`### ${icon} ${verdict.checkId} — ${verdict.path}${verdict.resourceName ? ` (${verdict.resourceName})` : ''}`);
         lines.push('');
         lines.push(`- Effectiveness: **${verdict.effectiveness}** — ${verdict.effectivenessReasoning}`);
-        lines.push(`- Efficiency: **${verdict.efficiency}** — ${verdict.efficiencyReasoning} (retries: ${verdict.retries}, turns: ${verdict.turns}, validate_fix failures: ${verdict.validateFixFailures})`);
+        lines.push(`- Efficiency: **${verdict.efficiency}** — ${verdict.efficiencyReasoning} (retries: ${verdict.retries}, turns: ${verdict.turns}, apply_fix failures: ${verdict.applyFixFailures})`);
         lines.push(`- Root cause: ${verdict.rootCause}`);
         lines.push('');
         lines.push(`**Current fix guidance:**`);
@@ -66,7 +66,7 @@ export class ReportWriter {
         }
         if (record?.session.finalComments) {
             lines.push('');
-            lines.push(`**FixAgent final comments:** ${record.session.finalComments}`);
+            lines.push(`**Fix agent final comments:** ${record.session.finalComments}`);
         }
         lines.push('');
         return lines.join('\n');

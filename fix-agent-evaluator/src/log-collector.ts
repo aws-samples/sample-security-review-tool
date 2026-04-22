@@ -1,23 +1,21 @@
 import type { ScanResult } from '../../src/assess/scanning/types.js';
 import type { AgentSession, ToolInvocationSummary } from './types.js';
 
-const SESSION_STARTED = 'FixAgent: session started';
-const SESSION_ENDED = 'FixAgent: session ended';
-const ASSISTANT_MESSAGE = 'FixAgent: assistant message';
-const TOOL_INVOKE = 'FixAgent: tool invoke';
-const TOOL_RESULT = 'FixAgent: tool result';
+const SESSION_STARTED = 'StrandsFixAgent: session started';
+const SESSION_ENDED = 'StrandsFixAgent: session ended';
+const TOOL_RESULT = 'StrandsFixAgent: tool result';
 
 /**
- * Parses FixAgent session transcripts out of the SRT debug log.
+ * Parses fix-agent session transcripts out of the SRT debug log.
  *
  * AgentLogger writes lines like:
- *   2026-04-20 13:14:00 [DEBUG]: FixAgent: session started {sessionId=3, checkId=S3-008, ...}
+ *   2026-04-22 13:14:00 [DEBUG]: StrandsFixAgent: session started {sessionId=3, checkId=S3-008, ...}
  *   ...
- *   2026-04-20 13:14:45 [DEBUG]: FixAgent: session ended {sessionId=3, turns=12, ...}
+ *   2026-04-22 13:14:45 [DEBUG]: StrandsFixAgent: session ended {sessionId=3, turns=4, ...}
  *
  * The parser extracts the block for the session that matches a given finding
- * and derives turn count, tool invocation summary, validate_fix failure count,
- * and the final `comments` value.
+ * and derives a tool invocation summary, apply_fix failure count, and the
+ * final `comments` value.
  */
 export class AgentSessionParser {
     public parseSession(logLines: string[], issue: ScanResult): AgentSession {
@@ -31,16 +29,17 @@ export class AgentSessionParser {
         const endedFields = endedLine ? this.parseFields(endedLine) : {};
 
         const toolInvocations = this.extractToolInvocations(block);
-        const validateFixInvocations = toolInvocations.filter(t => t.tool === 'validate_fix').length;
-        const validateFixFailures = toolInvocations.filter(t => t.tool === 'validate_fix' && t.isError).length;
-        const retries = this.countRetries(toolInvocations);
+        const applyFixCalls = toolInvocations.filter(t => t.tool === 'apply_fix');
+        const applyFixAttempts = applyFixCalls.length;
+        const applyFixFailures = applyFixCalls.filter(t => t.isFailure || t.isError).length;
+        const retries = applyFixFailures;
 
         return {
             sessionId: this.toNumber(startedFields.sessionId),
             turns: this.toNumber(endedFields.turns) ?? toolInvocations.length,
-            stopReason: endedFields.stopReason ?? 'unknown',
-            validateFixInvocations,
-            validateFixFailures,
+            stopReason: this.stripQuotes(endedFields.stopReason ?? 'unknown'),
+            applyFixAttempts,
+            applyFixFailures,
             retries,
             toolInvocations,
             finalComments: this.stripQuotes(endedFields.comments ?? ''),
@@ -77,17 +76,6 @@ export class AgentSessionParser {
         return true;
     }
 
-    /**
-     * A retry is any failed invocation of a tool whose purpose is to produce
-     * or commit the fix: validate_fix (the fix didn't pass), edit_file /
-     * apply_edits (the proposed edit was rejected). Exploratory tool errors
-     * (grep, list_files, read_file) are not counted.
-     */
-    private countRetries(invocations: ToolInvocationSummary[]): number {
-        const retryTools = new Set(['validate_fix', 'edit_file', 'apply_edits']);
-        return invocations.filter(t => t.isError && retryTools.has(t.tool)).length;
-    }
-
     private extractToolInvocations(block: string[]): ToolInvocationSummary[] {
         const invocations: ToolInvocationSummary[] = [];
         for (const line of block) {
@@ -95,8 +83,9 @@ export class AgentSessionParser {
                 const fields = this.parseFields(line);
                 invocations.push({
                     turn: this.toNumber(fields.turn) ?? 0,
-                    tool: fields.tool ?? 'unknown',
+                    tool: this.stripQuotes(fields.tool ?? 'unknown'),
                     isError: fields.isError === 'true',
+                    isFailure: fields.isFailure === 'true',
                     durationMs: this.toNumber(fields.durationMs),
                 });
             }
@@ -171,8 +160,8 @@ export class AgentSessionParser {
             sessionId: null,
             turns: 0,
             stopReason: 'no-session-found',
-            validateFixInvocations: 0,
-            validateFixFailures: 0,
+            applyFixAttempts: 0,
+            applyFixFailures: 0,
             retries: 0,
             toolInvocations: [],
             finalComments: '',

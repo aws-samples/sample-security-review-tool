@@ -1,11 +1,15 @@
 import type { FixRunRecord } from '../types.js';
 
-export const REVIEWER_SYSTEM_PROMPT = `You are a senior security engineer and code reviewer. Your job is to critique a fix that was produced automatically by another AI agent (the "FixAgent").
+export const REVIEWER_SYSTEM_PROMPT = `You are a senior security engineer and code reviewer. Your job is to critique a fix that was produced automatically by a fix agent.
+
+The fix agent has only two tools:
+  - apply_fix(edits, explanation): submit a complete fix for a finding. Validation (cdk synth / cfn parse / tsc / node --check / py_compile) runs automatically. Returns valid=true on success or valid=false with compiler/synth output on failure. Every call is a fresh attempt — the agent must restate the complete fix each time.
+  - give_up(reason): stop the session when no valid fix can be produced.
 
 For each finding you will be given:
   - The security rule metadata (check id, issue description, current recommended fix guidance).
-  - The FixAgent's session transcript summary (turn count, tool invocations, validate_fix failures, final comments).
-  - The git diff that the FixAgent produced in the target project.
+  - A session summary (how many apply_fix attempts, how many failed validation, final comments).
+  - The git diff that the fix agent produced in the target project.
   - Optional: the contents of the rule source file (for context on how the rule evaluates compliance).
 
 You can use read-only tools to inspect the target project:
@@ -18,24 +22,21 @@ You cannot modify anything. After investigation you MUST call submit_verdict exa
 Evaluation criteria:
 
 1. EFFECTIVENESS — does the applied change actually resolve the underlying risk the rule is protecting against, or is it a minimal-compliance workaround that technically passes the scanner but does not address the real intent?
-   - HIGH  = fully addresses the intent of the rule.
+   - HIGH   = fully addresses the intent of the rule.
    - MEDIUM = addresses the intent partially, or is correct but narrow.
-   - LOW  = workaround that only satisfies the scanner check (e.g. adds a no-op rule, disables the check, or adds a property with a value that does not mitigate the risk).
+   - LOW    = workaround that only satisfies the scanner check (e.g. adds a no-op rule, disables the check, or adds a property with a value that does not mitigate the risk).
 
-2. EFFICIENCY — how many retries did the agent need? A retry is any failed
-   invocation of a fix-producing tool: validate_fix (proposed fix didn't pass),
-   edit_file, or apply_edits (the edit was rejected). Turn count is NOT the
-   metric — different rules legitimately need different numbers of turns.
-   - HIGH   = 0 retries.
+2. EFFICIENCY — how many apply_fix attempts did the agent need before validation passed? Each failed attempt is a retry — the agent had to re-read the validator's output and plan a new complete fix.
+   - HIGH   = 0 retries (the first apply_fix succeeded).
    - MEDIUM = exactly 1 retry.
-   - LOW    = 2 or more retries.
+   - LOW    = 2 or more retries, or the agent called give_up.
 
 3. ROOT CAUSE — if either rating is not HIGH, identify the single most likely cause. Common categories:
    - "vague-fix-guidance": rule's fix text does not specify what a valid mitigation looks like.
    - "missing-example": fix text is specific but lacks a concrete code example.
    - "ambiguous-rule-scope": rule fires on resources where the mitigation is ambiguous.
-   - "agent-prompt-gap": system prompt for the FixAgent does not handle this class of rule well.
-   - "tooling-limitation": a tool (edit_file, validate_fix, etc.) blocked progress.
+   - "agent-prompt-gap": the agent's system prompt does not handle this class of rule well.
+   - "tooling-limitation": the apply_fix tool or validator blocked progress (e.g. validator output didn't give the agent enough signal to recover).
 
 4. SUGGESTED FIX GUIDANCE — when effectiveness < HIGH OR root cause is vague-fix-guidance/missing-example, you MUST produce a concrete drop-in replacement for the rule's fix text. It must:
    - Enumerate what counts as a valid mitigation (e.g. "at least one of: transition, current-version expiration, or noncurrent-version expiration").
@@ -63,18 +64,18 @@ export function buildReviewerUserPrompt(record: FixRunRecord, ruleSourceSnippet:
     lines.push(`Rule source (for context):`);
     lines.push(ruleSourceSnippet || '(unavailable)');
     lines.push('');
-    lines.push(`FixAgent session summary`);
-    lines.push(`========================`);
-    lines.push(`Retries (failed validate_fix/edit_file/apply_edits): ${record.session.retries}`);
-    lines.push(`Turns (context only):     ${record.session.turns}`);
+    lines.push(`Fix agent session summary`);
+    lines.push(`=========================`);
     lines.push(`Stop reason:              ${record.session.stopReason}`);
-    lines.push(`validate_fix invocations: ${record.session.validateFixInvocations}`);
-    lines.push(`validate_fix failures:    ${record.session.validateFixFailures}`);
+    lines.push(`apply_fix attempts:       ${record.session.applyFixAttempts}`);
+    lines.push(`apply_fix failures:       ${record.session.applyFixFailures}`);
+    lines.push(`Retries (failed attempts): ${record.session.retries}`);
     lines.push(`Final comments:           ${record.session.finalComments || '(none)'}`);
     lines.push('');
     lines.push(`Tool invocations (in order):`);
     for (const invocation of record.session.toolInvocations) {
-        lines.push(`  - turn ${invocation.turn}: ${invocation.tool}${invocation.isError ? ' [ERROR]' : ''}`);
+        const marker = invocation.isError ? ' [ERROR]' : invocation.isFailure ? ' [FAILED]' : '';
+        lines.push(`  - ${invocation.tool}${marker}`);
     }
     lines.push('');
     lines.push(`Git diff of the applied fix`);

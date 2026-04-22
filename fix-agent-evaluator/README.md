@@ -1,8 +1,8 @@
 # Fix Agent Evaluator
 
-A test harness that evaluates the quality of fixes produced by the SRT
-`FixAgent`. Intentionally **not** part of `src/` — this is a development-time
-tool, not a shipped CLI feature.
+A test harness that evaluates the quality of fixes produced by the SRT fix
+agent (`StrandsFixAgent`). Intentionally **not** part of `src/` — this is a
+development-time tool, not a shipped CLI feature.
 
 ## What it does
 
@@ -10,7 +10,7 @@ Given a target project folder, the evaluator:
 
 1. Runs `srt` (programmatically, via `AssessCoordinator`) to scan the project
    for security issues.
-2. Iterates every **high-priority, open** finding and invokes the `FixAgent`
+2. Iterates every **high-priority, open** finding and invokes the fix agent
    (programmatically, via `FixCoordinator.generateFix` / `applyFix`). It
    bookmarks the SRT log file around each run and captures the resulting git
    diff, giving a clean 1:1 mapping between finding and agent session.
@@ -19,11 +19,12 @@ Given a target project folder, the evaluator:
    the fix on two axes:
      - **Effectiveness** (HIGH / MEDIUM / LOW) — does the change actually
        mitigate the risk, or is it a minimal-compliance workaround?
-     - **Efficiency** (HIGH / MEDIUM / LOW) — number of **retries** derived
-       from the agent log. A retry is any failed `validate_fix`, `edit_file`,
-       or `apply_edits` invocation. HIGH = 0 retries, MEDIUM = 1 retry,
-       LOW = 2+ retries. Turn count is reported as context only; different
-       rules legitimately need different numbers of turns.
+     - **Efficiency** (HIGH / MEDIUM / LOW) — number of **retries**, i.e.
+       failed `apply_fix` attempts. Validation runs inside `apply_fix`, so a
+       failed attempt is one that returned `valid: false` (compiler/synth
+       error) or `applied: false` (bad input). HIGH = 0 retries (first
+       attempt passed), MEDIUM = 1 retry, LOW = 2+ retries or the agent
+       called `give_up`.
    When either rating is below HIGH, the reviewer returns a **drop-in
    replacement for the rule's `fix` text** so you can paste it straight back
    into the rule source.
@@ -35,7 +36,7 @@ Given a target project folder, the evaluator:
 `srt fix -e` is interactive (inquirer-based). Scripting it via PTY is fragile:
 any change to a prompt breaks the harness, and mapping stdout back to findings
 is guesswork. Calling `FixCoordinator.generateFix(issue)` directly gives us
-the exact same `FixAgent` execution with none of the UI coupling.
+the exact same fix-agent execution with none of the UI coupling.
 
 ## Usage
 
@@ -103,7 +104,7 @@ example:
 
 - Effectiveness: LOW — the added rule only aborts incomplete multipart
   uploads; it does not manage the lifetime of stored objects.
-- Efficiency: LOW — 3 retries (12 turns, 3 validate_fix failures).
+- Efficiency: LOW — 3 retries (retries: 3, turns: 4, apply_fix failures: 3).
 - Root cause: vague-fix-guidance
 
 **Current fix guidance:**

@@ -2,7 +2,7 @@ import type { ScanResult } from '../../src/assess/scanning/types.js';
 import type { Fix } from '../../src/fix/types.js';
 
 /**
- * The outcome of running the FixAgent against a single finding.
+ * The outcome of running the fix agent against a single finding.
  * Captures everything the reviewer needs to render a verdict:
  *   - the finding itself (so we know what was supposed to be fixed),
  *   - the Fix object the agent produced (if any),
@@ -19,7 +19,7 @@ export interface FixRunRecord {
 }
 
 /**
- * A single FixAgent run as reconstructed from the SRT debug log.
+ * A single fix agent run as reconstructed from the SRT debug log.
  * AgentLogger emits one session per finding with a monotonically increasing
  * sessionId, so we can slice the log cleanly.
  */
@@ -27,12 +27,13 @@ export interface AgentSession {
     sessionId: number | null;
     turns: number;
     stopReason: string;
-    validateFixInvocations: number;
-    validateFixFailures: number;
+    /** Number of `apply_fix` calls the agent made. */
+    applyFixAttempts: number;
+    /** Number of `apply_fix` calls that returned a semantic failure (`valid: false` or `applied: false`). */
+    applyFixFailures: number;
     /**
-     * Count of tool invocations that represent a retry: any failed
-     * validate_fix, edit_file, or apply_edits call. These indicate the agent
-     * attempted to produce or commit a fix and had to try again.
+     * Retries = failed attempts to produce a valid fix. Equal to
+     * applyFixFailures — each failure is a retry the agent had to make.
      */
     retries: number;
     toolInvocations: ToolInvocationSummary[];
@@ -43,7 +44,13 @@ export interface AgentSession {
 export interface ToolInvocationSummary {
     turn: number;
     tool: string;
+    /** Tool threw an exception (e.g. invalid input that escaped Zod). */
     isError: boolean;
+    /**
+     * Tool returned cleanly but signalled a semantic failure — for apply_fix,
+     * that is `valid: false` or `applied: false`. Used as the retry signal.
+     */
+    isFailure: boolean;
     durationMs: number | null;
 }
 
@@ -60,7 +67,7 @@ export interface ReviewVerdict {
     efficiencyReasoning: string;
     turns: number;
     retries: number;
-    validateFixFailures: number;
+    applyFixFailures: number;
     rootCause: string;
     currentFixGuidance: string;
     suggestedFixGuidance: string;
