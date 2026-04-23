@@ -1,4 +1,4 @@
-import type { FixRunRecord } from '../types.js';
+import type { FixRunRecord, RescanResult } from '../types.js';
 
 export const REVIEWER_SYSTEM_PROMPT = `You are a senior security engineer and code reviewer. Your job is to critique a fix that was produced automatically by a fix agent.
 
@@ -46,7 +46,11 @@ Evaluation criteria:
 
 Always call submit_verdict with ALL fields populated. If effectiveness and efficiency are both HIGH, set rootCause to "none" and suggestedFixGuidance to an empty string.`;
 
-export function buildReviewerUserPrompt(record: FixRunRecord, ruleSourceSnippet: string): string {
+export function buildReviewerUserPrompt(
+    record: FixRunRecord,
+    ruleSourceSnippet: string,
+    rescan: RescanResult | null,
+): string {
     const issue = record.issue;
     const lines: string[] = [];
     lines.push(`Finding under review`);
@@ -82,6 +86,19 @@ export function buildReviewerUserPrompt(record: FixRunRecord, ruleSourceSnippet:
     lines.push(`===========================`);
     lines.push(record.diff || '(no changes recorded)');
     lines.push('');
+    if (rescan) {
+        lines.push(`Post-fix rescan results`);
+        lines.push(`=======================`);
+        lines.push(`Target rule still fires:  ${rescan.targetRuleStillFires}`);
+        lines.push(`New rules triggered:      ${rescan.newRulesTriggered.length === 0 ? '(none)' : rescan.newRulesTriggered.join(', ')}`);
+        lines.push(`Fixture still validates:  ${rescan.validationPassed}`);
+        if (rescan.validationError) {
+            lines.push(`Validation error:         ${rescan.validationError.slice(0, 500)}`);
+        }
+        lines.push('');
+        lines.push(`If the target rule still fires, the fix is by definition LOW effectiveness — the scanner's own check was not satisfied. If new rules triggered, the fix introduced a regression you must describe.`);
+        lines.push('');
+    }
     lines.push(`Now investigate as needed with read_file / list_files / grep, then call submit_verdict exactly once.`);
     return lines.join('\n');
 }

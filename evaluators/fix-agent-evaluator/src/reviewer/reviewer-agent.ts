@@ -5,8 +5,8 @@ import {
     Tool,
     ToolUseBlock,
 } from '@aws-sdk/client-bedrock-runtime';
-import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
-import type { FixRunRecord, ReviewVerdict } from '../types.js';
+import { BedrockConfig } from '../../../../src/config/aws/bedrock-config.js';
+import type { FixRunRecord, RescanResult, ReviewVerdict } from '../types.js';
 import { REVIEWER_SYSTEM_PROMPT, buildReviewerUserPrompt } from './prompts.js';
 import { ReviewerTools } from './tools.js';
 
@@ -23,10 +23,14 @@ export class ReviewerAgent {
         private readonly tools: ReviewerTools,
     ) {}
 
-    public async review(record: FixRunRecord, ruleSourceSnippet: string): Promise<ReviewVerdict> {
+    public async review(
+        record: FixRunRecord,
+        ruleSourceSnippet: string,
+        rescan: RescanResult | null = null,
+    ): Promise<ReviewVerdict> {
         const messages: Message[] = [{
             role: 'user',
-            content: [{ text: buildReviewerUserPrompt(record, ruleSourceSnippet) }],
+            content: [{ text: buildReviewerUserPrompt(record, ruleSourceSnippet, rescan) }],
         }];
 
         let verdict: ReviewVerdict | null = null;
@@ -50,7 +54,7 @@ export class ReviewerAgent {
 
             for (const toolUse of toolUses) {
                 if (toolUse.name === 'submit_verdict') {
-                    verdict = this.buildVerdictFromToolInput(record, toolUse.input as Record<string, unknown>);
+                    verdict = this.buildVerdictFromToolInput(record, toolUse.input as Record<string, unknown>, rescan);
                     toolResultBlocks.push({
                         toolResult: {
                             toolUseId: toolUse.toolUseId!,
@@ -75,7 +79,7 @@ export class ReviewerAgent {
             messages.push({ role: 'user', content: toolResultBlocks });
         }
 
-        return verdict ?? this.defaultVerdict(record, 'reviewer-did-not-submit-verdict');
+        return verdict ?? this.defaultVerdict(record, 'reviewer-did-not-submit-verdict', rescan);
     }
 
     private extractToolUses(message: Message): ToolUseBlock[] {
@@ -179,15 +183,22 @@ export class ReviewerAgent {
         ];
     }
 
-    private buildVerdictFromToolInput(record: FixRunRecord, input: Record<string, unknown>): ReviewVerdict {
+    private buildVerdictFromToolInput(
+        record: FixRunRecord,
+        input: Record<string, unknown>,
+        rescan: RescanResult | null,
+    ): ReviewVerdict {
+        const effectiveness = this.asRating(input.effectiveness);
+        const efficiency = this.asRating(input.efficiency);
+        const resolvedRescan = rescan ?? emptyRescan();
         return {
             checkId: record.issue.check_id ?? 'unknown',
             source: record.issue.source,
             path: record.issue.path ?? 'unknown',
             resourceName: record.issue.resourceName,
-            effectiveness: this.asRating(input.effectiveness),
+            effectiveness,
             effectivenessReasoning: String(input.effectivenessReasoning ?? ''),
-            efficiency: this.asRating(input.efficiency),
+            efficiency,
             efficiencyReasoning: String(input.efficiencyReasoning ?? ''),
             turns: record.session.turns,
             retries: record.session.retries,
@@ -196,6 +207,9 @@ export class ReviewerAgent {
             currentFixGuidance: record.issue.fix ?? '',
             suggestedFixGuidance: String(input.suggestedFixGuidance ?? ''),
             additionalRecommendations: String(input.additionalRecommendations ?? ''),
+            rescan: resolvedRescan,
+            overallPass: computeOverallPass(effectiveness, efficiency, resolvedRescan),
+            failureReasons: computeFailureReasons(effectiveness, efficiency, resolvedRescan),
         };
     }
 
@@ -205,7 +219,8 @@ export class ReviewerAgent {
         return 'LOW';
     }
 
-    private defaultVerdict(record: FixRunRecord, reason: string): ReviewVerdict {
+    private defaultVerdict(record: FixRunRecord, reason: string, rescan: RescanResult | null): ReviewVerdict {
+        const resolvedRescan = rescan ?? emptyRescan();
         return {
             checkId: record.issue.check_id ?? 'unknown',
             source: record.issue.source,
@@ -222,6 +237,45 @@ export class ReviewerAgent {
             currentFixGuidance: record.issue.fix ?? '',
             suggestedFixGuidance: '',
             additionalRecommendations: '',
+            rescan: resolvedRescan,
+            overallPass: false,
+            failureReasons: ['reviewer-error', ...computeFailureReasons('LOW', 'LOW', resolvedRescan)],
         };
     }
+}
+
+function emptyRescan(): RescanResult {
+    return {
+        targetRuleStillFires: false,
+        newRulesTriggered: [],
+        validationPassed: true,
+    };
+}
+
+function computeOverallPass(
+    effectiveness: 'HIGH' | 'MEDIUM' | 'LOW',
+    efficiency: 'HIGH' | 'MEDIUM' | 'LOW',
+    rescan: RescanResult,
+): boolean {
+    return (
+        effectiveness === 'HIGH'
+        && efficiency === 'HIGH'
+        && !rescan.targetRuleStillFires
+        && rescan.newRulesTriggered.length === 0
+        && rescan.validationPassed
+    );
+}
+
+function computeFailureReasons(
+    effectiveness: 'HIGH' | 'MEDIUM' | 'LOW',
+    efficiency: 'HIGH' | 'MEDIUM' | 'LOW',
+    rescan: RescanResult,
+): string[] {
+    const reasons: string[] = [];
+    if (effectiveness !== 'HIGH') reasons.push(`effectiveness=${effectiveness}`);
+    if (efficiency !== 'HIGH') reasons.push(`efficiency=${efficiency}`);
+    if (rescan.targetRuleStillFires) reasons.push('target-rule-still-fires');
+    if (rescan.newRulesTriggered.length > 0) reasons.push(`new-rules-triggered:${rescan.newRulesTriggered.join(',')}`);
+    if (!rescan.validationPassed) reasons.push('fixture-failed-validation-after-fix');
+    return reasons;
 }

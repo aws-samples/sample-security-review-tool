@@ -1,12 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { AssessCoordinator } from '../../src/assess/coordinator.js';
-import { FixCoordinator } from '../../src/fix/coordinator.js';
-import { SrtLogger } from '../../src/shared/logging/srt-logger.js';
-import { BedrockConfig } from '../../src/config/aws/bedrock-config.js';
-import type { ScanResult } from '../../src/assess/scanning/types.js';
-import type { Fix } from '../../src/fix/types.js';
+import { execSync } from 'node:child_process';
+import { AssessCoordinator } from '../../../src/assess/coordinator.js';
+import { FixCoordinator } from '../../../src/fix/coordinator.js';
+import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
+import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
+import type { ScanResult } from '../../../src/assess/scanning/types.js';
+import type { Fix } from '../../../src/fix/types.js';
 import type { FixRunRecord } from './types.js';
 import { AgentSessionParser } from './log-collector.js';
 import { GitSnapshot } from './git-snapshot.js';
@@ -98,6 +99,49 @@ export class SrtRunner {
             records.push(record);
         }
         return records;
+    }
+
+    /**
+     * Generates + applies a fix for a single issue matched by check ID. Used
+     * by the fixture-driven evaluator, which synthesizes exactly one issue per
+     * fixture and wants to target it directly without iterating the whole
+     * issues.json.
+     *
+     * Reads issues.json directly so we can target findings of any priority —
+     * FixCoordinator.getIssues() requires a (priority, status) pair, but
+     * catalog rules span all priorities (notably Bandit defaults to MEDIUM).
+     */
+    public async fixIssueForRule(checkId: string): Promise<{ record: FixRunRecord; preFixIssues: ScanResult[] } | null> {
+        const allIssues = this.readAllIssues();
+        const issue = allIssues.find(candidate => candidate.check_id === checkId);
+        if (!issue) return null;
+
+        const coordinator = await FixCoordinator.create(this.projectPath, () => {});
+        const git = new GitSnapshot(this.projectPath);
+        await git.ensureGitRepository();
+
+        const record = await this.runSingleFinding(coordinator, git, issue);
+        return { record, preFixIssues: allIssues };
+    }
+
+    private readAllIssues(): ScanResult[] {
+        const issuesPath = path.join(this.projectPath, '.srt', 'issues.json');
+        if (!fs.existsSync(issuesPath)) return [];
+        try {
+            return JSON.parse(fs.readFileSync(issuesPath, 'utf8')) as ScanResult[];
+        } catch {
+            return [];
+        }
+    }
+
+    /**
+     * Resets a fixture back to its baseline commit so a later run starts from
+     * a clean slate. Intended for evaluator-owned fixtures created via
+     * `git init + initial commit`, never for user projects.
+     */
+    public static resetFixture(fixturePath: string): void {
+        execSync('git reset --hard -q HEAD', { cwd: fixturePath, stdio: 'ignore' });
+        execSync('git clean -fdxq', { cwd: fixturePath, stdio: 'ignore' });
     }
 
     private async runSingleFinding(

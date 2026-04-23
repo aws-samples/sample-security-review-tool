@@ -1,4 +1,4 @@
-import type { ScanResult } from '../../src/assess/scanning/types.js';
+import type { ScanResult } from '../../../src/assess/scanning/types.js';
 import type { AgentSession, ToolInvocationSummary } from './types.js';
 
 const SESSION_STARTED = 'StrandsFixAgent: session started';

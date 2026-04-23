@@ -1,5 +1,8 @@
-import type { ScanResult } from '../../src/assess/scanning/types.js';
-import type { Fix } from '../../src/fix/types.js';
+import type { ScanResult } from '../../../src/assess/scanning/types.js';
+import type { Fix } from '../../../src/fix/types.js';
+import type { RescanResult } from './rescan-checker.js';
+
+export type { RescanResult } from './rescan-checker.js';
 
 /**
  * The outcome of running the fix agent against a single finding.
@@ -72,4 +75,7 @@ export interface ReviewVerdict {
     currentFixGuidance: string;
     suggestedFixGuidance: string;
     additionalRecommendations: string;
+    rescan: RescanResult;
+    overallPass: boolean;
+    failureReasons: string[];
 }
