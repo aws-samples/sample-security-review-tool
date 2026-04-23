@@ -3,7 +3,8 @@ export enum ScanTool {
     SEMGREP = 'semgrep',
     BANDIT = 'bandit',
     SYFT = 'anchore_syft',
-    JUPYTER = 'jupyter'
+    JUPYTER = 'jupyter',
+    CFN_LINT = 'cfn-lint'
 }
 
 export enum AuxiliaryTool {
@@ -24,4 +25,5 @@ export interface VenvConfig {
     banditCmd: string;
     syftCmd: string;
     jupyterlabCmd: string;
+    cfnLintCmd: string;
 }

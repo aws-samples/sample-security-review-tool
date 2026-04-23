@@ -67,47 +67,57 @@ export class AssessCoordinator {
         if (clean) spin.text = clean;
     }
 
+    private async runPhase<T>(
+        startText: string,
+        successText: string,
+        fn: (spin: Ora) => Promise<T>,
+    ): Promise<T> {
+        const spin = ui.spinner(startText).start();
+        try {
+            const result = await fn(spin);
+            spin.succeed(successText);
+            return result;
+        } catch (error) {
+            spin.fail();
+            throw error;
+        }
+    }
+
     private async initializeProject(): Promise<void> {
-        const spin = ui.spinner('Initializing project...').start();
-        const initCoordinator = new InitializationCoordinator(this.context, (msg) => this.spinProgress(spin, msg));
-        await initCoordinator.initialize();
-        spin.succeed('Project initialized');
+        await this.runPhase('Initializing project...', 'Project initialized', async (spin) => {
+            const initCoordinator = new InitializationCoordinator(this.context, (msg) => this.spinProgress(spin, msg));
+            await initCoordinator.initialize();
+        });
     }
 
     private async checkLicenseCompliance(license: string, updateLicenses: boolean): Promise<void> {
-        if(!updateLicenses) return;
-        
-        const spin = ui.spinner('Validating license compliance...').start();
-        const licenseCoordinator = new LicenseComplianceCoordinator(this.context, license);
-        await licenseCoordinator.execute();
-        spin.succeed('Validated license compliance');
+        if (!updateLicenses) return;
+
+        await this.runPhase('Validating license compliance...', 'Validated license compliance', async () => {
+            const licenseCoordinator = new LicenseComplianceCoordinator(this.context, license);
+            await licenseCoordinator.execute();
+        });
     }
 
     private async runCodeScanners(): Promise<CodeScanResult> {
-        const spin = ui.spinner('Running security scans...').start();
-        const scanCoordinator = new ScannerCoordinator(this.context, (msg) => this.spinProgress(spin, msg));
-        const codeScanResult = await scanCoordinator.scanCode();
-        spin.succeed('Completed security scans');
-
-        return codeScanResult;
+        return this.runPhase('Running security scans...', 'Completed security scans', async (spin) => {
+            const scanCoordinator = new ScannerCoordinator(this.context, (msg) => this.spinProgress(spin, msg));
+            return scanCoordinator.scanCode();
+        });
     }
 
     private async processTemplates(generateDiagrams: boolean, generateThreatModels: boolean): Promise<TemplateResult[]> {
-        const spin = ui.spinner('Processing CloudFormation templates...').start();
-        const templateCoordinator = new TemplateCoordinator(this.context, generateDiagrams, generateThreatModels, (msg) => this.spinProgress(spin, msg));
-        const templateResults = await templateCoordinator.processTemplates();
-        spin.succeed('Processed CloudFormation templates');
-
-        return templateResults;
+        return this.runPhase('Processing CloudFormation templates...', 'Processed CloudFormation templates', async (spin) => {
+            const templateCoordinator = new TemplateCoordinator(this.context, generateDiagrams, generateThreatModels, (msg) => this.spinProgress(spin, msg));
+            return templateCoordinator.processTemplates();
+        });
     }
 
     private async generateProjectSummary(templateResults: TemplateResult[]): Promise<string | null> {
-        const spin = ui.spinner('Generating assessment summary...').start();
-        const summarizer = new ProjectSummarizer(this.context, (msg) => this.spinProgress(spin, msg));
-        const result = await summarizer.summarize(templateResults);
-        spin.succeed('Generated assessment summary');
-
-        return result;
+        return this.runPhase('Generating assessment summary...', 'Generated assessment summary', async (spin) => {
+            const summarizer = new ProjectSummarizer(this.context, (msg) => this.spinProgress(spin, msg));
+            return summarizer.summarize(templateResults);
+        });
     }
 
     private async generateReports(
@@ -116,16 +126,15 @@ export class AssessCoordinator {
         generateXlsx: boolean,
         projectSummary: string | null
     ): Promise<AssessmentSummary | null> {
-        const spin = ui.spinner('Creating SRT report...').start();
-        const reportGenerator = new ReportGenerator(this.context, (msg) => this.spinProgress(spin, msg));
-        const summary = await reportGenerator.generateReports({
-            codeScanResult,
-            templateResults,
-            generateXlsx,
-            projectSummary
+        return this.runPhase('Creating SRT report...', 'Created SRT report', async (spin) => {
+            const reportGenerator = new ReportGenerator(this.context, (msg) => this.spinProgress(spin, msg));
+            return reportGenerator.generateReports({
+                codeScanResult,
+                templateResults,
+                generateXlsx,
+                projectSummary
+            });
         });
-        spin.succeed('Created SRT report');
-        return summary;
     }
 
     private captureAssessmentCompleted(summary: AssessmentSummary): void {

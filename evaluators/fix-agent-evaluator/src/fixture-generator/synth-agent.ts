@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-bedrock-runtime';
 import { BedrockConfig } from '../../../../src/config/aws/bedrock-config.js';
 import type { FixtureFormat, RuleEntry } from '../../../shared/rule-catalog/src/index.js';
-import type { FixtureFile, ValidationFailure } from './types.js';
+import type { FixtureFile, RelatedRuleContext, ValidationFailure } from './types.js';
 import { SYNTH_SYSTEM_PROMPT, buildSynthUserPrompt } from './prompts.js';
 
 const MAX_TURNS = 3;
@@ -23,10 +23,11 @@ export class SynthAgent {
         rule: RuleEntry,
         format: FixtureFormat,
         previousFailure: ValidationFailure | null,
+        relatedRules: RelatedRuleContext[] = [],
     ): Promise<FixtureFile[]> {
         const messages: Message[] = [{
             role: 'user',
-            content: [{ text: buildSynthUserPrompt(rule, format, previousFailure) }],
+            content: [{ text: buildSynthUserPrompt(rule, format, previousFailure, relatedRules) }],
         }];
 
         for (let turn = 0; turn < MAX_TURNS; turn++) {

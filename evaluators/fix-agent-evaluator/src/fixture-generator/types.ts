@@ -12,6 +12,7 @@ export interface FixtureMeta {
     sourceHash: string;
     generatedAt: string;
     validationAttempts: number;
+    relatedRuleHashes?: Record<string, string>;
 }
 
 export interface GeneratedFixture {
@@ -22,9 +23,16 @@ export interface GeneratedFixture {
 }
 
 export interface ValidationFailure {
-    kind: 'parse' | 'synth' | 'scan-missing-target' | 'scan-extra-rules';
+    kind: 'parse' | 'synth' | 'scan-missing-target' | 'scan-extra-rules' | 'deps-install-failed';
     message: string;
     details?: string;
+    extraCheckIds?: string[];
+}
+
+export interface RelatedRuleContext {
+    checkId: string;
+    description: string;
+    ruleBody?: string;
 }
 
 export interface ValidationResult {

@@ -36,11 +36,11 @@ export class RescanChecker {
         const postFixIssues = this.readIssues(fixtureDir);
         const preIds = new Set(
             preFixIssues
-                .filter(issue => this.matchesScanner(issue, scanner))
+                .filter(issue => this.matchesScanner(issue, scanner) && this.isActive(issue))
                 .map(issue => issue.check_id ?? ''),
         );
 
-        const sameScannerPost = postFixIssues.filter(issue => this.matchesScanner(issue, scanner));
+        const sameScannerPost = postFixIssues.filter(issue => this.matchesScanner(issue, scanner) && this.isActive(issue));
         const targetRuleStillFires = sameScannerPost.some(issue => issue.check_id === checkId);
         const newRulesTriggered = sameScannerPost
             .map(issue => issue.check_id ?? '')
@@ -52,6 +52,11 @@ export class RescanChecker {
             validationPassed: validationError === undefined,
             validationError,
         };
+    }
+
+    private isActive(issue: ScanResult): boolean {
+        const status = (issue.status ?? '').toLowerCase();
+        return status !== 'fixed' && status !== 'resolved';
     }
 
     private matchesScanner(issue: ScanResult, scanner: Scanner): boolean {

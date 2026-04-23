@@ -17,6 +17,7 @@
     "build:cli:osx-x64:prod": "bun scripts/build-cli.ts osx-x64",
     "build:cli:win-x64": "bun scripts/build-cli.ts win-x64",
     "build:cli:win-x64:prod": "bun scripts/build-cli.ts win-x64",
+    "setup:tools": "bun scripts/setup-tools.ts",
     "test": "vitest run --passWithNoTests tests/",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",

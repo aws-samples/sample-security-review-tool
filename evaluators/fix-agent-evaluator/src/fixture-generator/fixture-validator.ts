@@ -57,12 +57,14 @@ export class FixtureValidator {
             };
         }
         if (extraHits.length > 0) {
+            const extraCheckIds = Array.from(new Set(extraHits.map(i => i.check_id).filter((id): id is string => Boolean(id))));
             return {
                 ok: false,
                 failure: {
                     kind: 'scan-extra-rules',
-                    message: `Fixture triggered other ${rule.scanner} rules: ${extraHits.map(i => i.check_id).join(', ')}`,
-                    details: `Remove the resource configurations that cause these additional findings.`,
+                    message: `Fixture triggered other ${rule.scanner} rules: ${extraCheckIds.join(', ')}`,
+                    details: `Satisfy these sibling rules (or remove the resources that trigger them) while keeping the target rule violated.`,
+                    extraCheckIds,
                 },
             };
         }

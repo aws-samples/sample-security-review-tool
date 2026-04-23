@@ -44,7 +44,7 @@ describe('S3008Rule', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null if a bucket has lifecycle configuration', () => {
+    it('should return null if a bucket has lifecycle configuration with an enabled rule', () => {
       // Arrange
       const resource: CloudFormationResource = {
         Type: 'AWS::S3::Bucket',
@@ -88,10 +88,10 @@ describe('S3008Rule', () => {
       expect(result?.resourceType).toBe('AWS::S3::Bucket');
       expect(result?.resourceName).toBe('TestBucket');
       expect(result?.issue).toContain('S3 bucket lacks lifecycle policy');
-      expect(result?.fix).toContain('Configure a lifecycle policy');
+      expect(result?.fix).toContain('Add a LifecycleConfiguration');
     });
 
-    it('should return a finding if a bucket has empty lifecycle configuration', () => {
+    it('should return a finding if LifecycleConfiguration is null', () => {
       // Arrange
       const resource: CloudFormationResource = {
         Type: 'AWS::S3::Bucket',
@@ -110,7 +110,115 @@ describe('S3008Rule', () => {
       expect(result?.resourceType).toBe('AWS::S3::Bucket');
       expect(result?.resourceName).toBe('MyBucket');
       expect(result?.issue).toContain('S3 bucket lacks lifecycle policy');
-      expect(result?.fix).toContain('Configure a lifecycle policy');
+      expect(result?.fix).toContain('Add a LifecycleConfiguration');
+    });
+
+    it('should return a finding if LifecycleConfiguration is an empty object (no Rules)', () => {
+      // Arrange
+      const resource: CloudFormationResource = {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: 'my-bucket',
+          LifecycleConfiguration: {}
+        },
+        LogicalId: 'TestBucket'
+      };
+
+      // Act
+      const result = rule.evaluate(resource, stackName);
+
+      // Assert
+      expect(result).not.toBeNull();
+      expect(result?.issue).toContain('LifecycleConfiguration has no rules');
+    });
+
+    it('should return a finding if LifecycleConfiguration has an empty Rules array', () => {
+      // Arrange
+      const resource: CloudFormationResource = {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: 'my-bucket',
+          LifecycleConfiguration: {
+            Rules: []
+          }
+        },
+        LogicalId: 'TestBucket'
+      };
+
+      // Act
+      const result = rule.evaluate(resource, stackName);
+
+      // Assert
+      expect(result).not.toBeNull();
+      expect(result?.issue).toContain('LifecycleConfiguration has no rules');
+    });
+
+    it('should return a finding if every Rule has Status Disabled', () => {
+      // Arrange
+      const resource: CloudFormationResource = {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: 'my-bucket',
+          LifecycleConfiguration: {
+            Rules: [
+              { Status: 'Disabled', ExpirationInDays: 365, Id: 'DisabledRule' }
+            ]
+          }
+        },
+        LogicalId: 'TestBucket'
+      };
+
+      // Act
+      const result = rule.evaluate(resource, stackName);
+
+      // Assert
+      expect(result).not.toBeNull();
+      expect(result?.issue).toContain('LifecycleConfiguration has no enabled rules');
+    });
+
+    it('should return null if at least one Rule is Enabled among mixed rules', () => {
+      // Arrange
+      const resource: CloudFormationResource = {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: 'my-bucket',
+          LifecycleConfiguration: {
+            Rules: [
+              { Status: 'Disabled', Id: 'DisabledRule' },
+              { Status: 'Enabled', ExpirationInDays: 365, Id: 'EnabledRule' }
+            ]
+          }
+        },
+        LogicalId: 'TestBucket'
+      };
+
+      // Act
+      const result = rule.evaluate(resource, stackName);
+
+      // Assert
+      expect(result).toBeNull();
+    });
+
+    it('should return null if a Rule Status is an unresolved intrinsic function', () => {
+      // Arrange
+      const resource: CloudFormationResource = {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: 'my-bucket',
+          LifecycleConfiguration: {
+            Rules: [
+              { Status: { Ref: 'LifecycleStatusParameter' }, ExpirationInDays: 365, Id: 'ParamRule' }
+            ]
+          }
+        },
+        LogicalId: 'TestBucket'
+      };
+
+      // Act
+      const result = rule.evaluate(resource, stackName);
+
+      // Assert
+      expect(result).toBeNull();
     });
 
     it('should return a finding if a bucket has lifecycle configuration with intrinsic function', () => {
@@ -163,7 +271,7 @@ describe('S3008Rule', () => {
         Type: 'AWS::S3::Bucket',
         Properties: {
           BucketName: 'my-bucket',
-          LifecycleConfiguration: { 
+          LifecycleConfiguration: {
             'Fn::If': [
               'EnableLifecycle',
               {
@@ -191,28 +299,6 @@ describe('S3008Rule', () => {
       expect(result?.resourceName).toBe('TestBucket');
       expect(result?.issue).toContain('S3 bucket lacks lifecycle policy');
       expect(result?.fix).toContain('Use explicit configuration instead of CloudFormation intrinsic functions');
-    });
-
-    it('should return null if a bucket has lifecycle configuration with empty rules array', () => {
-      // Arrange
-      const resource: CloudFormationResource = {
-        Type: 'AWS::S3::Bucket',
-        Properties: {
-          BucketName: 'my-bucket',
-          LifecycleConfiguration: {
-            Rules: []
-          }
-        },
-        LogicalId: 'TestBucket'
-      };
-
-      // Act
-      const result = rule.evaluate(resource, stackName);
-
-      // Assert
-      // Even though the rules array is empty, the LifecycleConfiguration exists and is resolved
-      // The rule only checks for existence, not content quality
-      expect(result).toBeNull();
     });
   });
 });

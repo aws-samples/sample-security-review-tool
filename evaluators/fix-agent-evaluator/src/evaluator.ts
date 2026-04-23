@@ -73,7 +73,7 @@ export class Evaluator {
 
         await this.ensureInitialized();
 
-        const generator = new GeneratorCoordinator(getBedrockClient(), this.fixturesRoot);
+        const generator = new GeneratorCoordinator(getBedrockClient(), this.fixturesRoot, catalog);
         const results: FixtureRunResult[] = [];
 
         for (const rule of rules) {

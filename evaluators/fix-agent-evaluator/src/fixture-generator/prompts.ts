@@ -1,5 +1,5 @@
 import type { FixtureFormat, RuleEntry } from '../../../shared/rule-catalog/src/index.js';
-import type { ValidationFailure } from './types.js';
+import type { RelatedRuleContext, ValidationFailure } from './types.js';
 
 export const SYNTH_SYSTEM_PROMPT = `You generate minimal test fixtures for a security scanner. Your fixture must:
   1. Trigger the target rule exactly once — no more, no less.
@@ -22,6 +22,7 @@ export function buildSynthUserPrompt(
     rule: RuleEntry,
     format: FixtureFormat,
     previousFailure: ValidationFailure | null,
+    relatedRules: RelatedRuleContext[] = [],
 ): string {
     const lines: string[] = [];
     lines.push(`Target rule: ${rule.checkId} (${rule.scanner})`);
@@ -52,6 +53,21 @@ export function buildSynthUserPrompt(
             lines.push(`  details: ${previousFailure.details.slice(0, 2000)}`);
         }
         lines.push(`Adjust the fixture to address this and avoid introducing new violations.`);
+    }
+    if (relatedRules.length > 0) {
+        lines.push('');
+        lines.push(`Sibling rules in the same scanner that the previous fixture also tripped. Read each rule's source and satisfy it (e.g., add the minimum configuration it requires) while keeping the target rule ${rule.checkId} violated:`);
+        for (const related of relatedRules) {
+            lines.push('');
+            lines.push(`- ${related.checkId}: ${related.description}`);
+            if (related.ruleBody) {
+                lines.push('  ```');
+                for (const bodyLine of related.ruleBody.split('\n')) {
+                    lines.push(`  ${bodyLine}`);
+                }
+                lines.push('  ```');
+            }
+        }
     }
     lines.push('');
     lines.push(`Call submit_fixture exactly once with the complete set of files.`);

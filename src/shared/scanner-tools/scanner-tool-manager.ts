@@ -1,4 +1,5 @@
 import path from 'path';
+import { existsSync } from 'node:fs';
 import fs from 'fs/promises';
 import { SrtLogger } from '../logging/srt-logger.js';
 import { CommandRunner } from '../command-execution/command-runner.js';
@@ -15,7 +16,7 @@ export class ScannerToolManager {
     }
 
     private initializeConfig(): VenvConfig {
-        const venvDir = path.join(AppPaths.getAppDir(), '.venv');
+        const venvDir = this.resolveVenvDir();
         const platform = process.platform;
         const pythonCmd = (platform === 'darwin' || platform === 'linux') ? 'python3' : 'python';
         const binDir = (platform === 'darwin' || platform === 'linux') ? 'bin' : 'Scripts';
@@ -24,7 +25,7 @@ export class ScannerToolManager {
         const pythonPath = path.join(venvDir, binDir, pythonExe);
 
         return {
-            rootDir: AppPaths.getAppDir(),
+            rootDir: path.dirname(venvDir),
             venvDir,
             binDir,
             pythonCmd,
@@ -33,8 +34,40 @@ export class ScannerToolManager {
             semgrepCmd: path.join(venvDir, binDir, ScannerToolManager.addExecutableExtension('semgrep', platform)),
             banditCmd: path.join(venvDir, binDir, ScannerToolManager.addExecutableExtension('bandit', platform)),
             syftCmd: path.join(venvDir, binDir, ScannerToolManager.addExecutableExtension('syft', platform)),
-            jupyterlabCmd: path.join(venvDir, binDir, ScannerToolManager.addExecutableExtension('jupyter', platform))
+            jupyterlabCmd: path.join(venvDir, binDir, ScannerToolManager.addExecutableExtension('jupyter', platform)),
+            cfnLintCmd: path.join(venvDir, binDir, ScannerToolManager.addExecutableExtension('cfn-lint', platform))
         };
+    }
+
+    private static readonly VENV_MARKER = '.srt-managed';
+
+    private resolveVenvDir(): string {
+        const appDirVenv = path.join(AppPaths.getAppDir(), '.venv');
+        if (existsSync(appDirVenv)) return appDirVenv;
+
+        const managed = this.findManagedVenv();
+        if (managed) return managed;
+
+        return appDirVenv;
+    }
+
+    private findManagedVenv(): string | null {
+        let dir = process.cwd();
+        for (let i = 0; i < 10; i++) {
+            const candidate = path.join(dir, '.venv');
+            if (existsSync(path.join(candidate, ScannerToolManager.VENV_MARKER))) {
+                return candidate;
+            }
+            const parent = path.dirname(dir);
+            if (parent === dir) break;
+            dir = parent;
+        }
+        return null;
+    }
+
+    public async markVenvAsManaged(): Promise<void> {
+        const markerPath = path.join(this.config.venvDir, ScannerToolManager.VENV_MARKER);
+        await fs.writeFile(markerPath, '', { flag: 'a' });
     }
 
     public static extractToolName(command: string): string {
@@ -89,6 +122,8 @@ export class ScannerToolManager {
                 throw new Error(errorMsg);
             }
         }
+
+        await this.markVenvAsManaged();
     }
 
     public async verifyToolInstalled(tool: ScanTool | string): Promise<void> {
@@ -144,6 +179,6 @@ export class ScannerToolManager {
     }
 
     public static getAllScanTools(): ScanTool[] {
-        return [ScanTool.CHECKOV, ScanTool.SEMGREP, ScanTool.SYFT, ScanTool.BANDIT, ScanTool.JUPYTER];
+        return [ScanTool.CHECKOV, ScanTool.SEMGREP, ScanTool.SYFT, ScanTool.BANDIT, ScanTool.JUPYTER, ScanTool.CFN_LINT];
     }
 }

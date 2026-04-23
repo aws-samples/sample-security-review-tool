@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { EditRecorder } from '../../../../src/fix/agent/edit-recorder.js';
+import { EditRecorder } from '../../../../src/fix/agent/staging/edit-recorder.js';
 import { FixValidator } from '../../../../src/fix/agent/validation/fix-validator.js';
 import { StrategyResult, ValidationStrategy } from '../../../../src/fix/agent/validation/types.js';
 import { ProjectContext } from '../../../../src/shared/project/project-context.js';

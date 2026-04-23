@@ -83,6 +83,7 @@ export class ScannerSetup {
             case ScanTool.BANDIT: return 'Bandit';
             case ScanTool.SYFT: return 'Syft';
             case ScanTool.JUPYTER: return 'Jupyter';
+            case ScanTool.CFN_LINT: return 'cfn-lint';
             default: return scanner;
         }
     }

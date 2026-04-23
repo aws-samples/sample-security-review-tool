@@ -106,6 +106,9 @@ junit.xml
 .bun-builds/
 bun.lock
 
+# Python virtual environment (scanner tools)
+.venv/
+
 # SRT temporary directories
 .claude/settings.local.json
 

@@ -128,6 +128,13 @@ type-elision at compile time; bun matches the runtime the shipped CLI uses.)
 
 - **Project mode only:** target must be a committed git repository. The
   evaluator stages fixes between findings.
+- **cfn-lint:** the fix agent validates CloudFormation templates with
+  `cfn-lint`. The compiled SRT binary installs it automatically via
+  `srt config`, but under bun `ScannerToolManager` resolves to the wrong
+  directory. Install it so it is on PATH:
+  ```bash
+  pip install cfn-lint        # or: pip3 install --user cfn-lint
+  ```
 - **CDK projects:** install the AWS CDK CLI yourself before running — SRT
   otherwise attempts `npm install -g aws-cdk`, which fails with EACCES on
   most Linux/macOS installs. Either run that command under `sudo`, or use a

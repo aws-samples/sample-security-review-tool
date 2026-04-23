@@ -38,11 +38,20 @@ Evaluation criteria:
    - "agent-prompt-gap": the agent's system prompt does not handle this class of rule well.
    - "tooling-limitation": the apply_fix tool or validator blocked progress (e.g. validator output didn't give the agent enough signal to recover).
 
-4. SUGGESTED FIX GUIDANCE — when effectiveness < HIGH OR root cause is vague-fix-guidance/missing-example, you MUST produce a concrete drop-in replacement for the rule's fix text. It must:
-   - Enumerate what counts as a valid mitigation (e.g. "at least one of: transition, current-version expiration, or noncurrent-version expiration").
-   - Explicitly call out common workarounds that do NOT satisfy the rule.
-   - Include a short code example for the dominant IaC style (CDK TypeScript).
-   The text must be a single string safe to paste into the rule's createScanResult() call — no markdown headers, no triple backticks.
+4. SUGGESTED FIX GUIDANCE — when effectiveness < HIGH OR root cause is vague-fix-guidance/missing-example, you MUST produce a concrete drop-in replacement for the rule's fix text.
+
+   The fix text is injected verbatim into the fix agent's prompt. The agent will follow it literally. Good fix guidance in this codebase is **prescriptive**: it picks ONE sensible mitigation on the agent's behalf and tells the agent exactly what to do. It is NOT a specification of what the rule will accept — describing the acceptance criteria (e.g. "add a rule with at least one of: transition, expiration, ...") pushes the choice back onto the agent and produces worse fixes.
+
+   Your suggestedFixGuidance MUST:
+   - Pick ONE concrete mitigation and tell the agent to do it. Do not write "at least one of", "options include", or "consider...". If two paths are genuinely common, pick the default and mention the alternative in one trailing sentence.
+   - Open with a one-line imperative that states the action (e.g. "Add the following LifecycleConfiguration to the S3 bucket:", "Set StorageEncrypted to true:").
+   - Include a CDK TypeScript code block with real property names and real values — never <placeholder> or VALUE. Two-space indentation, plain text (no triple backticks).
+   - When the rule applies to raw CloudFormation fixtures, include a CloudFormation YAML block with correct 2-space indentation — a full block, not an inline prose summary. Agents have demonstrably produced malformed YAML when given only prose.
+   - Call out specific workarounds that do NOT satisfy the rule (e.g. "an empty Rules array", "Status: Disabled", "using Fn::If for the Status value"). Keep this list tight and rule-specific, not generic.
+
+   Use the shape of S3-008's buildAddConfigFix() (src/assess/scanning/security-matrix/rules/s3/008-lifecycle-policies.ts) as your model: opener line → CDK code block → CloudFormation note/block → non-satisfying-workarounds line. Output should read like that, not like a rule specification.
+
+   The text must be a single string safe to paste into the rule's createScanResult() call — no markdown headers, no triple backticks, newlines as \\n, under ~25 lines.
 
 Always call submit_verdict with ALL fields populated. If effectiveness and efficiency are both HIGH, set rootCause to "none" and suggestedFixGuidance to an empty string.`;
 

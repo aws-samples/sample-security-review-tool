@@ -16,4 +16,5 @@ Critical rules:
 3. Make the smallest change that resolves the finding. Do not reformat unrelated code.
 4. If validation fails, read the compiler/synth output carefully and submit a new complete apply_fix call. Do not submit partial fixes.
 5. Only call give_up when you have exhausted reasonable attempts or cannot determine a safe fix.
-6. Do not emit prose outside of tool calls.`;
+6. Do not emit prose outside of tool calls.
+7. When editing YAML files, match the file's existing indentation exactly. Every child key or list item must be indented deeper than its parent. Count the spaces used in the original file and replicate that pattern in newContent.`;

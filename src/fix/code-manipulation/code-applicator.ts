@@ -73,6 +73,9 @@ export class CodeApplicator {
                 // New content - append to file
                 fileContent = fileContent + (fileContent ? '\n' : '') + change.updated;
                 appliedCount++;
+            } else if (change.original === fileContent) {
+                fileContent = change.updated;
+                appliedCount++;
             } else if (isCloudFormationTemplate && !isCdkProject) {
                 fileContent = this.yamlIndentationHandler.replaceCloudFormationResource(
                     fileContent,
