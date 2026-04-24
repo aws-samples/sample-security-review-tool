@@ -3,8 +3,25 @@ import { ScanResult } from '../../../base-scanner.js';
 import { Template } from 'cloudform-types';
 
 /**
- * S3-001 Rule: Ensure that access logging is enabled on all in-scope S3 buckets
- * with a dedicated log destination bucket.
+ * S3-001: S3 buckets must have access logging enabled with a dedicated log
+ * destination bucket.
+ *
+ * Uses the template-aware evaluateResource entry point to inspect all buckets in
+ * a template together. Buckets that serve as log destinations for other buckets
+ * are automatically excluded from evaluation.
+ *
+ * Checks:
+ * - LoggingConfiguration is present with a DestinationBucketName.
+ * - The destination bucket is not the source bucket itself (self-logging).
+ *
+ * Destination bucket references are resolved through literal strings, Ref, and
+ * Fn::GetAtt intrinsics.
+ *
+ * Known limitations:
+ * - Templates that conditionally apply LoggingConfiguration via Fn::If or
+ *   Fn::Transform will be flagged even if the deployed result is compliant.
+ * - CDK L2 Bucket constructs automatically add AccessControl: LogDeliveryWrite
+ *   when serverAccessLogsBucket is used. The fix prompts accept this behavior.
  */
 export class S3001Rule extends BaseRule {
   constructor() {
@@ -35,11 +52,33 @@ export class S3001Rule extends BaseRule {
 
     const destinationBucket = resource.Properties?.LoggingConfiguration?.DestinationBucketName;
     if (!destinationBucket) {
-      return this.createResult(stackName, template, resource, this.description, `Enable S3 access logging by configuring a LoggingConfiguration with a DestinationBucketName that points to a separate, dedicated logging bucket.\nFirst, check whether the template already contains a dedicated logging bucket (i.e. a bucket that other buckets already reference as their LoggingConfiguration.DestinationBucketName). If one exists, reuse it — do NOT create a new logging bucket. If no existing logging bucket is found, create a new S3 bucket resource to serve as the log destination. Do NOT use the legacy AccessControl property; instead, configure OwnershipControls with ObjectOwnership set to BucketOwnerPreferred, and add a separate AWS::S3::BucketPolicy resource granting the logging.s3.amazonaws.com service s3:PutObject permission on the log bucket (scoped to the log prefix path). Include a Condition restricting aws:SourceAccount to the current account.\nOn the original bucket, add a LoggingConfiguration with DestinationBucketName referencing the logging bucket and a LogFilePrefix that includes the source bucket name to keep logs separated (e.g. "<source-bucket-name>/access-logs/").\nDo NOT log to the same bucket (self-logging). Do NOT use the deprecated AccessControl property without OwnershipControls — use a BucketPolicy instead.`);
+      return this.createResult(
+        stackName,
+        template,
+        resource,
+        this.description,
+        `Enable S3 access logging by configuring the source bucket to send access logs to a separate, dedicated logging bucket.
+First, check whether the template already contains a dedicated logging bucket that other buckets reference as their logging destination. If one exists, reuse it. If not, create a new S3 bucket to serve as the log destination.
+For the logging bucket: configure OwnershipControls with ObjectOwnership set to BucketOwnerPreferred. Do NOT set the AccessControl property at all — instead, add a separate BucketPolicy resource granting the logging.s3.amazonaws.com service s3:PutObject permission on the log bucket ARN (scoped to the log prefix path), with a Condition restricting aws:SourceAccount to the current account.
+On the source bucket, add a LoggingConfiguration with DestinationBucketName referencing the logging bucket and a LogFilePrefix that includes the source bucket's logical name (e.g. "DataBucket/access-logs/").
+In CDK, use the objectOwnership property set to BUCKET_OWNER_PREFERRED on the log bucket, and the serverAccessLogsBucket/serverAccessLogsPrefix properties on the source bucket. Add the bucket policy via addToResourcePolicy. Note: CDK automatically adds AccessControl: LogDeliveryWrite to the log bucket when serverAccessLogsBucket is used — this is expected and acceptable.
+Do NOT log to the same bucket (self-logging). For raw CloudFormation, do NOT set AccessControl on any bucket — use only BucketPolicy for permissions.`
+);
     }
 
     if (this.isSelfLogging(resource, destinationBucket, logicalId)) {
-      return this.createResult(stackName, template, resource, this.description, 'Use a dedicated logging bucket different from the source bucket to prevent log loss.');
+      return this.createResult(
+        stackName,
+        template,
+        resource,
+        this.description,
+        `Redirect access logs from the self-logging bucket to a separate, dedicated logging bucket.
+First, check whether the template already contains a dedicated logging bucket that other buckets reference as their logging destination. If one exists, reuse it. If not, create a new S3 bucket to serve as the log destination. Configure the logging bucket with OwnershipControls setting ObjectOwnership to BucketOwnerPreferred.
+Add an AWS::S3::BucketPolicy on the logging bucket granting the logging.s3.amazonaws.com service s3:PutObject permission on the bucket's ARN scoped to the log prefix path. Include a Condition restricting aws:SourceAccount to the current account (use !Ref AWS::AccountId).
+On the original bucket, change the LoggingConfiguration.DestinationBucketName to reference the logging bucket using !Ref. Set LogFilePrefix to something like "access-logs/".
+In CDK, use the objectOwnership property set to BUCKET_OWNER_PREFERRED on the log bucket, and the serverAccessLogsBucket/serverAccessLogsPrefix properties on the source bucket. Add the bucket policy via addToResourcePolicy. Note: CDK automatically adds AccessControl: LogDeliveryWrite to the log bucket when serverAccessLogsBucket is used — this is expected and acceptable.
+Do NOT log to the same bucket (self-logging). For raw CloudFormation, do NOT set AccessControl on any bucket — use only BucketPolicy for permissions.`
+      );
     }
 
     return null;
