@@ -52,22 +52,26 @@ export class EditSession {
         this.reset();
 
         const baselinesByPath = new Map<string, FileBaseline>();
-        const pendingContentByPath = new Map<string, string[]>();
+        const resolvedEdits: { absolutePath: string; edit: EditInput }[] = [];
 
         for (const edit of edits) {
             const resolved = this.safeResolve(edit.path);
             if (!resolved.ok) return resolved;
 
-            const baseline = baselinesByPath.get(resolved.absolutePath)
-                ?? await this.loadBaseline(resolved.absolutePath);
-            baselinesByPath.set(resolved.absolutePath, baseline);
-
-            const existingLines = pendingContentByPath.get(resolved.absolutePath) ?? baseline.originalLines;
-            const applied = applyLineRangeEdit(existingLines, edit, baseline.fileExisted);
-            if (!applied.ok) {
-                return { ok: false, reason: applied.reason, path: edit.path };
+            if (!baselinesByPath.has(resolved.absolutePath)) {
+                baselinesByPath.set(resolved.absolutePath, await this.loadBaseline(resolved.absolutePath));
             }
-            pendingContentByPath.set(resolved.absolutePath, applied.lines);
+            resolvedEdits.push({ absolutePath: resolved.absolutePath, edit });
+        }
+
+        const editsByPath = groupByPath(resolvedEdits);
+        const pendingContentByPath = new Map<string, string[]>();
+
+        for (const [absolutePath, fileEdits] of editsByPath) {
+            const baseline = baselinesByPath.get(absolutePath)!;
+            const result = applyEditsForFile(fileEdits, baseline);
+            if (!result.ok) return result;
+            pendingContentByPath.set(absolutePath, result.lines);
         }
 
         for (const [absolutePath, baseline] of baselinesByPath) {
@@ -105,6 +109,69 @@ export class EditSession {
             };
         }
     }
+}
+
+function groupByPath(resolvedEdits: { absolutePath: string; edit: EditInput }[]): Map<string, EditInput[]> {
+    const map = new Map<string, EditInput[]>();
+    for (const { absolutePath, edit } of resolvedEdits) {
+        let list = map.get(absolutePath);
+        if (!list) {
+            list = [];
+            map.set(absolutePath, list);
+        }
+        list.push(edit);
+    }
+    return map;
+}
+
+function editOriginalEnd(edit: EditInput): number {
+    const [start, end] = edit.lineRange;
+    return end >= start ? end : start - 1;
+}
+
+/**
+ * Applies multiple edits to a single file, translating original-file line
+ * numbers into post-edit coordinates. Edits are sorted top-to-bottom by
+ * their original start line and applied with a running offset so the agent
+ * can always reference the original file's line numbers.
+ */
+function applyEditsForFile(edits: EditInput[], baseline: FileBaseline): { ok: true; lines: string[] } | ApplyFailure {
+    const sorted = [...edits].sort((a, b) => a.lineRange[0] - b.lineRange[0]);
+
+    for (let i = 1; i < sorted.length; i++) {
+        const prevEnd = editOriginalEnd(sorted[i - 1]);
+        const currStart = sorted[i].lineRange[0];
+        if (currStart <= prevEnd) {
+            return {
+                ok: false,
+                reason: `Overlapping edits: [${sorted[i - 1].lineRange}] and [${sorted[i].lineRange}] overlap in the original file.`,
+                path: sorted[i].path,
+            };
+        }
+    }
+
+    let currentLines = baseline.originalLines;
+    let runningOffset = 0;
+
+    for (const edit of sorted) {
+        const adjusted: EditInput = {
+            ...edit,
+            lineRange: [edit.lineRange[0] + runningOffset, edit.lineRange[1] + runningOffset],
+        };
+
+        const applied = applyLineRangeEdit(currentLines, adjusted, baseline.fileExisted);
+        if (!applied.ok) {
+            return { ok: false, reason: applied.reason, path: edit.path };
+        }
+        currentLines = applied.lines;
+
+        const isInsert = edit.lineRange[1] === edit.lineRange[0] - 1;
+        const replacedCount = isInsert ? 0 : (edit.lineRange[1] - edit.lineRange[0] + 1);
+        const insertedCount = edit.newContent.split(/\r?\n/).length;
+        runningOffset += insertedCount - replacedCount;
+    }
+
+    return { ok: true, lines: currentLines };
 }
 
 type LineEditResult =
