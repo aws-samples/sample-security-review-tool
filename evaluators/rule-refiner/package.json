@@ -1,0 +1,15 @@
+{
+  "name": "rule-refiner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Automated evaluate-fix loop: runs rule-impl-evaluator and fix-agent-evaluator, feeds reports to Claude Code, and iterates until rules pass.",
+  "scripts": {
+    "refine": "bun src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^22.16.5"
+  }
+}
