@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { CheckovPolicies } from '../../../../src/assess/scanning/checkov/checkov_fixes.js';
+import { CheckovPolicies } from '../../../../../src/assess/scanning/checkov/checkov_fixes.js';
 import type { RuleEntry } from './types.js';
 import { sha256OfFile } from './hash.js';
 

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { glob } from 'glob';
-import { allRules } from '../../../../src/assess/scanning/security-matrix/rules/index.js';
+import { allRules } from '../../../../../src/assess/scanning/security-matrix/rules/index.js';
 import type { RuleEntry } from './types.js';
 import { sha256OfFile, sha256OfString } from './hash.js';
 

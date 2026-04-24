@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { SemgrepFixes } from '../../../../src/assess/scanning/semgrep/semgrep-fixes.js';
+import { SemgrepFixes } from '../../../../../src/assess/scanning/semgrep/semgrep-fixes.js';
 import type { FixtureFormat, RuleEntry } from './types.js';
 import { sha256OfFile } from './hash.js';
 

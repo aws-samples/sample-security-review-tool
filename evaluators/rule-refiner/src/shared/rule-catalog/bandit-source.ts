@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { BanditFixes } from '../../../../src/assess/scanning/bandit/bandit-fixes.js';
+import { BanditFixes } from '../../../../../src/assess/scanning/bandit/bandit-fixes.js';
 import type { RuleEntry } from './types.js';
 import { sha256OfFile } from './hash.js';
 

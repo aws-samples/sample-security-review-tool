@@ -1,4 +1,4 @@
-import type { RuleEntry, FixtureFormat, CatalogFilter } from '../../shared/rule-catalog/src/index.js';
+import type { RuleEntry, FixtureFormat, CatalogFilter } from './shared/rule-catalog/index.js';
 import type { ScanResult } from '../../../src/assess/scanning/types.js';
 
 export type { RuleEntry, FixtureFormat, CatalogFilter };

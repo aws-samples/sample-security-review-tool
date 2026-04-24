@@ -1,6 +1,6 @@
 import * as path from 'node:path';
-import { RuleCatalog } from '../../shared/rule-catalog/src/index.js';
-import type { CatalogFilter, FixtureFormat, RuleEntry } from '../../shared/rule-catalog/src/index.js';
+import { RuleCatalog } from './shared/rule-catalog/index.js';
+import type { CatalogFilter, FixtureFormat, RuleEntry } from './shared/rule-catalog/index.js';
 import { createAwsKnowledgeMcpClient } from './shared/aws-knowledge-mcp-client.js';
 import { createRefinerAgent } from './agent-factory.js';
 import { buildUserPrompt } from './prompts.js';
