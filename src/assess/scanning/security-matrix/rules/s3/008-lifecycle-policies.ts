@@ -3,9 +3,20 @@ import { ScanResult } from '../../../base-scanner.js';
 import { CloudFormationResolver } from '../../resolver.js';
 
 /**
- * S8 Rule: Ensure S3 buckets have lifecycle policies configured.
+ * S3-008: S3 buckets must have a lifecycle policy with at least one enabled rule.
  *
- * Documentation: "The solution should use a lifecycle policy configuration to manage S3 objects during their lifetime."
+ * Checks the inline LifecycleConfiguration.Rules array on AWS::S3::Bucket. Flags
+ * buckets where the property is missing, the Rules array is empty, or all rules
+ * have Status: Disabled.
+ *
+ * Intrinsic function handling is conservative: if the entire LifecycleConfiguration
+ * is an intrinsic (e.g. Fn::If), a finding is emitted suggesting explicit config.
+ * If an individual rule's Status is unresolvable, it is treated as enabled to avoid
+ * false positives.
+ *
+ * Known limitations:
+ * - Templates that conditionally apply LifecycleConfiguration via Fn::If or
+ *   Fn::Transform will be flagged even if the deployed result is compliant.
  */
 export class S3008Rule extends BaseRule {
   constructor() {
