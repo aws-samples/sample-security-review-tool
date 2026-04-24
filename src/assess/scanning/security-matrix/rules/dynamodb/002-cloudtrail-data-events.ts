@@ -1,14 +1,43 @@
 import { BaseRule, CloudFormationResource } from '../../security-rule-base.js';
 import { ScanResult } from '../../../base-scanner.js';
 
+/**
+ * DDB-002: DynamoDB tables must have CloudTrail data plane event logging
+ * enabled.
+ *
+ * For each DynamoDB table, scans all CloudTrail Trail resources in the same
+ * template for an EventSelector or AdvancedEventSelector that covers DynamoDB
+ * data events.
+ *
+ * Checks:
+ * - At least one trail has a basic EventSelector with a DataResource of type
+ *   AWS::DynamoDB::Table and a non-empty Values array.
+ * - OR at least one trail has an AdvancedEventSelector whose FieldSelectors
+ *   include eventCategory=Data AND resources.type=AWS::DynamoDB::Table.
+ *
+ * Known limitations:
+ * - CloudTrail trails defined in other stacks/templates are not visible — the
+ *   rule only inspects resources within the same synthesized template.
+ * - Organization-level trails configured outside CloudFormation are not
+ *   detected.
+ * - The rule does not verify that the EventSelector ARN values match the
+ *   specific table — it only confirms that some DynamoDB data event
+ *   configuration exists on a trail in the template.
+ * - IsLogging is not checked; a trail with IsLogging: false would still
+ *   satisfy the rule, though this property is required and defaults to true.
+ */
 export class Ddb002Rule extends BaseRule {
-  private readonly fixPrompt = `Enable CloudTrail logging for DynamoDB data plane events for this table. Create a CloudTrail Trail if none exists. Add this table's ARN to an EventSelector with DataResources type 'AWS::DynamoDB::Table' — append to existing values array if one exists, otherwise create a new EventSelector. For CDK: use the L1 escape hatch (trail.node.defaultChild as CfnTrail).eventSelectors as DataResourceType.DYNAMODB_TABLE does not exist.
+  private readonly fixPrompt = `Enable CloudTrail logging for DynamoDB data plane events for this table.
 
-IMPORTANT - S3 Bucket Logging Requirements:
-If creating a new S3 bucket for CloudTrail logs:
-1. First check if the template already has an S3 bucket configured as a logging destination (look for buckets referenced in other buckets' LoggingConfiguration.DestinationBucketName)
-2. If a logging bucket exists, configure the new CloudTrail bucket's LoggingConfiguration to use it with LoggingPrefix 'cloudtrail-logs/'
-3. If no logging bucket exists, create a dedicated server access logging bucket first, then configure the CloudTrail bucket to log to it with LoggingPrefix 'cloudtrail-logs/'`
+Steps:
+1. If no CloudTrail Trail exists, create one. It needs an S3 bucket for logs. Create a dedicated access-logging bucket (BlockPublicAccess.BLOCK_ALL, enforceSSL: true), then create the trail bucket with that as its serverAccessLogsBucket (prefix 'cloudtrail-logs/'). If an existing access-logging bucket is already in the template, reuse it.
+2. Add an EventSelector to the trail with DataResources containing type 'AWS::DynamoDB::Table' and this table's ARN in Values. Set ReadWriteType to 'All'.
+
+For CDK: The L2 Trail construct does NOT support adding DynamoDB data event selectors directly (no DataResourceType.DYNAMODB_TABLE). You MUST use the L1 escape hatch after creating the trail:
+  const cfnTrail = trail.node.defaultChild as cloudtrail.CfnTrail;
+  cfnTrail.eventSelectors = [{ dataResources: [{ type: 'AWS::DynamoDB::Table', values: [table.tableArn] }], readWriteType: 'All' }];
+
+IMPORTANT: Do NOT set objectOwnership on S3 buckets — the CDK default handles ACLs correctly for server access logging. Do NOT use trail.logAllS3DataEvents() or similar L2 methods.`
   
   constructor() {
     super(
@@ -41,8 +70,16 @@ If creating a new S3 bucket for CloudTrail logs:
 
   /**
    * Check if a CloudTrail trail has DynamoDB data events configured
+   * via either basic EventSelectors or AdvancedEventSelectors
    */
   private hasDynamoDBDataEvents(trail: CloudFormationResource): boolean {
+    return this.hasBasicEventSelectorForDynamoDB(trail) || this.hasAdvancedEventSelectorForDynamoDB(trail);
+  }
+
+  /**
+   * Check basic EventSelectors for DynamoDB data events
+   */
+  private hasBasicEventSelectorForDynamoDB(trail: CloudFormationResource): boolean {
     const eventSelectors = trail.Properties?.EventSelectors;
 
     if (!Array.isArray(eventSelectors)) {
@@ -72,6 +109,50 @@ If creating a new S3 bucket for CloudTrail logs:
         // (whether string, !Sub, !Ref, etc.)
         return true;
       });
+    });
+  }
+
+  /**
+   * Check AdvancedEventSelectors for DynamoDB data events.
+   * A valid advanced selector for DynamoDB data events must have:
+   * - eventCategory Equals "Data"
+   * - resources.type Equals "AWS::DynamoDB::Table"
+   */
+  private hasAdvancedEventSelectorForDynamoDB(trail: CloudFormationResource): boolean {
+    const advancedSelectors = trail.Properties?.AdvancedEventSelectors;
+
+    if (!Array.isArray(advancedSelectors)) {
+      return false;
+    }
+
+    return advancedSelectors.some(selector => {
+      const fieldSelectors = selector.FieldSelectors;
+
+      if (!Array.isArray(fieldSelectors)) {
+        return false;
+      }
+
+      let hasDataCategory = false;
+      let hasDynamoDBResourceType = false;
+
+      for (const field of fieldSelectors) {
+        const fieldName = field.Field;
+        const equalsValues = field.Equals;
+
+        if (!fieldName || !Array.isArray(equalsValues)) {
+          continue;
+        }
+
+        if (fieldName === 'eventCategory' && equalsValues.includes('Data')) {
+          hasDataCategory = true;
+        }
+
+        if (fieldName === 'resources.type' && equalsValues.includes('AWS::DynamoDB::Table')) {
+          hasDynamoDBResourceType = true;
+        }
+      }
+
+      return hasDataCategory && hasDynamoDBResourceType;
     });
   }
 }
