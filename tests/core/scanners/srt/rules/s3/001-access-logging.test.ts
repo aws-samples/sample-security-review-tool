@@ -38,7 +38,7 @@ describe('S3001Rule', () => {
         expect(result).not.toBeNull();
         expect(result?.resourceType).toBe('AWS::S3::Bucket');
         expect(result?.resourceName).toBe('TestBucket');
-        expect(result?.fix).toContain('Add LoggingConfiguration property');
+        expect(result?.fix).toContain('configuring a LoggingConfiguration with a DestinationBucketName');
       });
 
       it('should return finding for bucket with logging configuration without destination bucket', () => {
@@ -59,7 +59,7 @@ describe('S3001Rule', () => {
         expect(result).not.toBeNull();
         expect(result?.resourceType).toBe('AWS::S3::Bucket');
         expect(result?.resourceName).toBe('TestBucket');
-        expect(result?.fix).toContain('Set DestinationBucketName');
+        expect(result?.fix).toContain('configuring a LoggingConfiguration with a DestinationBucketName');
       });
 
       it('should return finding for bucket that logs to itself', () => {
