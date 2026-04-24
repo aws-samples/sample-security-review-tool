@@ -4,27 +4,21 @@ import { Template } from 'cloudform-types';
 
 /**
  * S3-001 Rule: Ensure that access logging is enabled on all in-scope S3 buckets
- *
- * Documentation: "Access logging enables visibility into actions taken against S3 buckets and objects,
- * and aids in supporting a robust incident response program. Store access logs in a dedicated access
- * log bucket and ensure that only least privilege permissions are granted."
+ * with a dedicated log destination bucket.
  */
 export class S3001Rule extends BaseRule {
   constructor() {
     super(
       'S3-001',
       'HIGH',
-      'S3 bucket violates access logging or least privilege requirements',
-      ['AWS::S3::Bucket', 'AWS::S3::BucketPolicy']
+      'S3 bucket lacks proper access logging configuration',
+      ['AWS::S3::Bucket']
     );
   }
 
   public evaluateResource(stackName: string, template: Template, resource: Resource): ScanResult | null {
     if (resource.Type === 'AWS::S3::Bucket') {
       return this.evaluateBucket(stackName, template, resource);
-    }
-    if (resource.Type === 'AWS::S3::BucketPolicy') {
-      return this.evaluateBucketPolicy(stackName, template, resource);
     }
     return null;
   }
@@ -56,25 +50,6 @@ export class S3001Rule extends BaseRule {
     return null;
   }
 
-  private evaluateBucketPolicy(stackName: string, template: Template, resource: Resource): ScanResult | null {
-    const statements = resource.Properties?.PolicyDocument?.Statement;
-    if (!statements) return null;
-
-    for (const statement of statements) {
-      if (statement.Effect !== 'Allow') continue;
-
-      if (this.hasOverlyBroadActions(statement) && this.hasWildcardPrincipal(statement)) {
-        return this.createResult(stackName, template, resource, this.description, 'Replace wildcard actions (*) with specific S3 actions needed (e.g., s3:GetObject, s3:PutObject).');
-      }
-
-      if (this.hasUnrestrictedWildcardPrincipal(statement)) {
-        return this.createResult(stackName, template, resource, this.description, `Add Condition block 'StringEquals': {'aws:SourceAccount': !Ref 'AWS::AccountId'} to restrict wildcard principal (*) access to current account only.`);
-      }
-    }
-
-    return null;
-  }
-
   private getLogicalId(template: Template, resource: Resource): string {
     if (!template.Resources) return '';
     const entry = Object.entries(template.Resources).find(([_, res]) => res === resource);
@@ -90,9 +65,7 @@ export class S3001Rule extends BaseRule {
       const destBucket = res.Properties?.LoggingConfiguration?.DestinationBucketName;
       if (!destBucket) continue;
 
-      // After cfn-utils parsing, Ref is resolved to the logical ID string
       if (destBucket === logicalId) return true;
-      // Raw template format (before parsing)
       if (destBucket?.Ref === logicalId) return true;
       if (destBucket?.['Fn::GetAtt']?.[0] === logicalId) return true;
     }
@@ -100,30 +73,12 @@ export class S3001Rule extends BaseRule {
   }
 
   private isSelfLogging(resource: Resource, destinationBucket: any, logicalId: string): boolean {
-    // Check literal bucket name match
     const bucketName = resource.Properties?.BucketName;
     if (typeof bucketName === 'string' && typeof destinationBucket === 'string' && bucketName === destinationBucket) {
       return true;
     }
-    // Check Ref to self
     if (destinationBucket?.Ref === logicalId) return true;
     return false;
-  }
-
-  private hasUnrestrictedWildcardPrincipal(statement: any): boolean {
-    return this.hasWildcardPrincipal(statement) && !statement.Condition;
-  }
-
-  private hasOverlyBroadActions(statement: any): boolean {
-    if (!statement.Action) return false;
-    const actions = Array.isArray(statement.Action) ? statement.Action : [statement.Action];
-    return actions.some((action: string) => action === '*');
-  }
-
-  private hasWildcardPrincipal(statement: any): boolean {
-    return statement.Principal === '*' ||
-      statement.Principal?.AWS === '*' ||
-      (Array.isArray(statement.Principal?.AWS) && statement.Principal.AWS.includes('*'));
   }
 }
 
