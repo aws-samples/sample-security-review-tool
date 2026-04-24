@@ -20,6 +20,9 @@ export function createSubmitResultTool(session: RefinerSession) {
                 knownLimitations: z.array(z.string()),
                 detectionLogicEdited: z.boolean(),
                 editSummary: z.string(),
+                fixGuidanceDocIssues: z.array(z.string()).default([]),
+                fixGuidanceEdited: z.boolean().default(false),
+                fixGuidanceEditSummary: z.string().default(''),
             }),
             phase2: z.object({
                 variantResults: z.array(z.object({

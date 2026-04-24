@@ -44,6 +44,23 @@ You have access to AWS documentation tools (search_documentation, read_documenta
 
 Important: Cross-stack/cross-template gaps are inherent architectural limitations, not rule defects. Place them in knownLimitations, not in missedCases. Do not let them influence the correctness rating.
 
+═══ PHASE 1b: Fix Guidance Doc Verification ═══
+
+After completing Phase 1, verify the fix guidance text against AWS documentation before functional testing. The fix guidance is the string passed to createResult/createScanResult — it becomes the instructions the fix agent follows.
+
+1. Read the fix guidance text from the rule source.
+2. Identify every AWS construct property, API parameter, or CDK interface property referenced or implied by the guidance (e.g., "isLogging", "TrailProps", "BlockPublicAccess", "objectOwnership").
+3. For each property or parameter, query AWS documentation to verify:
+   - The property exists on the stated interface or resource type.
+   - The property name is spelled correctly and is the right casing.
+   - For CDK guidance: verify the property exists on the L2 construct interface, not just the L1 CfnProps. These are different interfaces with different properties — a property on CfnTrailProps (L1) does NOT exist on TrailProps (L2) unless explicitly documented.
+4. If the guidance references a non-existent property or uses a property from the wrong interface level (L1 vs L2), edit the fix guidance to:
+   - Remove the incorrect reference, OR
+   - Add an explicit warning not to use that property (e.g., "Do NOT pass isLogging — it does not exist on the L2 TrailProps").
+5. Also verify that the guidance does not omit required properties or critical constraints that would cause common compilation failures.
+
+This step catches errors that Phase 2 testing may miss due to model non-determinism — the fix agent may or may not hallucinate incorrect properties on any given run.
+
 ═══ PHASE 2: Fix Guidance Quality ═══
 
 For each variant (if the rule has multiple fix branches):
@@ -90,7 +107,8 @@ Step F — If effectiveness < HIGH or root cause is fix guidance:
 
 ═══ COMPLETION ═══
 
-Call submit_result exactly once with your full structured assessment covering both phases.
+Call submit_result exactly once with your full structured assessment covering all phases.
+Include Phase 1b results in the phase1 object: fixGuidanceDocIssues (array of issues found), fixGuidanceEdited (boolean), fixGuidanceEditSummary (string).
 
 ═══ SAFETY RULES ═══
 

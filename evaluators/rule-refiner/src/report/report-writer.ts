@@ -58,6 +58,14 @@ export class ReportWriter {
                 lines.push('- Known limitations:');
                 for (const l of result.phase1.knownLimitations) lines.push(`  - ${l}`);
             }
+            if (result.phase1.fixGuidanceDocIssues.length > 0) {
+                lines.push('- Fix guidance doc issues:');
+                for (const issue of result.phase1.fixGuidanceDocIssues) lines.push(`  - ${issue}`);
+            }
+            if (result.phase1.fixGuidanceEdited) {
+                lines.push(`- Fix guidance edited (Phase 1b): Yes`);
+                if (result.phase1.fixGuidanceEditSummary) lines.push(`- Fix guidance edit: ${result.phase1.fixGuidanceEditSummary}`);
+            }
             lines.push('');
 
             if (result.phase2.variantResults.length > 0) {

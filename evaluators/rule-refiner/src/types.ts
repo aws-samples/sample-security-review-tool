@@ -34,6 +34,9 @@ export interface Phase1Result {
     knownLimitations: string[];
     detectionLogicEdited: boolean;
     editSummary: string;
+    fixGuidanceDocIssues: string[];
+    fixGuidanceEdited: boolean;
+    fixGuidanceEditSummary: string;
 }
 
 export interface Phase2VariantResult {
