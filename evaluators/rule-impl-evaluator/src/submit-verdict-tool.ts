@@ -13,6 +13,8 @@ const verdictSchema = z.object({
         .describe('Config patterns that should trigger the finding but do not. Empty array if none.'),
     falsePositiveRisks: z.array(z.string())
         .describe('Config patterns that trigger the finding but are actually compliant. Empty array if none.'),
+    knownLimitations: z.array(z.string())
+        .describe('Inherent detection boundaries that cannot be fixed in the rule (e.g., cross-stack/cross-template visibility gaps). These will be documented in the rule JSDoc, not implemented as code changes. Empty array if none.'),
     suggestedLogicChanges: z.string()
         .describe('Concrete proposed changes to the rule code if correctness is not CORRECT. Empty string if CORRECT.'),
 });
@@ -48,6 +50,7 @@ export function createSubmitVerdictTool(
                 awsDocCitations: input.awsDocCitations,
                 missedCases: input.missedCases,
                 falsePositiveRisks: input.falsePositiveRisks,
+                knownLimitations: input.knownLimitations,
                 suggestedLogicChanges: input.suggestedLogicChanges,
                 ruleSourceHash,
             };

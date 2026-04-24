@@ -8,6 +8,7 @@ export interface RuleImplVerdict {
     awsDocCitations: string[];
     missedCases: string[];
     falsePositiveRisks: string[];
+    knownLimitations: string[];
     suggestedLogicChanges: string;
     ruleSourceHash: string;
 }

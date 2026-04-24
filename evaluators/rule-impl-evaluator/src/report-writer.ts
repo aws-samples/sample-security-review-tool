@@ -46,10 +46,7 @@ export class ReportWriter {
         if (correct.length > 0) {
             lines.push(`## CORRECT (${correct.length})`);
             lines.push('');
-            lines.push(`<details><summary>Expand</summary>`);
-            lines.push('');
             for (const v of correct) lines.push(...this.renderVerdict(v, true));
-            lines.push(`</details>`);
         }
 
         return lines.join('\n');
@@ -75,6 +72,11 @@ export class ReportWriter {
             lines.push('');
             lines.push(`**False-positive risks:**`);
             for (const c of verdict.falsePositiveRisks) lines.push(`  - ${c}`);
+        }
+        if (verdict.knownLimitations.length > 0) {
+            lines.push('');
+            lines.push(`**Known limitations:**`);
+            for (const c of verdict.knownLimitations) lines.push(`  - ${c}`);
         }
         if (verdict.suggestedLogicChanges) {
             lines.push('');

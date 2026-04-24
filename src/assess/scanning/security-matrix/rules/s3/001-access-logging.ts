@@ -35,7 +35,7 @@ export class S3001Rule extends BaseRule {
 
     const loggingConfiguration = resource.Properties?.LoggingConfiguration;
     if (!loggingConfiguration) {
-      return this.createResult(stackName, template, resource, this.description, 'Add LoggingConfiguration property to enable S3 access logging with a dedicated log bucket.');
+      return this.createResult(stackName, template, resource, this.description, 'Enable S3 access logging with a dedicated log bucket.');
     }
 
     const destinationBucket = loggingConfiguration.DestinationBucketName;

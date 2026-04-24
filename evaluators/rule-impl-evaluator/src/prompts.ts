@@ -15,6 +15,9 @@ You will be shown the rule's full source code. Read it carefully — the evaluat
 3. Does the rule handle all valid ways of expressing the mitigation (e.g., both inline properties and references to KMS keys)?
 4. Does the rule miss any configuration that *should* trigger the finding? List missedCases.
 5. Does the rule trigger on any configuration that *is* actually compliant? List falsePositiveRisks.
+6. Are there inherent detection boundaries (e.g., cross-stack or cross-template gaps) that the rule cannot address? List knownLimitations.
+
+Important scope constraint: The SRT analyzes each CloudFormation template in isolation — it has no visibility into resources defined in other templates or stacks. Cross-stack or cross-template gaps are inherent architectural boundaries, not rule defects. Place them in knownLimitations, not in missedCases or falsePositiveRisks, and do not let them influence the correctness rating. In suggestedLogicChanges, recommend documenting them in the rule's "Known limitations" JSDoc comment rather than proposing code changes for them.
 
 When you have enough evidence, call submit_impl_verdict exactly once with your structured assessment. Your verdict must cite the specific AWS doc URLs you relied on.
 

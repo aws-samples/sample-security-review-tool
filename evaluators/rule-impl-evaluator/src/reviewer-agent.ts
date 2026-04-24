@@ -67,6 +67,7 @@ export class RuleImplReviewer {
             awsDocCitations: [],
             missedCases: [],
             falsePositiveRisks: [],
+            knownLimitations: [],
             suggestedLogicChanges: '',
             ruleSourceHash: rule.sourceHash,
         };
