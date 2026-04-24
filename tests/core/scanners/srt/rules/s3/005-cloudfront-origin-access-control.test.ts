@@ -61,25 +61,11 @@ describe('S3005Rule', () => {
   });
 
   describe('evaluateResource - OAC configurations', () => {
-    it('should pass when bucket has proper OAC with CloudFront service principal', () => {
+    it('should pass when bucket has OAC configured on origin', () => {
       const template = createTemplate({
         TestBucket: {
           Type: 'AWS::S3::Bucket',
           Properties: { BucketName: 'test-bucket' }
-        },
-        TestBucketPolicy: {
-          Type: 'AWS::S3::BucketPolicy',
-          Properties: {
-            Bucket: { Ref: 'TestBucket' },
-            PolicyDocument: {
-              Statement: [{
-                Effect: 'Allow',
-                Principal: { Service: 'cloudfront.amazonaws.com' },
-                Action: 's3:GetObject',
-                Resource: { 'Fn::Sub': '${TestBucket.Arn}/*' }
-              }]
-            }
-          }
         },
         TestDistribution: {
           Type: 'AWS::CloudFront::Distribution',
@@ -110,121 +96,14 @@ describe('S3005Rule', () => {
       const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
       expect(result).toBeNull();
     });
-
-    it('should pass when bucket policy has CloudFront service principal array', () => {
-      const template = createTemplate({
-        TestBucket: {
-          Type: 'AWS::S3::Bucket',
-          Properties: { BucketName: 'test-bucket' }
-        },
-        TestBucketPolicy: {
-          Type: 'AWS::S3::BucketPolicy',
-          Properties: {
-            Bucket: { Ref: 'TestBucket' },
-            PolicyDocument: {
-              Statement: [{
-                Effect: 'Allow',
-                Principal: { Service: ['cloudfront.amazonaws.com', 'lambda.amazonaws.com'] },
-                Action: 's3:GetObject',
-                Resource: { 'Fn::Sub': '${TestBucket.Arn}/*' }
-              }]
-            }
-          }
-        },
-        TestDistribution: {
-          Type: 'AWS::CloudFront::Distribution',
-          Properties: {
-            DistributionConfig: {
-              Origins: [{
-                Id: 'S3Origin',
-                DomainName: { 'Fn::GetAtt': ['TestBucket', 'DomainName'] },
-                OriginAccessControlId: { Ref: 'TestOAC' },
-                S3OriginConfig: {}
-              }]
-            }
-          }
-        },
-        TestOAC: {
-          Type: 'AWS::CloudFront::OriginAccessControl',
-          Properties: {}
-        }
-      });
-
-      const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
-      expect(result).toBeNull();
-    });
-
-    it('should pass when bucket policy has CloudFront SourceArn condition', () => {
-      const template = createTemplate({
-        TestBucket: {
-          Type: 'AWS::S3::Bucket',
-          Properties: { BucketName: 'test-bucket' }
-        },
-        TestBucketPolicy: {
-          Type: 'AWS::S3::BucketPolicy',
-          Properties: {
-            Bucket: { Ref: 'TestBucket' },
-            PolicyDocument: {
-              Statement: [{
-                Effect: 'Allow',
-                Principal: { Service: 'cloudfront.amazonaws.com' },
-                Action: 's3:GetObject',
-                Resource: { 'Fn::Sub': '${TestBucket.Arn}/*' },
-                Condition: {
-                  StringEquals: {
-                    'aws:SourceArn': 'arn:aws:cloudfront::123456789012:distribution/EXAMPLE'
-                  }
-                }
-              }]
-            }
-          }
-        },
-        TestDistribution: {
-          Type: 'AWS::CloudFront::Distribution',
-          Properties: {
-            DistributionConfig: {
-              Origins: [{
-                Id: 'S3Origin',
-                DomainName: { 'Fn::GetAtt': ['TestBucket', 'DomainName'] },
-                OriginAccessControlId: { Ref: 'TestOAC' },
-                S3OriginConfig: {}
-              }]
-            }
-          }
-        },
-        TestOAC: {
-          Type: 'AWS::CloudFront::OriginAccessControl',
-          Properties: {}
-        }
-      });
-
-      const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
-      expect(result).toBeNull();
-    });
   });
 
   describe('evaluateResource - OAI configurations', () => {
-    it('should pass when bucket has proper OAI with CanonicalUser principal', () => {
+    it('should pass when OAI uses Fn::Sub for OriginAccessIdentity', () => {
       const template = createTemplate({
         TestBucket: {
           Type: 'AWS::S3::Bucket',
           Properties: { BucketName: 'test-bucket' }
-        },
-        TestBucketPolicy: {
-          Type: 'AWS::S3::BucketPolicy',
-          Properties: {
-            Bucket: { Ref: 'TestBucket' },
-            PolicyDocument: {
-              Statement: [{
-                Effect: 'Allow',
-                Principal: {
-                  CanonicalUser: { 'Fn::GetAtt': ['TestOAI', 'S3CanonicalUserId'] }
-                },
-                Action: 's3:GetObject',
-                Resource: { 'Fn::Sub': '${TestBucket.Arn}/*' }
-              }]
-            }
-          }
         },
         TestDistribution: {
           Type: 'AWS::CloudFront::Distribution',
@@ -257,22 +136,6 @@ describe('S3005Rule', () => {
         TestBucket: {
           Type: 'AWS::S3::Bucket',
           Properties: { BucketName: 'test-bucket' }
-        },
-        TestBucketPolicy: {
-          Type: 'AWS::S3::BucketPolicy',
-          Properties: {
-            Bucket: { Ref: 'TestBucket' },
-            PolicyDocument: {
-              Statement: [{
-                Effect: 'Allow',
-                Principal: {
-                  CanonicalUser: { 'Fn::GetAtt': ['TestOAI', 'S3CanonicalUserId'] }
-                },
-                Action: 's3:GetObject',
-                Resource: { 'Fn::Sub': '${TestBucket.Arn}/*' }
-              }]
-            }
-          }
         },
         TestDistribution: {
           Type: 'AWS::CloudFront::Distribution',
@@ -308,22 +171,6 @@ describe('S3005Rule', () => {
           Type: 'AWS::S3::Bucket',
           Properties: { BucketName: 'test-bucket' }
         },
-        TestBucketPolicy: {
-          Type: 'AWS::S3::BucketPolicy',
-          Properties: {
-            Bucket: { Ref: 'TestBucket' },
-            PolicyDocument: {
-              Statement: [{
-                Effect: 'Allow',
-                Principal: {
-                  CanonicalUser: 'abc123canonicaluserid'
-                },
-                Action: 's3:GetObject',
-                Resource: { 'Fn::Sub': '${TestBucket.Arn}/*' }
-              }]
-            }
-          }
-        },
         TestDistribution: {
           Type: 'AWS::CloudFront::Distribution',
           Properties: {
@@ -336,6 +183,38 @@ describe('S3005Rule', () => {
                 }
               }]
             }
+          }
+        }
+      });
+
+      const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
+      expect(result).toBeNull();
+    });
+
+    it('should pass when OAI uses Ref for OriginAccessIdentity', () => {
+      const template = createTemplate({
+        TestBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: { BucketName: 'test-bucket' }
+        },
+        TestDistribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Origins: [{
+                Id: 'S3Origin',
+                DomainName: { 'Fn::GetAtt': ['TestBucket', 'DomainName'] },
+                S3OriginConfig: {
+                  OriginAccessIdentity: { Ref: 'TestOAI' }
+                }
+              }]
+            }
+          }
+        },
+        TestOAI: {
+          Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity',
+          Properties: {
+            CloudFrontOriginAccessIdentityConfig: { Comment: 'OAI for TestBucket' }
           }
         }
       });
@@ -369,10 +248,9 @@ describe('S3005Rule', () => {
       const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
       expect(result).not.toBeNull();
       expect(result?.fix).toContain('OAC');
-      expect(result?.fix).toContain('OAI');
     });
 
-    it('should fail when bucket policy is missing', () => {
+    it('should pass when OAC is configured without bucket policy in template', () => {
       const template = createTemplate({
         TestBucket: {
           Type: 'AWS::S3::Bucket',
@@ -398,28 +276,14 @@ describe('S3005Rule', () => {
       });
 
       const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
-      expect(result).not.toBeNull();
+      expect(result).toBeNull();
     });
 
-    it('should fail when bucket policy does not have CloudFront principal for OAC', () => {
+    it('should pass when OAI is configured without bucket policy in template', () => {
       const template = createTemplate({
         TestBucket: {
           Type: 'AWS::S3::Bucket',
           Properties: { BucketName: 'test-bucket' }
-        },
-        TestBucketPolicy: {
-          Type: 'AWS::S3::BucketPolicy',
-          Properties: {
-            Bucket: { Ref: 'TestBucket' },
-            PolicyDocument: {
-              Statement: [{
-                Effect: 'Allow',
-                Principal: { AWS: 'arn:aws:iam::123456789012:role/MyRole' },
-                Action: 's3:GetObject',
-                Resource: { 'Fn::Sub': '${TestBucket.Arn}/*' }
-              }]
-            }
-          }
         },
         TestDistribution: {
           Type: 'AWS::CloudFront::Distribution',
@@ -428,20 +292,17 @@ describe('S3005Rule', () => {
               Origins: [{
                 Id: 'S3Origin',
                 DomainName: { 'Fn::GetAtt': ['TestBucket', 'DomainName'] },
-                OriginAccessControlId: { Ref: 'TestOAC' },
-                S3OriginConfig: {}
+                S3OriginConfig: {
+                  OriginAccessIdentity: 'origin-access-identity/cloudfront/E127EXAMPLE51Z'
+                }
               }]
             }
           }
-        },
-        TestOAC: {
-          Type: 'AWS::CloudFront::OriginAccessControl',
-          Properties: {}
         }
       });
 
       const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
-      expect(result).not.toBeNull();
+      expect(result).toBeNull();
     });
   });
 
@@ -494,6 +355,30 @@ describe('S3005Rule', () => {
       expect(result).not.toBeNull();
     });
 
+    it('should detect bucket referenced via Fn::Sub array format', () => {
+      const template = createTemplate({
+        TestBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: { BucketName: 'test-bucket' }
+        },
+        TestDistribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Origins: [{
+                Id: 'S3Origin',
+                DomainName: { 'Fn::Sub': ['${TestBucket}.s3.amazonaws.com', {}] },
+                S3OriginConfig: {}
+              }]
+            }
+          }
+        }
+      });
+
+      const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
+      expect(result).not.toBeNull();
+    });
+
     it('should detect bucket referenced via Fn::Join', () => {
       const template = createTemplate({
         TestBucket: {
@@ -533,6 +418,33 @@ describe('S3005Rule', () => {
               Origins: [{
                 Id: 'S3WebsiteOrigin',
                 DomainName: 'test-bucket.s3-website-us-east-1.amazonaws.com',
+                CustomOriginConfig: { OriginProtocolPolicy: 'http-only' }
+              }]
+            }
+          }
+        }
+      });
+
+      const result = rule.evaluateResource(stackName, template, template.Resources!.TestBucket);
+      expect(result).toBeNull();
+    });
+
+    it('should not flag bucket when CloudFront uses website endpoint via Fn::GetAtt', () => {
+      const template = createTemplate({
+        TestBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {
+            BucketName: 'test-bucket',
+            WebsiteConfiguration: { IndexDocument: 'index.html' }
+          }
+        },
+        TestDistribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Origins: [{
+                Id: 'S3WebsiteOrigin',
+                DomainName: { 'Fn::GetAtt': ['TestBucket', 'WebsiteURL'] },
                 CustomOriginConfig: { OriginProtocolPolicy: 'http-only' }
               }]
             }

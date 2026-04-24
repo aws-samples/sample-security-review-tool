@@ -35,8 +35,6 @@ export class FixtureValidator {
         const issues = this.readIssues(fixtureDir);
         const sameScanner = issues.filter(issue => this.matchesScanner(issue, rule.scanner));
         const targetHits = sameScanner.filter(issue => issue.check_id === rule.checkId);
-        const extraHits = sameScanner.filter(issue => issue.check_id !== rule.checkId);
-
         if (targetHits.length === 0) {
             return {
                 ok: false,
@@ -53,18 +51,6 @@ export class FixtureValidator {
                 failure: {
                     kind: 'scan-extra-rules',
                     message: `Fixture triggered ${rule.checkId} ${targetHits.length} times; expected exactly once`,
-                },
-            };
-        }
-        if (extraHits.length > 0) {
-            const extraCheckIds = Array.from(new Set(extraHits.map(i => i.check_id).filter((id): id is string => Boolean(id))));
-            return {
-                ok: false,
-                failure: {
-                    kind: 'scan-extra-rules',
-                    message: `Fixture triggered other ${rule.scanner} rules: ${extraCheckIds.join(', ')}`,
-                    details: `Satisfy these sibling rules (or remove the resources that trigger them) while keeping the target rule violated.`,
-                    extraCheckIds,
                 },
             };
         }

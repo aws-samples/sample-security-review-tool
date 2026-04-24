@@ -7,9 +7,24 @@ import { Template } from 'cloudform-types';
  *
  * Both Origin Access Control (OAC) and Origin Access Identity (OAI) prevent direct public
  * access to S3 buckets, ensuring objects can only be accessed through CloudFront.
- *
  * OAC is the newer approach with additional features (SigV4, SSE-KMS support), but OAI
  * remains a valid security configuration for existing deployments.
+ *
+ * Detects OAC via OriginAccessControlId on the origin, and OAI via
+ * S3OriginConfig.OriginAccessIdentity (string, Ref, Fn::Sub, Fn::Join).
+ * Resolves origin-to-bucket references through Ref, Fn::GetAtt, Fn::Sub (string and
+ * array forms), and Fn::Join.
+ *
+ * Only evaluates origins using S3OriginConfig. Origins using CustomOriginConfig (S3
+ * website endpoints) are excluded because OAC/OAI cannot be applied to them.
+ *
+ * Bucket policy presence is not checked — the policy may be managed in a separate stack
+ * or outside CloudFormation entirely. OAC/OAI on the origin is sufficient to pass.
+ *
+ * Known limitations:
+ * - Hardcoded string DomainName values (e.g. "mybucket.s3.amazonaws.com") cannot be
+ *   linked to S3 bucket resources in the template.
+ * - Fn::Select, Fn::If, and Fn::ImportValue are not handled in reference resolution.
  */
 export class S3005Rule extends BaseRule {
 	constructor() {
@@ -36,7 +51,7 @@ export class S3005Rule extends BaseRule {
 			template,
 			resource,
 			this.description,
-			'Configure Origin Access Control (OAC) or Origin Access Identity (OAI) for CloudFront distributions using this bucket, and update bucket policy to restrict access.'
+			'Configure Origin Access Control (OAC) for CloudFront distributions using this bucket.'
 		);
 	}
 
@@ -63,36 +78,7 @@ export class S3005Rule extends BaseRule {
 	}
 
 	private isS3Origin(origin: any): boolean {
-		if (origin.S3OriginConfig) return true;
-
-		if (origin.CustomOriginConfig && origin.DomainName) {
-			return this.isS3DomainName(origin.DomainName);
-		}
-		return false;
-	}
-
-	private isS3DomainName(domainName: any): boolean {
-		if (typeof domainName === 'string') {
-			return this.isS3WebsiteEndpoint(domainName);
-		}
-		return this.referencesS3Attribute(domainName);
-	}
-
-	private isS3WebsiteEndpoint(domain: string): boolean {
-		return domain.includes('.s3-website-') ||
-			domain.includes('.s3-website.') ||
-			domain.endsWith('.s3.amazonaws.com') ||
-			(domain.includes('.s3.') && domain.includes('.amazonaws.com'));
-	}
-
-	private referencesS3Attribute(domainName: any): boolean {
-		if (typeof domainName !== 'object' || !domainName['Fn::GetAtt']) return false;
-
-		const getAtt = domainName['Fn::GetAtt'];
-		if (!Array.isArray(getAtt) || getAtt.length < 2) return false;
-
-		const attribute = getAtt[1];
-		return attribute === 'WebsiteURL' || attribute === 'DomainName' || attribute === 'RegionalDomainName';
+		return !!origin.S3OriginConfig;
 	}
 
 	private originReferencesBucket(origin: any, bucketLogicalId: string): boolean {
@@ -118,7 +104,9 @@ export class S3005Rule extends BaseRule {
 	private isSubReferencing(value: any, logicalId: string): boolean {
 		if (typeof value !== 'object' || !value['Fn::Sub']) return false;
 		const sub = value['Fn::Sub'];
-		return typeof sub === 'string' && sub.includes(`\${${logicalId}}`);
+		if (typeof sub === 'string') return sub.includes(`\${${logicalId}}`);
+		if (Array.isArray(sub) && typeof sub[0] === 'string') return sub[0].includes(`\${${logicalId}}`);
+		return false;
 	}
 
 	private isJoinReferencing(value: any, logicalId: string): boolean {
@@ -133,12 +121,8 @@ export class S3005Rule extends BaseRule {
 	}
 
 	private hasValidAccessRestriction(template: Template, bucketLogicalId: string): boolean {
-		const hasOAC = this.hasOriginAccessControl(template, bucketLogicalId);
-		const hasOAI = this.hasOriginAccessIdentity(template, bucketLogicalId);
-
-		if (!hasOAC && !hasOAI) return false;
-
-		return this.hasBucketPolicyForCloudFront(template, bucketLogicalId, hasOAC);
+		return this.hasOriginAccessControl(template, bucketLogicalId) ||
+			this.hasOriginAccessIdentity(template, bucketLogicalId);
 	}
 
 	private hasOriginAccessControl(template: Template, bucketLogicalId: string): boolean {
@@ -183,62 +167,6 @@ export class S3005Rule extends BaseRule {
 		}
 
 		return typeof oai === 'object' && (oai['Fn::Join'] || oai['Fn::Sub'] || oai.Ref);
-	}
-
-	private hasBucketPolicyForCloudFront(template: Template, bucketLogicalId: string, isOAC: boolean): boolean {
-		for (const resource of Object.values(template.Resources || {})) {
-			if (resource.Type !== 'AWS::S3::BucketPolicy') continue;
-			if (!this.policyTargetsBucket(resource.Properties?.Bucket, bucketLogicalId)) continue;
-
-			const statements = this.extractStatements(resource.Properties?.PolicyDocument);
-
-			for (const statement of statements) {
-				if (statement.Effect !== 'Allow') continue;
-				if (isOAC && this.isCloudFrontServicePolicy(statement)) return true;
-				if (!isOAC && this.isOAICanonicalUserPolicy(statement)) return true;
-			}
-		}
-		return false;
-	}
-
-	private policyTargetsBucket(bucketRef: any, bucketLogicalId: string): boolean {
-		if (typeof bucketRef === 'string') return bucketRef === bucketLogicalId;
-		return this.isRefTo(bucketRef, bucketLogicalId);
-	}
-
-	private extractStatements(policyDocument: any): any[] {
-		if (!policyDocument?.Statement) return [];
-		return Array.isArray(policyDocument.Statement) ? policyDocument.Statement : [policyDocument.Statement];
-	}
-
-	private isCloudFrontServicePolicy(statement: any): boolean {
-		const principal = statement.Principal;
-		if (!principal) return false;
-
-		if (principal.Service === 'cloudfront.amazonaws.com') return true;
-		if (Array.isArray(principal.Service) && principal.Service.includes('cloudfront.amazonaws.com')) return true;
-
-		return this.hasCloudFrontSourceArnCondition(statement.Condition);
-	}
-
-	private isOAICanonicalUserPolicy(statement: any): boolean {
-		const principal = statement.Principal;
-		if (!principal) return false;
-
-		if (principal.CanonicalUser) return true;
-		return false;
-	}
-
-	private hasCloudFrontSourceArnCondition(condition: any): boolean {
-		if (!condition?.StringEquals) return false;
-
-		const sourceArn = condition.StringEquals['aws:SourceArn'] || condition.StringEquals['AWS:SourceArn'];
-		if (!sourceArn) return false;
-
-		if (typeof sourceArn === 'string') return sourceArn.includes('cloudfront');
-		if (Array.isArray(sourceArn)) return sourceArn.some((arn: string) => arn.includes('cloudfront'));
-
-		return false;
 	}
 
 	public evaluate(resource: CloudFormationResource, stackName: string, allResources?: CloudFormationResource[]): ScanResult | null {
