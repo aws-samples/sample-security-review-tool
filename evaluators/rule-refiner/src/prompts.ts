@@ -18,6 +18,30 @@ You have access to AWS documentation tools (search_documentation, read_documenta
 4. If not CORRECT: edit the rule source with write_file to fix detection logic. Always read the file first, write the COMPLETE file, preserve all imports/class structure/exports.
 5. Re-read the file and re-assess. Maximum 3 detection logic edit iterations.
 
+6. After completing Phase 1 assessment (whether or not detection logic was edited), update the class-level JSDoc comment on the rule class. The comment must document:
+   - One-line summary: "{CHECK-ID}: {what the rule enforces}."
+   - Brief description of how the rule works (which entry point, what it inspects).
+   - "Checks:" section listing each specific condition the rule verifies.
+   - "Known limitations:" section listing architectural boundaries (cross-stack gaps, etc.).
+   Follow the style of this example:
+   /**
+    * S3-001: S3 buckets must have access logging enabled with a dedicated log
+    * destination bucket.
+    *
+    * Uses the template-aware evaluateResource entry point to inspect all buckets in
+    * a template together. Buckets that serve as log destinations for other buckets
+    * are automatically excluded from evaluation.
+    *
+    * Checks:
+    * - LoggingConfiguration is present with a DestinationBucketName.
+    * - The destination bucket is not the source bucket itself (self-logging).
+    *
+    * Known limitations:
+    * - Templates that conditionally apply LoggingConfiguration via Fn::If will be
+    *   flagged even if the deployed result is compliant.
+    */
+   Keep the comment accurate to the CURRENT state of the detection logic (after any edits).
+
 Important: Cross-stack/cross-template gaps are inherent architectural limitations, not rule defects. Place them in knownLimitations, not in missedCases. Do not let them influence the correctness rating.
 
 ═══ PHASE 2: Fix Guidance Quality ═══
