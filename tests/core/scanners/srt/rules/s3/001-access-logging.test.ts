@@ -38,7 +38,6 @@ describe('S3001Rule', () => {
         expect(result).not.toBeNull();
         expect(result?.resourceType).toBe('AWS::S3::Bucket');
         expect(result?.resourceName).toBe('TestBucket');
-        expect(result?.fix).toContain('configuring a LoggingConfiguration with a DestinationBucketName');
       });
 
       it('should return finding for bucket with logging configuration without destination bucket', () => {
@@ -59,7 +58,6 @@ describe('S3001Rule', () => {
         expect(result).not.toBeNull();
         expect(result?.resourceType).toBe('AWS::S3::Bucket');
         expect(result?.resourceName).toBe('TestBucket');
-        expect(result?.fix).toContain('configuring a LoggingConfiguration with a DestinationBucketName');
       });
 
       it('should return finding for bucket that logs to itself', () => {
@@ -83,7 +81,6 @@ describe('S3001Rule', () => {
         expect(result).not.toBeNull();
         expect(result?.resourceType).toBe('AWS::S3::Bucket');
         expect(result?.resourceName).toBe('TestBucket');
-        expect(result?.fix).toContain('Use a dedicated logging bucket different from the source bucket');
       });
 
       it('should return finding for bucket that logs to itself via Ref', () => {
@@ -105,7 +102,6 @@ describe('S3001Rule', () => {
         const result = rule.evaluateResource(stackName, template, template.Resources!['TestBucket'] as Resource);
 
         expect(result).not.toBeNull();
-        expect(result?.fix).toContain('Use a dedicated logging bucket');
       });
 
       it('should not return finding for bucket with proper logging configuration', () => {

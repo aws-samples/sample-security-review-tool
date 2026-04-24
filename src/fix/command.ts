@@ -39,6 +39,7 @@ export class FixCommand {
                         const filePath = await coordinator.getCodeFilePath(issue);
 
                         console.log(`${chalk.blueBright('Issue:')} ${issue.issue}`);
+                        if (issue.check_id) console.log(`${chalk.blueBright('Check ID:')} ${issue.check_id}`);
                         if (issue.resourceType) console.log(`${chalk.blueBright('Resource Type:')} ${issue.resourceType}`);
                         if (issue.resourceName) console.log(`${chalk.blueBright('Resource Name:')} ${issue.resourceName}`);
                         if (issue.path) console.log(`${chalk.blueBright('File:')} ${filePath}`);
