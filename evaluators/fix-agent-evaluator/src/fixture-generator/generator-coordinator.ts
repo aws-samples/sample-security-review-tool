@@ -5,6 +5,7 @@ import { BedrockRuntimeClient } from '@aws-sdk/client-bedrock-runtime';
 import type { FixtureFormat, RuleEntry } from '../../../shared/rule-catalog/src/index.js';
 import { RuleCatalog } from '../../../shared/rule-catalog/src/index.js';
 import type {
+    FindingVariant,
     FixtureFile,
     FixtureMeta,
     GeneratedFixture,
@@ -40,11 +41,11 @@ export class GeneratorCoordinator {
     public async generate(
         rule: RuleEntry,
         format: FixtureFormat,
-        options: { regenerate?: boolean } = {},
+        options: { regenerate?: boolean; variant?: FindingVariant } = {},
     ): Promise<GeneratedFixture> {
-        const fixtureDir = this.fixtureDirFor(rule, format);
+        const fixtureDir = this.fixtureDirFor(rule, format, options.variant?.variantId);
         const cached = this.readCachedMeta(fixtureDir);
-        if (!options.regenerate && cached && this.isCacheValid(cached, rule)) {
+        if (!options.regenerate && cached && this.isCacheValid(cached, rule, options.variant)) {
             await this.restoreDepsIfMissing(fixtureDir);
             return { meta: cached, fixtureDir, ungeneratable: false };
         }
@@ -55,7 +56,7 @@ export class GeneratorCoordinator {
         let previousFailure: ValidationFailure | null = null;
         const relatedRules = new Map<string, RelatedRuleContext>();
         for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            const files = await this.synthAgent.generate(rule, format, previousFailure, [...relatedRules.values()]);
+            const files = await this.synthAgent.generate(rule, format, previousFailure, [...relatedRules.values()], options.variant);
             this.writeFixtureFiles(fixtureDir, files);
 
             const installFailure = await this.ensureDepsInstalled(fixtureDir);
@@ -65,9 +66,9 @@ export class GeneratorCoordinator {
                 continue;
             }
 
-            const validation = await this.validator.validate(fixtureDir, rule);
+            const validation = await this.validator.validate(fixtureDir, rule, options.variant);
             if (validation.ok) {
-                const meta = this.buildMeta(rule, format, attempt, relatedRules);
+                const meta = this.buildMeta(rule, format, attempt, relatedRules, options.variant);
                 this.writeMeta(fixtureDir, meta);
                 this.gitInit(fixtureDir);
                 return { meta, fixtureDir, ungeneratable: false };
@@ -78,7 +79,7 @@ export class GeneratorCoordinator {
         }
 
         return {
-            meta: this.buildMeta(rule, format, MAX_ATTEMPTS, relatedRules),
+            meta: this.buildMeta(rule, format, MAX_ATTEMPTS, relatedRules, options.variant),
             fixtureDir,
             ungeneratable: true,
             ungeneratableReason: previousFailure
@@ -149,8 +150,9 @@ export class GeneratorCoordinator {
         };
     }
 
-    private isCacheValid(cached: FixtureMeta, rule: RuleEntry): boolean {
+    private isCacheValid(cached: FixtureMeta, rule: RuleEntry, variant?: FindingVariant): boolean {
         if (cached.sourceHash !== rule.sourceHash) return false;
+        if ((cached.variantId ?? undefined) !== (variant?.variantId ?? undefined)) return false;
         for (const [checkId, cachedHash] of Object.entries(cached.relatedRuleHashes ?? {})) {
             const currentEntry = this.ruleCatalog.find(checkId);
             if (!currentEntry || currentEntry.sourceHash !== cachedHash) return false;
@@ -158,9 +160,10 @@ export class GeneratorCoordinator {
         return true;
     }
 
-    public fixtureDirFor(rule: RuleEntry, format: FixtureFormat): string {
+    public fixtureDirFor(rule: RuleEntry, format: FixtureFormat, variantId?: string): string {
         const safeCheckId = rule.checkId.replace(/[^A-Za-z0-9_.-]/g, '_');
-        return path.join(this.fixturesRoot, rule.scanner, format, safeCheckId);
+        const base = path.join(this.fixturesRoot, rule.scanner, format, safeCheckId);
+        return variantId ? path.join(base, variantId) : base;
     }
 
     private readCachedMeta(fixtureDir: string): FixtureMeta | null {
@@ -206,6 +209,7 @@ export class GeneratorCoordinator {
         format: FixtureFormat,
         attempts: number,
         relatedRules: Map<string, RelatedRuleContext>,
+        variant?: FindingVariant,
     ): FixtureMeta {
         const meta: FixtureMeta = {
             checkId: rule.checkId,
@@ -215,6 +219,9 @@ export class GeneratorCoordinator {
             generatedAt: new Date().toISOString(),
             validationAttempts: attempts,
         };
+        if (variant) {
+            meta.variantId = variant.variantId;
+        }
         if (relatedRules.size > 0) {
             meta.relatedRuleHashes = this.collectRelatedRuleHashes(relatedRules);
         }

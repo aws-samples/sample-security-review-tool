@@ -5,9 +5,10 @@ import { SrtRunner } from './srt-runner.js';
 import { ReviewerAgent } from './reviewer/reviewer-agent.js';
 import { ReviewerTools } from './reviewer/tools.js';
 import { ReportWriter } from './report/report-writer.js';
-import { CoverageReportWriter } from './report/coverage-report-writer.js';
 import { RuleSourceLocator } from './rule-source-locator.js';
 import { GeneratorCoordinator } from './fixture-generator/generator-coordinator.js';
+import type { FindingVariant } from './fixture-generator/types.js';
+import { extractVariants } from './fixture-generator/variant-extractor.js';
 import { RescanChecker } from './rescan-checker.js';
 import { RuleCatalog } from '../../shared/rule-catalog/src/index.js';
 import type { CatalogFilter, FixtureFormat, RuleEntry, Scanner } from '../../shared/rule-catalog/src/index.js';
@@ -22,6 +23,7 @@ export interface FixtureModeOptions {
 export interface FixtureRunResult {
     rule: RuleEntry;
     format: FixtureFormat;
+    variant?: FindingVariant;
     ungeneratable: boolean;
     ungeneratableReason?: string;
     verdict?: ReviewVerdict;
@@ -34,8 +36,8 @@ export interface FixtureRunResult {
  * Two modes:
  *   - Legacy target-project mode (one git repo supplied by the user).
  *   - Fixture mode: iterate every fixable rule from the catalog, generate a
- *     minimal fixture, scan → fix → rescan → review, and write a coverage
- *     report alongside the drilldown report.
+ *     minimal fixture, scan → fix → rescan → review, and write a drilldown
+ *     report.
  */
 export class Evaluator {
     constructor(
@@ -62,7 +64,7 @@ export class Evaluator {
         return writer.write(records, verdicts);
     }
 
-    public async evaluateFixtures(options: FixtureModeOptions): Promise<{ markdownPath: string; jsonPath: string; coveragePath: string }> {
+    public async evaluateFixtures(options: FixtureModeOptions): Promise<{ markdownPath: string; jsonPath: string }> {
         const catalog = new RuleCatalog(this.srtRepoRoot);
         await catalog.load();
         const rules = catalog.list(options.filter ?? {});
@@ -75,10 +77,17 @@ export class Evaluator {
 
         const generator = new GeneratorCoordinator(getBedrockClient(), this.fixturesRoot, catalog);
 
-        const tasks: Array<{ rule: RuleEntry; format: FixtureFormat }> = [];
+        const tasks: Array<{ rule: RuleEntry; format: FixtureFormat; variant?: FindingVariant }> = [];
         for (const rule of rules) {
+            const variants = extractVariants(rule.ruleBody ?? '');
             for (const format of this.resolveFormats(rule, options.formats)) {
-                tasks.push({ rule, format });
+                if (variants.length === 0) {
+                    tasks.push({ rule, format });
+                } else {
+                    for (const variant of variants) {
+                        tasks.push({ rule, format, variant });
+                    }
+                }
             }
         }
 
@@ -86,7 +95,7 @@ export class Evaluator {
         console.log(`Running ${tasks.length} fixture evaluation(s) with concurrency=${concurrency}.`);
 
         const results = await this.runWithConcurrency(tasks, concurrency, async (task) => {
-            const runResult = await this.evaluateOneFixture(task.rule, task.format, generator, options.regenerate);
+            const runResult = await this.evaluateOneFixture(task.rule, task.format, generator, options.regenerate, task.variant);
             this.logFixtureOutcome(task.rule, task.format, runResult);
             return runResult;
         });
@@ -99,10 +108,7 @@ export class Evaluator {
             verdicts,
         );
 
-        const coverageWriter = new CoverageReportWriter(this.reportsDir);
-        const coveragePath = await coverageWriter.write(rules, results);
-
-        return { markdownPath, jsonPath, coveragePath };
+        return { markdownPath, jsonPath };
     }
 
     private async evaluateOneFixture(
@@ -110,13 +116,15 @@ export class Evaluator {
         format: FixtureFormat,
         generator: GeneratorCoordinator,
         regenerate: boolean | undefined,
+        variant?: FindingVariant,
     ): Promise<FixtureRunResult> {
         try {
-            const fixture = await generator.generate(rule, format, { regenerate });
+            const fixture = await generator.generate(rule, format, { regenerate, variant });
             if (fixture.ungeneratable) {
                 return {
                     rule,
                     format,
+                    variant,
                     ungeneratable: true,
                     ungeneratableReason: fixture.ungeneratableReason,
                 };
@@ -131,6 +139,7 @@ export class Evaluator {
                 return {
                     rule,
                     format,
+                    variant,
                     ungeneratable: false,
                     error: `fixIssueForRule returned null for ${rule.checkId} — fixture scan did not contain the target finding at fix time`,
                 };
@@ -149,14 +158,18 @@ export class Evaluator {
                 fixOutcome.record,
                 rescan,
             );
+            if (variant) {
+                verdict.variantId = variant.variantId;
+            }
 
             SrtRunner.resetFixture(fixture.fixtureDir);
 
-            return { rule, format, ungeneratable: false, verdict };
+            return { rule, format, variant, ungeneratable: false, verdict };
         } catch (error) {
             return {
                 rule,
                 format,
+                variant,
                 ungeneratable: false,
                 error: (error as Error).message,
             };
@@ -218,7 +231,8 @@ export class Evaluator {
     }
 
     private logFixtureOutcome(rule: RuleEntry, format: FixtureFormat, result: FixtureRunResult): void {
-        const id = `${rule.scanner}/${format}/${rule.checkId}`;
+        const variantSuffix = result.variant ? `/${result.variant.variantId}` : '';
+        const id = `${rule.scanner}/${format}/${rule.checkId}${variantSuffix}`;
         if (result.ungeneratable) {
             console.log(`  [ungeneratable] ${id}: ${result.ungeneratableReason ?? 'unknown'}`);
             return;

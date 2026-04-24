@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { AssessCoordinator } from '../../../../src/assess/coordinator.js';
 import type { ScanResult } from '../../../../src/assess/scanning/types.js';
 import type { RuleEntry, Scanner } from '../../../shared/rule-catalog/src/index.js';
-import type { ValidationResult } from './types.js';
+import type { FindingVariant, ValidationResult } from './types.js';
 
 const ISSUES_FILE = path.join('.srt', 'issues.json');
 
@@ -15,7 +15,7 @@ const ISSUES_FILE = path.join('.srt', 'issues.json');
  * produce no findings at all.
  */
 export class FixtureValidator {
-    public async validate(fixtureDir: string, rule: RuleEntry): Promise<ValidationResult> {
+    public async validate(fixtureDir: string, rule: RuleEntry, variant?: FindingVariant): Promise<ValidationResult> {
         this.resetIssuesFile(fixtureDir);
 
         try {
@@ -54,7 +54,22 @@ export class FixtureValidator {
                 },
             };
         }
+        if (variant && !this.matchesVariant(targetHits[0], variant)) {
+            return {
+                ok: false,
+                failure: {
+                    kind: 'wrong-variant',
+                    message: `Fixture triggered ${rule.checkId} but hit a different branch`,
+                    details: `Expected fix text containing "${variant.fixGuidance.slice(0, 80)}...", got "${(targetHits[0].fix ?? '').slice(0, 80)}..."`,
+                },
+            };
+        }
         return { ok: true };
+    }
+
+    private matchesVariant(issue: ScanResult, variant: FindingVariant): boolean {
+        const fix = issue.fix ?? '';
+        return fix.includes(variant.fixGuidance) || variant.fixGuidance.includes(fix);
     }
 
     private matchesScanner(issue: ScanResult, scanner: Scanner): boolean {

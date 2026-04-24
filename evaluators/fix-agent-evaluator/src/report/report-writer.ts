@@ -45,7 +45,8 @@ export class ReportWriter {
     private renderVerdict(verdict: ReviewVerdict, record: FixRunRecord | undefined): string {
         const icon = verdict.effectiveness === 'HIGH' && verdict.efficiency === 'HIGH' ? '✅' : '❌';
         const lines: string[] = [];
-        lines.push(`### ${icon} ${verdict.checkId} — ${verdict.path}${verdict.resourceName ? ` (${verdict.resourceName})` : ''}`);
+        const variantTag = verdict.variantId ? ` [${verdict.variantId}]` : '';
+        lines.push(`### ${icon} ${verdict.checkId}${variantTag} — ${verdict.path}${verdict.resourceName ? ` (${verdict.resourceName})` : ''}`);
         lines.push('');
         lines.push(`- Effectiveness: **${verdict.effectiveness}** — ${verdict.effectivenessReasoning}`);
         lines.push(`- Efficiency: **${verdict.efficiency}** — ${verdict.efficiencyReasoning} (retries: ${verdict.retries}, turns: ${verdict.turns}, apply_fix failures: ${verdict.applyFixFailures})`);

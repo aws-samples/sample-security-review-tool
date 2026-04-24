@@ -8,7 +8,7 @@ Two modes:
 
 - **Fixture mode (default)** — iterate every fixable rule in the catalog,
   synthesize a minimal test project per rule, scan → fix → rescan → review,
-  and produce a coverage report. Catches rules with deficient fix guidance
+  and catch rules with deficient fix guidance
   without anyone having to hand-build test projects.
 - **Project mode (legacy)** — point it at an existing git repository and
   evaluate whichever findings happen to fire there. Kept for cases where you
@@ -53,8 +53,8 @@ A rule passes for a given format only if all of:
 - Rescan: no new rules triggered
 - Rescan: fixture still validates
 
-All five are surfaced in the coverage report's failure-reasons column so
-you can see exactly which bar the rule fell below.
+All five are surfaced in the drilldown report's failure-reasons so you
+can see exactly which bar the rule fell below.
 
 ## Scanners covered
 
@@ -159,12 +159,6 @@ Both modes write a per-finding drill-down:
 - `reports/evaluation-<timestamp>.md` — one section per finding
 - `reports/evaluation-<timestamp>.json` — structured form
 
-Fixture mode additionally writes:
-
-- `reports/coverage-<timestamp>.md` — pass-rate per scanner, failure table
-  sorted by severity of failure, per-rule suggested fix-text replacements,
-  ungeneratable list.
-
 Example drill-down entry:
 
 ```
@@ -198,7 +192,6 @@ fix-agent-evaluator/
     semgrep/<CHECK-ID>/
   reports/                               # git-ignored
     evaluation-<ts>.{md,json}
-    coverage-<ts>.md                     # fixture mode only
   src/
     fixture-generator/                   # bedrock synth + validate + cache
     rescan-checker.ts

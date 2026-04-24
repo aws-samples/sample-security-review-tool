@@ -73,6 +73,7 @@ export interface ReviewVerdict {
     source: string;
     path: string;
     resourceName?: string;
+    variantId?: string;
     effectiveness: Rating;
     effectivenessReasoning: string;
     efficiency: Rating;

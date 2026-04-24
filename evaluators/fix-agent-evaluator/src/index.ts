@@ -30,14 +30,13 @@ async function main(): Promise<void> {
         return;
     }
 
-    const { markdownPath, jsonPath, coveragePath } = await evaluator.evaluateFixtures({
+    const { markdownPath, jsonPath } = await evaluator.evaluateFixtures({
         filter: args.filter,
         formats: args.formats,
         regenerate: args.regenerate,
         concurrency: args.concurrency,
     });
     console.log(`\nReports written:`);
-    console.log(`  ${coveragePath}`);
     console.log(`  ${markdownPath}`);
     console.log(`  ${jsonPath}`);
 }

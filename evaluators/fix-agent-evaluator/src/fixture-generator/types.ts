@@ -5,6 +5,12 @@ export interface FixtureFile {
     content: string;
 }
 
+export interface FindingVariant {
+    variantId: string;
+    fixGuidance: string;
+    label: string;
+}
+
 export interface FixtureMeta {
     checkId: string;
     scanner: Scanner;
@@ -13,6 +19,7 @@ export interface FixtureMeta {
     generatedAt: string;
     validationAttempts: number;
     relatedRuleHashes?: Record<string, string>;
+    variantId?: string;
 }
 
 export interface GeneratedFixture {
@@ -23,7 +30,7 @@ export interface GeneratedFixture {
 }
 
 export interface ValidationFailure {
-    kind: 'parse' | 'synth' | 'scan-missing-target' | 'scan-extra-rules' | 'deps-install-failed';
+    kind: 'parse' | 'synth' | 'scan-missing-target' | 'scan-extra-rules' | 'deps-install-failed' | 'wrong-variant';
     message: string;
     details?: string;
     extraCheckIds?: string[];

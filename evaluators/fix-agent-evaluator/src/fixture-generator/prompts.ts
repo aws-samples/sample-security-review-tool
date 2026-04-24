@@ -1,5 +1,5 @@
 import type { FixtureFormat, RuleEntry } from '../../../shared/rule-catalog/src/index.js';
-import type { RelatedRuleContext, ValidationFailure } from './types.js';
+import type { FindingVariant, RelatedRuleContext, ValidationFailure } from './types.js';
 
 export const SYNTH_SYSTEM_PROMPT = `You generate minimal test fixtures for a security scanner. Your fixture must:
   1. Trigger the target rule exactly once — no more, no less.
@@ -23,6 +23,7 @@ export function buildSynthUserPrompt(
     format: FixtureFormat,
     previousFailure: ValidationFailure | null,
     relatedRules: RelatedRuleContext[] = [],
+    variant?: FindingVariant,
 ): string {
     const lines: string[] = [];
     lines.push(`Target rule: ${rule.checkId} (${rule.scanner})`);
@@ -40,6 +41,16 @@ export function buildSynthUserPrompt(
         lines.push('```');
         lines.push(rule.ruleBody);
         lines.push('```');
+        lines.push('');
+    }
+    if (variant) {
+        lines.push(`IMPORTANT: This fixture must trigger a SPECIFIC finding branch.`);
+        lines.push(`The rule has multiple code paths that produce different findings with different fix guidance.`);
+        lines.push(`You must trigger the branch that emits this specific fix text:`);
+        lines.push('---');
+        lines.push(variant.fixGuidance);
+        lines.push('---');
+        lines.push(`Study the rule source code carefully to determine what resource configuration reaches this specific createResult/createScanResult call, not any other branch.`);
         lines.push('');
     }
     lines.push(`Target fixture format: ${format}`);
