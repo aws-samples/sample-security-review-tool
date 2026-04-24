@@ -63,7 +63,7 @@ export class CoverageReportWriter {
             }
             lines.push('');
 
-            lines.push(`### Suggested fix-guidance replacements`);
+            lines.push(`### Suggested fix guidance (framework-agnostic)`);
             lines.push('');
             for (const r of sorted) {
                 const v = r.verdict!;
@@ -76,7 +76,7 @@ export class CoverageReportWriter {
                 lines.push('```');
                 lines.push(`Suggested:`);
                 lines.push('```');
-                lines.push(v.suggestedFixGuidance);
+                lines.push(v.suggestedFixGuidance.replaceAll('\\n', '\n'));
                 lines.push('```');
                 lines.push('');
             }

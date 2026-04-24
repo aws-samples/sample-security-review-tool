@@ -8,6 +8,7 @@ interface ParsedArgs {
     filter: CatalogFilter;
     formats: FixtureFormat[];
     regenerate: boolean;
+    concurrency: number;
 }
 
 async function main(): Promise<void> {
@@ -33,6 +34,7 @@ async function main(): Promise<void> {
         filter: args.filter,
         formats: args.formats,
         regenerate: args.regenerate,
+        concurrency: args.concurrency,
     });
     console.log(`\nReports written:`);
     console.log(`  ${coveragePath}`);
@@ -46,6 +48,7 @@ function parseArgs(argv: string[]): ParsedArgs {
         filter: {},
         formats: [],
         regenerate: false,
+        concurrency: 3,
     };
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
@@ -71,6 +74,14 @@ function parseArgs(argv: string[]): ParsedArgs {
             case '--regenerate':
                 result.regenerate = true;
                 break;
+            case '--concurrency': {
+                const value = Number(consumeValue());
+                if (!Number.isFinite(value) || value < 1) {
+                    throw new Error('--concurrency must be a positive integer');
+                }
+                result.concurrency = Math.floor(value);
+                break;
+            }
             case '-h':
             case '--help':
                 printUsage();
@@ -98,6 +109,7 @@ function printUsage(): void {
   bun src/index.ts --service <name>          # e.g. s3, rds, lambda
   bun src/index.ts --format <list>           # comma-sep: cfn,cdk,python,javascript,go,java,yaml
   bun src/index.ts --regenerate              # force regeneration of cached fixtures
+  bun src/index.ts --concurrency <n>         # parallel fixture evaluations (default 3)
   bun src/index.ts /path/to/project          # legacy: evaluate findings in an existing project
 `);
 }

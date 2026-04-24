@@ -40,6 +40,8 @@ export interface AgentSession {
      */
     retries: number;
     toolInvocations: ToolInvocationSummary[];
+    /** Validation errors from each failed apply_fix attempt (one inner array per attempt). */
+    applyFixFailureDetails: ApplyFixFailureDetail[][];
     finalComments: string;
     rawLogLines: string[];
 }
@@ -55,6 +57,13 @@ export interface ToolInvocationSummary {
      */
     isFailure: boolean;
     durationMs: number | null;
+    /** Validation errors from a failed apply_fix call, parsed from the log's resultPreview. */
+    failureDetails?: ApplyFixFailureDetail[];
+}
+
+export interface ApplyFixFailureDetail {
+    strategy: string;
+    output: string;
 }
 
 export type Rating = 'HIGH' | 'MEDIUM' | 'LOW';

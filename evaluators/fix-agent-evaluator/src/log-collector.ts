@@ -1,5 +1,5 @@
 import type { ScanResult } from '../../../src/assess/scanning/types.js';
-import type { AgentSession, ToolInvocationSummary } from './types.js';
+import type { AgentSession, ApplyFixFailureDetail, ToolInvocationSummary } from './types.js';
 
 const SESSION_STARTED = 'StrandsFixAgent: session started';
 const SESSION_ENDED = 'StrandsFixAgent: session ended';
@@ -30,9 +30,11 @@ export class AgentSessionParser {
 
         const toolInvocations = this.extractToolInvocations(block);
         const applyFixCalls = toolInvocations.filter(t => t.tool === 'apply_fix');
+        const failedApplyFixCalls = applyFixCalls.filter(t => t.isFailure || t.isError);
         const applyFixAttempts = applyFixCalls.length;
-        const applyFixFailures = applyFixCalls.filter(t => t.isFailure || t.isError).length;
+        const applyFixFailures = failedApplyFixCalls.length;
         const retries = applyFixFailures;
+        const applyFixFailureDetails = failedApplyFixCalls.map(t => t.failureDetails ?? []);
 
         return {
             sessionId: this.toNumber(startedFields.sessionId),
@@ -42,6 +44,7 @@ export class AgentSessionParser {
             applyFixFailures,
             retries,
             toolInvocations,
+            applyFixFailureDetails,
             finalComments: this.stripQuotes(endedFields.comments ?? ''),
             rawLogLines: block,
         };
@@ -81,16 +84,46 @@ export class AgentSessionParser {
         for (const line of block) {
             if (line.includes(TOOL_RESULT)) {
                 const fields = this.parseFields(line);
-                invocations.push({
+                const tool = this.stripQuotes(fields.tool ?? 'unknown');
+                const isError = fields.isError === 'true';
+                const isFailure = fields.isFailure === 'true';
+
+                const summary: ToolInvocationSummary = {
                     turn: this.toNumber(fields.turn) ?? 0,
-                    tool: this.stripQuotes(fields.tool ?? 'unknown'),
-                    isError: fields.isError === 'true',
-                    isFailure: fields.isFailure === 'true',
+                    tool,
+                    isError,
+                    isFailure,
                     durationMs: this.toNumber(fields.durationMs),
-                });
+                };
+
+                if (tool === 'apply_fix' && (isFailure || isError)) {
+                    summary.failureDetails = this.parseApplyFixFailureDetails(fields.resultPreview);
+                }
+
+                invocations.push(summary);
             }
         }
         return invocations;
+    }
+
+    private parseApplyFixFailureDetails(resultPreview: string | undefined): ApplyFixFailureDetail[] {
+        if (!resultPreview) return [];
+        try {
+            const parsed = JSON.parse(resultPreview);
+            if (!parsed || typeof parsed !== 'object') return [];
+            if (Array.isArray(parsed.errors)) {
+                return parsed.errors.map((entry: { strategy?: string; output?: string }) => ({
+                    strategy: String(entry.strategy ?? 'unknown'),
+                    output: String(entry.output ?? '').slice(0, 1000),
+                }));
+            }
+            if (parsed.applied === false && parsed.reason) {
+                return [{ strategy: 'edit-application', output: String(parsed.reason).slice(0, 1000) }];
+            }
+            return [];
+        } catch {
+            return [];
+        }
     }
 
     /**
@@ -164,6 +197,7 @@ export class AgentSessionParser {
             applyFixFailures: 0,
             retries: 0,
             toolInvocations: [],
+            applyFixFailureDetails: [],
             finalComments: '',
             rawLogLines: [],
         };

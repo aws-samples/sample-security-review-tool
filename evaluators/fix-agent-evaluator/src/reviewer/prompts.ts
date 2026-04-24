@@ -44,14 +44,14 @@ Evaluation criteria:
 
    Your suggestedFixGuidance MUST:
    - Pick ONE concrete mitigation and tell the agent to do it. Do not write "at least one of", "options include", or "consider...". If two paths are genuinely common, pick the default and mention the alternative in one trailing sentence.
-   - Open with a one-line imperative that states the action (e.g. "Add the following LifecycleConfiguration to the S3 bucket:", "Set StorageEncrypted to true:").
-   - Include a CDK TypeScript code block with real property names and real values — never <placeholder> or VALUE. Two-space indentation, plain text (no triple backticks).
-   - When the rule applies to raw CloudFormation fixtures, include a CloudFormation YAML block with correct 2-space indentation — a full block, not an inline prose summary. Agents have demonstrably produced malformed YAML when given only prose.
-   - Call out specific workarounds that do NOT satisfy the rule (e.g. "an empty Rules array", "Status: Disabled", "using Fn::If for the Status value"). Keep this list tight and rule-specific, not generic.
+   - Open with a one-line imperative that states the action (e.g. "Enable server-side encryption using AWS-managed keys (SSE-S3).", "Configure access logging to a dedicated log bucket.").
+   - Describe the security configuration intent and outcome — what needs to be true about the resource, not which IaC properties to set. The fix agent works across IaC frameworks (CloudFormation, CDK, Terraform) and will determine the correct syntax. Do not include code blocks in any IaC language.
+   - Be specific about the security requirement without prescribing property names: state what capability to enable, what values are acceptable, and any constraints (e.g. "the log destination must be a separate bucket, not the source bucket itself").
+   - Call out specific workarounds that do NOT satisfy the rule (e.g. "an empty rules array with no transitions", "a disabled lifecycle rule", "logging to the same bucket"). Keep this list tight and rule-specific, not generic.
 
-   Use the shape of S3-008's buildAddConfigFix() (src/assess/scanning/security-matrix/rules/s3/008-lifecycle-policies.ts) as your model: opener line → CDK code block → CloudFormation note/block → non-satisfying-workarounds line. Output should read like that, not like a rule specification.
+   Format: opener imperative line → description of the required security configuration → non-satisfying-workarounds line. Output should be concise and actionable, not a rule specification.
 
-   The text must be a single string safe to paste into the rule's createScanResult() call — no markdown headers, no triple backticks, newlines as \\n, under ~25 lines.
+   The text must be a single string safe to paste into the rule's createScanResult() call — no markdown headers, no triple backticks, newlines as \\n, under ~15 lines.
 
 Always call submit_verdict with ALL fields populated. If effectiveness and efficiency are both HIGH, set rootCause to "none" and suggestedFixGuidance to an empty string.`;
 
@@ -89,6 +89,22 @@ export function buildReviewerUserPrompt(
     for (const invocation of record.session.toolInvocations) {
         const marker = invocation.isError ? ' [ERROR]' : invocation.isFailure ? ' [FAILED]' : '';
         lines.push(`  - ${invocation.tool}${marker}`);
+        if (invocation.failureDetails && invocation.failureDetails.length > 0) {
+            for (const detail of invocation.failureDetails) {
+                lines.push(`      Validation error (${detail.strategy}): ${detail.output}`);
+            }
+        }
+    }
+    if (record.session.applyFixFailureDetails.length > 0) {
+        lines.push('');
+        lines.push(`apply_fix failure details`);
+        lines.push(`-------------------------`);
+        record.session.applyFixFailureDetails.forEach((details, attemptIndex) => {
+            lines.push(`Attempt ${attemptIndex + 1}:`);
+            for (const detail of details) {
+                lines.push(`  - [${detail.strategy}] ${detail.output}`);
+            }
+        });
     }
     lines.push('');
     lines.push(`Git diff of the applied fix`);

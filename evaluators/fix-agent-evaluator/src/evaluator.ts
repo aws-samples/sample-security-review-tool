@@ -74,16 +74,22 @@ export class Evaluator {
         await this.ensureInitialized();
 
         const generator = new GeneratorCoordinator(getBedrockClient(), this.fixturesRoot, catalog);
-        const results: FixtureRunResult[] = [];
 
+        const tasks: Array<{ rule: RuleEntry; format: FixtureFormat }> = [];
         for (const rule of rules) {
-            const targetFormats = this.resolveFormats(rule, options.formats);
-            for (const format of targetFormats) {
-                const runResult = await this.evaluateOneFixture(rule, format, generator, options.regenerate);
-                results.push(runResult);
-                this.logFixtureOutcome(rule, format, runResult);
+            for (const format of this.resolveFormats(rule, options.formats)) {
+                tasks.push({ rule, format });
             }
         }
+
+        const concurrency = options.concurrency ?? 3;
+        console.log(`Running ${tasks.length} fixture evaluation(s) with concurrency=${concurrency}.`);
+
+        const results = await this.runWithConcurrency(tasks, concurrency, async (task) => {
+            const runResult = await this.evaluateOneFixture(task.rule, task.format, generator, options.regenerate);
+            this.logFixtureOutcome(task.rule, task.format, runResult);
+            return runResult;
+        });
 
         const records = results.filter((r): r is FixtureRunResult & { verdict: ReviewVerdict } => Boolean(r.verdict));
         const verdicts = records.map(r => r.verdict);
@@ -226,6 +232,27 @@ export class Evaluator {
         console.log(`  [${mark}] ${id} — effectiveness=${v.effectiveness} efficiency=${v.efficiency} reasons=${v.failureReasons.join('|') || 'none'}`);
     }
 
+    private async runWithConcurrency<T>(
+        tasks: T[],
+        concurrency: number,
+        worker: (task: T) => Promise<FixtureRunResult>,
+    ): Promise<FixtureRunResult[]> {
+        const results: FixtureRunResult[] = new Array(tasks.length);
+        let nextIndex = 0;
+
+        async function runWorker(): Promise<void> {
+            while (true) {
+                const index = nextIndex++;
+                if (index >= tasks.length) return;
+                results[index] = await worker(tasks[index]);
+            }
+        }
+
+        const workerCount = Math.max(1, Math.min(concurrency, tasks.length));
+        await Promise.all(Array.from({ length: workerCount }, runWorker));
+        return results;
+    }
+
     private pseudoRecord(result: FixtureRunResult & { verdict: ReviewVerdict }): FixRunRecord {
         // ReportWriter operates on FixRunRecord; the fixture-mode results only
         // carry verdicts (the underlying records were already consumed to
@@ -252,6 +279,7 @@ export class Evaluator {
                 applyFixFailures: result.verdict.applyFixFailures,
                 retries: result.verdict.retries,
                 toolInvocations: [],
+                applyFixFailureDetails: [],
                 finalComments: '',
                 rawLogLines: [],
             },

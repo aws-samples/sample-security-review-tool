@@ -50,15 +50,29 @@ export class ReportWriter {
         lines.push(`- Effectiveness: **${verdict.effectiveness}** — ${verdict.effectivenessReasoning}`);
         lines.push(`- Efficiency: **${verdict.efficiency}** — ${verdict.efficiencyReasoning} (retries: ${verdict.retries}, turns: ${verdict.turns}, apply_fix failures: ${verdict.applyFixFailures})`);
         lines.push(`- Root cause: ${verdict.rootCause}`);
+        if (record?.session.applyFixFailureDetails && record.session.applyFixFailureDetails.length > 0) {
+            lines.push('');
+            lines.push(`<details>`);
+            lines.push(`<summary><strong>apply_fix failure details (${record.session.applyFixFailureDetails.length} failed attempt(s))</strong></summary>`);
+            lines.push('');
+            record.session.applyFixFailureDetails.forEach((details, attemptIndex) => {
+                lines.push(`**Attempt ${attemptIndex + 1}:**`);
+                for (const detail of details) {
+                    lines.push(`- \`${detail.strategy}\`: ${detail.output}`);
+                }
+                lines.push('');
+            });
+            lines.push(`</details>`);
+        }
         lines.push('');
         lines.push(`**Current fix guidance:**`);
         lines.push('```');
         lines.push(verdict.currentFixGuidance || '(none)');
         lines.push('```');
         if (verdict.suggestedFixGuidance) {
-            lines.push(`**Recommended replacement (drop-in for the rule's \`fix\` string):**`);
+            lines.push(`**Suggested fix guidance (framework-agnostic):**`);
             lines.push('```');
-            lines.push(verdict.suggestedFixGuidance);
+            lines.push(verdict.suggestedFixGuidance.replaceAll('\\n', '\n'));
             lines.push('```');
         }
         if (verdict.additionalRecommendations) {

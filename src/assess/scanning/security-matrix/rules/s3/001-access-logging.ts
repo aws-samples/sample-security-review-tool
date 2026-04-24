@@ -35,7 +35,7 @@ export class S3001Rule extends BaseRule {
 
     const loggingConfiguration = resource.Properties?.LoggingConfiguration;
     if (!loggingConfiguration) {
-      return this.createResult(stackName, template, resource, this.description, 'Enable S3 access logging with a dedicated log bucket.');
+      return this.createResult(stackName, template, resource, this.description, `Enable S3 access logging by adding a LoggingConfiguration to the bucket that points to a separate, dedicated logging bucket.\nFirst, check whether the template already contains a dedicated logging bucket (i.e. a bucket that other buckets already reference as their LoggingConfiguration.DestinationBucketName). If one exists, reuse it — do NOT create a new logging bucket. If no existing logging bucket is found, create a new S3 bucket resource to serve as the log destination. Do NOT use the legacy AccessControl property; instead, configure OwnershipControls with ObjectOwnership set to BucketOwnerPreferred, and add a separate AWS::S3::BucketPolicy resource granting the logging.s3.amazonaws.com service s3:PutObject permission on the log bucket (scoped to the log prefix path). Include a Condition restricting aws:SourceAccount to the current account.\nOn the original bucket, add a LoggingConfiguration with DestinationBucketName referencing the logging bucket and a LogFilePrefix that includes the source bucket name to keep logs separated (e.g. "<source-bucket-name>/access-logs/").\nDo NOT log to the same bucket (self-logging). Do NOT use the deprecated AccessControl property without OwnershipControls — use a BucketPolicy instead.`);
     }
 
     const destinationBucket = loggingConfiguration.DestinationBucketName;
