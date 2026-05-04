@@ -1,4 +1,3 @@
-import * as path from 'node:path';
 import { RuleCatalog } from './shared/rule-catalog/index.js';
 import type { CatalogFilter, FixtureFormat, RuleEntry } from './shared/rule-catalog/index.js';
 import { createAwsKnowledgeMcpClient } from './shared/aws-knowledge-mcp-client.js';
@@ -7,7 +6,7 @@ import { buildUserPrompt } from './prompts.js';
 import { extractVariants } from './shared/variant-extractor.js';
 import { fixtureDirFor } from './shared/fixture-paths.js';
 import { ReportWriter } from './report/report-writer.js';
-import type { RefinerSession, RefinerResult, FindingVariant } from './types.js';
+import type { RefinerSession, RefinerResult } from './types.js';
 
 const TIMEOUT_MS = 45 * 60 * 1000;
 

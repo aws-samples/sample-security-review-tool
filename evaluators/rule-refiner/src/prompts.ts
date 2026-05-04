@@ -44,22 +44,22 @@ You have access to AWS documentation tools (search_documentation, read_documenta
 
 Important: Cross-stack/cross-template gaps are inherent architectural limitations, not rule defects. Place them in knownLimitations, not in missedCases. Do not let them influence the correctness rating.
 
-═══ PHASE 1b: Fix Guidance Doc Verification ═══
+═══ PHASE 1b: Fix Guidance Hallucination Prevention ═══
 
-After completing Phase 1, verify the fix guidance text against AWS documentation before functional testing. The fix guidance is the string passed to createResult/createScanResult — it becomes the instructions the fix agent follows.
+After completing Phase 1, harden the fix guidance against likely model hallucinations. The fix agent is an LLM that will add plausible-sounding properties beyond what the guidance says — the guidance must explicitly forbid common traps.
 
 1. Read the fix guidance text from the rule source.
-2. Identify every AWS construct property, API parameter, or CDK interface property referenced or implied by the guidance (e.g., "isLogging", "TrailProps", "BlockPublicAccess", "objectOwnership").
-3. For each property or parameter, query AWS documentation to verify:
-   - The property exists on the stated interface or resource type.
-   - The property name is spelled correctly and is the right casing.
-   - For CDK guidance: verify the property exists on the L2 construct interface, not just the L1 CfnProps. These are different interfaces with different properties — a property on CfnTrailProps (L1) does NOT exist on TrailProps (L2) unless explicitly documented.
-4. If the guidance references a non-existent property or uses a property from the wrong interface level (L1 vs L2), edit the fix guidance to:
-   - Remove the incorrect reference, OR
-   - Add an explicit warning not to use that property (e.g., "Do NOT pass isLogging — it does not exist on the L2 TrailProps").
-5. Also verify that the guidance does not omit required properties or critical constraints that would cause common compilation failures.
+2. Identify every AWS resource or CDK construct the fix agent will need to create or modify (e.g., if guidance says "create a CloudTrail Trail", the construct is cloudtrail.Trail with TrailProps).
+3. For each construct, query AWS documentation to look up the ACTUAL interface:
+   - For CDK L2 constructs: look up the L2 props interface (e.g., TrailProps, BucketProps). Note which properties EXIST on L2 vs only on L1 (CfnTrailProps, CfnBucketProps). These are different interfaces — L1 properties do NOT exist on L2.
+   - For CloudFormation resources: look up the resource property reference.
+4. Identify hallucination-prone properties: properties that exist on L1 but NOT on L2 (or vice versa), properties with plausible names that don't actually exist, and properties from related constructs that an LLM might incorrectly apply. Examples:
+   - isLogging exists on CfnTrailProps (L1) but NOT on TrailProps (L2).
+   - objectOwnership is a common guess for S3 buckets but interacts badly with server access logging.
+5. For each hallucination risk identified, add an explicit "Do NOT" warning to the fix guidance. Format: "Do NOT pass <property> — <reason>."
+6. Also check: does the guidance specify exactly which properties to pass to each construct? If it says "create a Trail" without specifying the constructor args, the model will guess. Make the guidance explicit about what to pass AND what not to pass.
 
-This step catches errors that Phase 2 testing may miss due to model non-determinism — the fix agent may or may not hallucinate incorrect properties on any given run.
+This step is critical because Phase 2 testing is probabilistic — the fix agent may or may not hallucinate a given property on any run. Explicit warnings in guidance are the only reliable defense.
 
 ═══ PHASE 2: Fix Guidance Quality ═══
 

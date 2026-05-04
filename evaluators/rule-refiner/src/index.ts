@@ -3,44 +3,39 @@ import * as url from 'node:url';
 import { bootstrapBedrock } from './shared/bedrock-bootstrap.js';
 import { Orchestrator, type OrchestratorOptions } from './orchestrator.js';
 import type { CatalogFilter, FixtureFormat } from './types.js';
+import { RuleImplementationAssessmentAgent } from './agents/rule-implementation-assessment/agent.js';
+import { RuleCatalog } from './shared/rule-catalog/index.js';
 
 interface ParsedArgs {
     filter: CatalogFilter;
-    formats: FixtureFormat[];
-    phase1Only: boolean;
-    phase2Only: boolean;
 }
 
 async function main(): Promise<void> {
     const args = parseArgs(process.argv.slice(2));
-    bootstrapBedrock();
+    const implementationAssessmentAgent = new RuleImplementationAssessmentAgent();
+    const ruleImplementation = await getRuleImplementation(args.filter.checkId!);
 
-    const moduleDir = path.dirname(url.fileURLToPath(import.meta.url));
-    const evaluatorRoot = path.resolve(moduleDir, '..');
-    const srtRepoRoot = path.resolve(moduleDir, '..', '..', '..');
-    const reportsDir = path.resolve(evaluatorRoot, 'reports');
-    const fixturesRoot = path.resolve(evaluatorRoot, 'fixtures');
+    const result = await implementationAssessmentAgent.run(ruleImplementation);
 
-    const orchestrator = new Orchestrator(srtRepoRoot, reportsDir, fixturesRoot);
-    const options: OrchestratorOptions = {
-        filter: args.filter,
-        formats: args.formats.length > 0 ? args.formats : undefined,
-        phase1Only: args.phase1Only,
-        phase2Only: args.phase2Only,
-    };
+    console.log(JSON.stringify(result, null, 2));
+ }
 
-    const { markdownPath, jsonPath } = await orchestrator.run(options);
-    console.log(`\nReports written:`);
-    console.log(`  ${markdownPath}`);
-    console.log(`  ${jsonPath}`);
-}
+ async function getRuleImplementation(checkId: string): Promise<string> {
+    const catalog = new RuleCatalog();
 
-function parseArgs(argv: string[]): ParsedArgs {
+    await catalog.load();
+
+    const rule = catalog.find(checkId);
+
+    if (!rule) throw new Error(`Rule with checkId ${checkId} not found in catalog.`);
+    if (!rule.ruleBody) throw new Error(`Rule with checkId ${checkId} does not have an implementation in the catalog.`);
+    
+    return rule.ruleBody;
+ }
+
+ function parseArgs(argv: string[]): ParsedArgs {
     const result: ParsedArgs = {
-        filter: {},
-        formats: [],
-        phase1Only: false,
-        phase2Only: false,
+        filter: {}
     };
 
     for (let i = 0; i < argv.length; i++) {
@@ -51,22 +46,14 @@ function parseArgs(argv: string[]): ParsedArgs {
             i++;
             return next;
         };
+
         switch (arg) {
             case '--rule':
                 result.filter.checkId = consumeValue();
                 break;
             case '--service':
                 result.filter.service = consumeValue();
-                break;
-            case '--format':
-                result.formats = consumeValue().split(',').map(s => s.trim()) as FixtureFormat[];
-                break;
-            case '--phase1-only':
-                result.phase1Only = true;
-                break;
-            case '--phase2-only':
-                result.phase2Only = true;
-                break;
+                break;            
             case '-h':
             case '--help':
                 printUsage();
@@ -79,6 +66,75 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     return result;
 }
+
+// async function main(): Promise<void> {
+//     const args = parseArgs(process.argv.slice(2));
+//     bootstrapBedrock();
+
+//     const moduleDir = path.dirname(url.fileURLToPath(import.meta.url));
+//     const evaluatorRoot = path.resolve(moduleDir, '..');
+//     const srtRepoRoot = path.resolve(moduleDir, '..', '..', '..');
+//     const reportsDir = path.resolve(evaluatorRoot, 'reports');
+//     const fixturesRoot = path.resolve(evaluatorRoot, 'fixtures');
+
+//     const orchestrator = new Orchestrator(srtRepoRoot, reportsDir, fixturesRoot);
+//     const options: OrchestratorOptions = {
+//         filter: args.filter,
+//         formats: args.formats.length > 0 ? args.formats : undefined,
+//         phase1Only: args.phase1Only,
+//         phase2Only: args.phase2Only,
+//     };
+
+//     const { markdownPath, jsonPath } = await orchestrator.run(options);
+//     console.log(`\nReports written:`);
+//     console.log(`  ${markdownPath}`);
+//     console.log(`  ${jsonPath}`);
+// }
+
+// function parseArgs(argv: string[]): ParsedArgs {
+//     const result: ParsedArgs = {
+//         filter: {},
+//         formats: [],
+//         phase1Only: false,
+//         phase2Only: false,
+//     };
+
+//     for (let i = 0; i < argv.length; i++) {
+//         const arg = argv[i];
+//         const consumeValue = (): string => {
+//             const next = argv[i + 1];
+//             if (next === undefined) throw new Error(`Missing value for ${arg}`);
+//             i++;
+//             return next;
+//         };
+//         switch (arg) {
+//             case '--rule':
+//                 result.filter.checkId = consumeValue();
+//                 break;
+//             case '--service':
+//                 result.filter.service = consumeValue();
+//                 break;
+//             case '--format':
+//                 result.formats = consumeValue().split(',').map(s => s.trim()) as FixtureFormat[];
+//                 break;
+//             case '--phase1-only':
+//                 result.phase1Only = true;
+//                 break;
+//             case '--phase2-only':
+//                 result.phase2Only = true;
+//                 break;
+//             case '-h':
+//             case '--help':
+//                 printUsage();
+//                 process.exit(0);
+//                 break;
+//             default:
+//                 throw new Error(`Unknown argument: ${arg}`);
+//         }
+//     }
+
+//     return result;
+// }
 
 function printUsage(): void {
     console.log(`Usage:

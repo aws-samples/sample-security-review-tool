@@ -24,7 +24,8 @@ import { ScanResult } from '../../../base-scanner.js';
  *   specific table — it only confirms that some DynamoDB data event
  *   configuration exists on a trail in the template.
  * - IsLogging is not checked; a trail with IsLogging: false would still
- *   satisfy the rule, though this property is required and defaults to true.
+ *   satisfy the rule, though IsLogging is a required CFN property so it must
+ *   be explicitly set.
  */
 export class Ddb002Rule extends BaseRule {
   private readonly fixPrompt = `Enable CloudTrail logging for DynamoDB data plane events for this table.
