@@ -7,10 +7,15 @@ import * as path from 'path';
 import { spawnSync } from 'child_process';
 import z from 'zod';
 import { srtRepoRoot } from '../../shared/fixture-paths.js';
+import { RuleCatalog } from '../../shared/rule-catalog/index.js';
 
-export class RuleImplementationFixAgent {    
-    public async invoke(rule: RuleEntry, issues: z.infer<typeof RuleImplementationAssessmentOutputSchema>): Promise<void> {
+export class RuleImplementationFixAgent {
+    public async invoke(ruleId: string, issues: z.infer<typeof RuleImplementationAssessmentOutputSchema>): Promise<void> {
         for (const issue of issues.issues) {
+            RuleCatalog.refresh();
+
+            const rule = await RuleCatalog.find(ruleId);
+
             let retries = 0;
             let error: string | null = null;
 
@@ -41,11 +46,11 @@ export class RuleImplementationFixAgent {
             systemPrompt: SYSTEM_PROMPT,
             structuredOutputSchema: RuleImplementationFixOutputSchema
         });
-    }   
+    }
 
     private getUserPrompt(issue: z.infer<typeof IssueSchema>, ruleImplementation: string, error: string | null): string {
         let prompt = USER_PROMPT.replace('{{ISSUE}}', `${issue.description} (Property: ${issue.property}, Documentation: ${issue.documentation})`);
-       
+
         prompt = prompt.replace('{{RULE_IMPLEMENTATION}}', ruleImplementation);
 
         if (error) {

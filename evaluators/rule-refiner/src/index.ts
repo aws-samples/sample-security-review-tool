@@ -1,9 +1,6 @@
-import * as path from 'node:path';
-import * as url from 'node:url';
 import { bootstrapBedrock } from './shared/bedrock-bootstrap.js';
 import { Orchestrator, type OrchestratorOptions } from './orchestrator.js';
-import * as fs from 'fs/promises';
-import type { CatalogFilter, FixtureFormat, RuleEntry } from './types.js';
+import type { CatalogFilter, FixtureFormat } from './types.js';
 import { RuleImplementationAssessmentAgent } from './agents/rule-implementation-assessment/agent.js';
 import { RuleCatalog } from './shared/rule-catalog/index.js';
 import { RuleImplementationFixAgent } from './agents/rule-implementation-fix/agent.js';
@@ -14,32 +11,19 @@ interface ParsedArgs {
 
 async function main(): Promise<void> {
     const args = parseArgs(process.argv.slice(2));
-    const rule = await getRuleImplementation(args.filter.checkId!);
+    const ruleId = args.filter.checkId!;
 
     for (let i = 0; i < 3; i++) {
-        console.log(`Assessing implementation for rule ${rule.checkId}, attempt ${i + 1}...`);
+        console.log(`Assessing implementation for rule ${ruleId}, iteration ${i + 1}...`);
 
-        const ruleImplementationAssessmentAgent = new RuleImplementationAssessmentAgent();
-        const ruleImplementationFixAgent = new RuleImplementationFixAgent();
-        const ruleBody = rule.ruleBody;
-        const assessmentResult = await ruleImplementationAssessmentAgent.invoke(ruleBody);
+        const assessmentAgent = new RuleImplementationAssessmentAgent();
+        const assessmentResult = await assessmentAgent.invoke(ruleId);
 
         if (assessmentResult.issues.length === 0) return;
 
-        await ruleImplementationFixAgent.invoke(rule, assessmentResult);
+        const fixAgent = new RuleImplementationFixAgent();
+        await fixAgent.invoke(ruleId, assessmentResult);
     }
-}
-
-async function getRuleImplementation(checkId: string): Promise<RuleEntry> {
-    const catalog = new RuleCatalog();
-
-    await catalog.load();
-
-    const rule = catalog.find(checkId);
-
-    if (!rule) throw new Error(`Rule with checkId ${checkId} not found in catalog.`);
-
-    return rule;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
