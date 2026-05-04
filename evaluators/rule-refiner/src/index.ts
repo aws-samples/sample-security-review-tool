@@ -2,7 +2,6 @@ import { bootstrapBedrock } from './shared/bedrock-bootstrap.js';
 import { Orchestrator, type OrchestratorOptions } from './orchestrator.js';
 import type { CatalogFilter, FixtureFormat } from './types.js';
 import { RuleImplementationAssessmentAgent } from './agents/rule-implementation-assessment/agent.js';
-import { RuleCatalog } from './shared/rule-catalog/index.js';
 import { RuleImplementationFixAgent } from './agents/rule-implementation-fix/agent.js';
 
 interface ParsedArgs {
@@ -20,6 +19,8 @@ async function main(): Promise<void> {
         const assessmentResult = await assessmentAgent.invoke(ruleId);
 
         if (assessmentResult.issues.length === 0) return;
+
+        console.log(`${assessmentResult.issues.length} issues found for rule ${ruleId}:`);
 
         const fixAgent = new RuleImplementationFixAgent();
         await fixAgent.invoke(ruleId, assessmentResult);

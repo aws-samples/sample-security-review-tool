@@ -12,7 +12,9 @@ import { RuleCatalog } from '../../shared/rule-catalog/index.js';
 export class RuleImplementationFixAgent {
     public async invoke(ruleId: string, issues: z.infer<typeof RuleImplementationAssessmentOutputSchema>): Promise<void> {
         for (const issue of issues.issues) {
-            RuleCatalog.refresh();
+            console.log(`Applying fix for issue: ${issue.description} (Property: ${issue.property}, Documentation: ${issue.documentation})`);
+
+            await RuleCatalog.refresh();
 
             const rule = await RuleCatalog.find(ruleId);
 

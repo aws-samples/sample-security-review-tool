@@ -9,6 +9,8 @@ export class RuleImplementationAssessmentAgent {
     private readonly awsKnowledgeMcpClient = new McpClient({ transport: new StreamableHTTPClientTransport(new URL('https://knowledge-mcp.global.api.aws')) });
 
     public async invoke(ruleId: string): Promise<z.infer<typeof RuleImplementationAssessmentOutputSchema>> {
+        await RuleCatalog.refresh();
+        
         const rule = await RuleCatalog.find(ruleId);
         const userPrompt = USER_PROMPT.replace('{{RULE_IMPLEMENTATION}}', rule.ruleBody);
         const result = await this.getAgent().invoke(userPrompt);

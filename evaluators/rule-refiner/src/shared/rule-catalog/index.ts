@@ -13,7 +13,7 @@ export class RuleCatalog {
     private static instance: RuleCatalog;
 
     private static async getInstance(): Promise<RuleCatalog> {
-        if (!this.instance) RuleCatalog.refresh();
+        if (!this.instance) await RuleCatalog.refresh();
         return RuleCatalog.instance;
     }
 
@@ -31,11 +31,11 @@ export class RuleCatalog {
     }
 
     public static async list(filter: CatalogFilter = {}): Promise<RuleEntry[]> {
-        return (await this.getInstance()).rules.filter(rule => this.matches(rule, filter));
+        return (await RuleCatalog.getInstance()).rules.filter(rule => this.matches(rule, filter));
     }
 
     public static async find(checkId: string): Promise<RuleEntry> {
-        const result = (await this.getInstance()).rules.find(rule => rule.checkId === checkId);
+        const result = (await RuleCatalog.getInstance()).rules.find(rule => rule.checkId === checkId);
 
         if (!result) throw new Error(`Rule with checkId ${checkId} not found.`);
 
@@ -50,6 +50,6 @@ export class RuleCatalog {
     }
 
     public static async count(): Promise<number> {
-        return (await this.getInstance()).rules.length;
+        return (await RuleCatalog.getInstance()).rules.length;
     }
 }
