@@ -15,10 +15,12 @@ interface ParsedArgs {
 async function main(): Promise<void> {
     const args = parseArgs(process.argv.slice(2));
     const rule = await getRuleImplementation(args.filter.checkId!);
-    const ruleImplementationAssessmentAgent = new RuleImplementationAssessmentAgent();
-    const ruleImplementationFixAgent = new RuleImplementationFixAgent();
 
     for (let i = 0; i < 3; i++) {
+        console.log(`Assessing implementation for rule ${rule.checkId}, attempt ${i + 1}...`);
+
+        const ruleImplementationAssessmentAgent = new RuleImplementationAssessmentAgent();
+        const ruleImplementationFixAgent = new RuleImplementationFixAgent();
         const ruleBody = rule.ruleBody;
         const assessmentResult = await ruleImplementationAssessmentAgent.invoke(ruleBody);
 

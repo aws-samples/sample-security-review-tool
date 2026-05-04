@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as url from 'node:url';
 
 export function sanitizeRelativePath(relativePath: string): string {
     const normalized = path.normalize(relativePath).replace(/^(\.\.[/\\])+/, '');
@@ -16,4 +17,9 @@ export function fixtureDirFor(
     const safeCheckId = checkId.replace(/[^A-Za-z0-9_.-]/g, '_');
     const base = path.join(fixturesRoot, scanner, format, safeCheckId);
     return variantId ? path.join(base, variantId) : base;
+}
+
+export function srtRepoRoot(): string {
+    const moduleDir = path.dirname(url.fileURLToPath(import.meta.url));
+    return path.resolve(moduleDir, '..', '..', '..', '..');
 }

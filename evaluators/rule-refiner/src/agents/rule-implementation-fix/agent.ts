@@ -6,14 +6,9 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
 import z from 'zod';
+import { srtRepoRoot } from '../../shared/fixture-paths.js';
 
-export class RuleImplementationFixAgent {
-    private readonly agent: Agent = new Agent({
-        model: 'global.anthropic.claude-opus-4-7',
-        systemPrompt: SYSTEM_PROMPT,
-        structuredOutputSchema: RuleImplementationFixOutputSchema
-    });
-
+export class RuleImplementationFixAgent {    
     public async invoke(rule: RuleEntry, issues: z.infer<typeof RuleImplementationAssessmentOutputSchema>): Promise<void> {
         for (const issue of issues.issues) {
             let retries = 0;
@@ -33,15 +28,24 @@ export class RuleImplementationFixAgent {
     }
 
     private async applyFixToSource(rule: RuleEntry, issue: z.infer<typeof IssueSchema>, error: string | null): Promise<void> {
-
-        const result = await this.agent.invoke(this.getUserPrompt(issue, rule.ruleBody, error));
+        const userPrompt = this.getUserPrompt(issue, rule.ruleBody, error);
+        const result = await this.getAgent().invoke(userPrompt);
         const structuredOutput = result.structuredOutput as z.infer<typeof RuleImplementationFixOutputSchema>;
 
         await fs.writeFile(path.resolve(rule.sourceLocation), structuredOutput.updatedSource, 'utf-8');
     }
 
+    private getAgent(): Agent {
+        return new Agent({
+            model: 'global.anthropic.claude-opus-4-7',
+            systemPrompt: SYSTEM_PROMPT,
+            structuredOutputSchema: RuleImplementationFixOutputSchema
+        });
+    }   
+
     private getUserPrompt(issue: z.infer<typeof IssueSchema>, ruleImplementation: string, error: string | null): string {
         let prompt = USER_PROMPT.replace('{{ISSUE}}', `${issue.description} (Property: ${issue.property}, Documentation: ${issue.documentation})`);
+       
         prompt = prompt.replace('{{RULE_IMPLEMENTATION}}', ruleImplementation);
 
         if (error) {
@@ -53,7 +57,7 @@ export class RuleImplementationFixAgent {
     }
 
     private async validateFix(): Promise<{ isValid: boolean, errorMessage: string | null }> {
-        const tscResult = spawnSync('npx', ['tsc', '--noEmit', '--pretty'], { encoding: 'utf-8' });
+        const tscResult = spawnSync('npx', ['tsc', '--noEmit', '--pretty'], { encoding: 'utf-8', cwd: srtRepoRoot() });
 
         return tscResult.status == 0 ?
             { isValid: true, errorMessage: null } :

@@ -1,10 +1,9 @@
-import * as path from 'node:path';
-import * as url from 'node:url';
 import type { CatalogFilter, RuleEntry } from './types.js';
 import { loadSecurityMatrixRules } from './security-matrix-source.js';
 import { loadCheckovRules } from './checkov-source.js';
 import { loadBanditRules } from './bandit-source.js';
 import { loadSemgrepRules } from './semgrep-source.js';
+import { srtRepoRoot } from '../fixture-paths.js';
 
 export type { RuleEntry, CatalogFilter, Scanner, FixtureFormat } from './types.js';
 
@@ -12,14 +11,8 @@ export class RuleCatalog {
     private rules: RuleEntry[] = [];
     private srtRepoRoot: string;
 
-    constructor(srtRepoRoot: string | undefined = undefined) {
-        if (srtRepoRoot) {
-            this.srtRepoRoot = srtRepoRoot;
-        } else {
-            const moduleDir = path.dirname(url.fileURLToPath(import.meta.url));
-            this.srtRepoRoot = path.resolve(moduleDir, '..', '..', '..', '..', '..');
-            console.log(this.srtRepoRoot);
-        }
+    constructor(repoRoot?: string) {
+        this.srtRepoRoot = repoRoot ?? srtRepoRoot();
     }
 
     public async load(): Promise<void> {
