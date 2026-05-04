@@ -13,7 +13,7 @@ export interface RuleEntry {
     sourceHash: string;
     applicableResourceTypes?: string[];
     applicableFormats: FixtureFormat[];
-    ruleBody?: string;
+    ruleBody: string;
 }
 
 export interface CatalogFilter {

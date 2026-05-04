@@ -2,9 +2,11 @@ import * as path from 'node:path';
 import * as url from 'node:url';
 import { bootstrapBedrock } from './shared/bedrock-bootstrap.js';
 import { Orchestrator, type OrchestratorOptions } from './orchestrator.js';
-import type { CatalogFilter, FixtureFormat } from './types.js';
+import * as fs from 'fs/promises';
+import type { CatalogFilter, FixtureFormat, RuleEntry } from './types.js';
 import { RuleImplementationAssessmentAgent } from './agents/rule-implementation-assessment/agent.js';
 import { RuleCatalog } from './shared/rule-catalog/index.js';
+import { RuleImplementationFixAgent } from './agents/rule-implementation-fix/agent.js';
 
 interface ParsedArgs {
     filter: CatalogFilter;
@@ -12,15 +14,21 @@ interface ParsedArgs {
 
 async function main(): Promise<void> {
     const args = parseArgs(process.argv.slice(2));
-    const implementationAssessmentAgent = new RuleImplementationAssessmentAgent();
-    const ruleImplementation = await getRuleImplementation(args.filter.checkId!);
+    const rule = await getRuleImplementation(args.filter.checkId!);
+    const ruleImplementationAssessmentAgent = new RuleImplementationAssessmentAgent();
+    const ruleImplementationFixAgent = new RuleImplementationFixAgent();
 
-    const result = await implementationAssessmentAgent.run(ruleImplementation);
+    for (let i = 0; i < 3; i++) {
+        const ruleBody = rule.ruleBody;
+        const assessmentResult = await ruleImplementationAssessmentAgent.invoke(ruleBody);
 
-    console.log(JSON.stringify(result, null, 2));
- }
+        if (assessmentResult.issues.length === 0) return;
 
- async function getRuleImplementation(checkId: string): Promise<string> {
+        await ruleImplementationFixAgent.invoke(rule, assessmentResult);
+    }
+}
+
+async function getRuleImplementation(checkId: string): Promise<RuleEntry> {
     const catalog = new RuleCatalog();
 
     await catalog.load();
@@ -28,12 +36,11 @@ async function main(): Promise<void> {
     const rule = catalog.find(checkId);
 
     if (!rule) throw new Error(`Rule with checkId ${checkId} not found in catalog.`);
-    if (!rule.ruleBody) throw new Error(`Rule with checkId ${checkId} does not have an implementation in the catalog.`);
-    
-    return rule.ruleBody;
- }
 
- function parseArgs(argv: string[]): ParsedArgs {
+    return rule;
+}
+
+function parseArgs(argv: string[]): ParsedArgs {
     const result: ParsedArgs = {
         filter: {}
     };
@@ -53,7 +60,7 @@ async function main(): Promise<void> {
                 break;
             case '--service':
                 result.filter.service = consumeValue();
-                break;            
+                break;
             case '-h':
             case '--help':
                 printUsage();

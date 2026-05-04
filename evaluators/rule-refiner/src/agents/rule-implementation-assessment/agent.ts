@@ -1,7 +1,7 @@
 import { Agent, McpClient } from "@strands-agents/sdk";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SYSTEM_PROMPT, USER_PROMPT } from "./prompt.js";
-import { RuleImplementationAssessmentOutputSchema } from "./types.js";
+import { RuleImplementationAssessmentOutputSchema } from "../types.js";
 import z from "zod";
 
 export class RuleImplementationAssessmentAgent {
@@ -13,7 +13,7 @@ export class RuleImplementationAssessmentAgent {
         structuredOutputSchema: RuleImplementationAssessmentOutputSchema
     });
 
-    public async run(ruleImplementation: string): Promise<z.infer<typeof RuleImplementationAssessmentOutputSchema>> {
+    public async invoke(ruleImplementation: string): Promise<z.infer<typeof RuleImplementationAssessmentOutputSchema>> {
         const userPrompt = USER_PROMPT.replace('{{RULE_IMPLEMENTATION}}', ruleImplementation);
         const result = await this.agent.invoke(userPrompt);
 
