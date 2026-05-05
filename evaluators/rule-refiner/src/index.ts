@@ -11,8 +11,9 @@ interface ParsedArgs {
 async function main(): Promise<void> {
     const args = parseArgs(process.argv.slice(2));
     const ruleId = args.filter.checkId!;
+    const maxAttempts = 5;
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < maxAttempts; i++) {
         console.log(`Assessing implementation for rule ${ruleId}, iteration ${i + 1}...`);
 
         const assessmentAgent = new RuleImplementationAssessmentAgent();

@@ -1,4 +1,4 @@
-import { Agent } from '@strands-agents/sdk';
+import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { IssueSchema, RuleImplementationAssessmentOutputSchema, RuleImplementationFixOutputSchema } from '../types.js';
 import { RETRY_PROMPT, SYSTEM_PROMPT, USER_PROMPT } from './prompt.js';
 import { RuleEntry } from '../../types.js';
@@ -44,7 +44,8 @@ export class RuleImplementationFixAgent {
 
     private getAgent(): Agent {
         return new Agent({
-            model: 'global.anthropic.claude-opus-4-7',
+            //model: 'global.anthropic.claude-opus-4-7',
+            model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
             systemPrompt: SYSTEM_PROMPT,
             structuredOutputSchema: RuleImplementationFixOutputSchema
         });

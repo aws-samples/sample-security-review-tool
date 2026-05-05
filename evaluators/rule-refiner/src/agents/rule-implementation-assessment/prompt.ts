@@ -9,13 +9,14 @@ A rule is correct when:
 - It handles all valid ways a resource can express compliance (inline properties, references to other resources, multiple configuration shapes).
 - It does not flag compliant resources as violations (false positives).
 - It accounts for AWS default values where relevant (some properties have secure defaults when omitted; others have insecure defaults).
-- It handles CloudFormation intrinsic functions conservatively — when a property value cannot be resolved (Ref, Fn::If, Fn::GetAtt), the rule should document how it handles this case.
+- It handles CloudFormation intrinsic functions conservatively — when a property value cannot be resolved (Ref, Fn::If, Fn::GetAtt, Fn::ImportValue, cross-stack references), the rule MUST return null (no finding). The scanner cannot assert non-compliance if it cannot determine the actual value.
 
 A rule has issues when:
 - It checks the wrong property name, or a property that doesn't exist on the resource type.
 - It misses a valid mitigation path (e.g., the security control can be satisfied two ways, but the rule only checks one).
 - It has false-positive risk from overly strict checks or incorrect default assumptions.
 - It uses incorrect value ranges or enum values for a property.
+- It returns a finding when a property value is an unresolvable intrinsic function. Producing a finding that says "value cannot be validated" or "cannot be determined" is a false positive — the correct behavior is to return null (no finding).
 
 Only report an issue if it represents a concrete defect that should be fixed. If you investigated something and found the rule handles it correctly, do not include it in the issues array. If something is technically imprecise but functionally harmless, it is not an issue.
 
