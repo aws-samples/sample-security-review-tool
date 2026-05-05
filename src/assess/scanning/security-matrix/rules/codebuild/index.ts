@@ -1,4 +1,4 @@
-import rule009 from './009-s3-bucket-permissions.js';
+import rule009 from './009-s3-bucket-permissions.cf.js';
 
 export const codebuildRules = [
   rule009
@@ -7,3 +7,8 @@ export const codebuildRules = [
 export {
   rule009 as s3BucketPermissionsRule
 };
+import tfRule001 from './009-s3-bucket-permissions.tf.js';
+
+export const tfCodebuildRules = [
+  tfRule001,
+];

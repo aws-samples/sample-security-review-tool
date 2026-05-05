@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
-import EMR007Rule from '../../../../../../src/assess/scanning/security-matrix/rules/emr/007-security-group-ingress.js';
+import EMR007Rule from '../../../../../../src/assess/scanning/security-matrix/rules/emr/007-security-group-ingress.cf.js';
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner.js';
 
 describe('EMR-007: EMR cluster security group ingress rule', () => {

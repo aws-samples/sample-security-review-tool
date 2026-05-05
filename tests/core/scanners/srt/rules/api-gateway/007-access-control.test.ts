@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ApiGw007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/api-gateway/007-access-control.js';
+import { ApiGw007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/api-gateway/007-access-control.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ApiGw007Rule', () => {

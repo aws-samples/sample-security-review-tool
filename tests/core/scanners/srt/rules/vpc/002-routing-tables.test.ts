@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NetVpc002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/vpc/002-routing-tables.js';
+import { NetVpc002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/vpc/002-routing-tables.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('NetVpc002Rule', () => {

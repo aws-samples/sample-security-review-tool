@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Sec004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/secrets-management/004-least-privilege-access.js';
+import { Sec004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/secrets-management/004-least-privilege-access.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Sec004Rule', () => {

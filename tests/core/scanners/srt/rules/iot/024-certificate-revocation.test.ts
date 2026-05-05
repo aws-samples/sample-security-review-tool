@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { IoT024Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/024-certificate-revocation.js';
+import { IoT024Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/024-certificate-revocation.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('IoT024Rule - Use certificate revocation lists', () => {

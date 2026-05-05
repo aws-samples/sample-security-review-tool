@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NEM001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/network-manager/001-transit-gateway-registration.js';
+import { NEM001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/network-manager/001-transit-gateway-registration.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('NEM001Rule', () => {

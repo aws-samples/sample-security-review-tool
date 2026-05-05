@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { ECS007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/007-logging-enabled.js';
+import { ECS007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/007-logging-enabled.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ECS007Rule', () => {

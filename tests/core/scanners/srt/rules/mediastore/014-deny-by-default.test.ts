@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MEDIASTORE014Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediastore/014-deny-by-default.js';
+import { MEDIASTORE014Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediastore/014-deny-by-default.cf.js';
 
 describe('MEDIASTORE014Rule', () => {
   let rule: MEDIASTORE014Rule;

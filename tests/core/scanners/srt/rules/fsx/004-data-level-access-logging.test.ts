@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FSx004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/004-data-level-access-logging.js';
+import { FSx004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/004-data-level-access-logging.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('FSx004Rule - Data-Level Access Logging Tests', () => {

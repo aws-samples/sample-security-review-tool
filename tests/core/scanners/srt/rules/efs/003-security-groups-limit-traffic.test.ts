@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EFS003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/efs/003-security-groups-limit-traffic';
+import { EFS003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/efs/003-security-groups-limit-traffic.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EFS003Rule - Security Groups Limit Traffic Tests', () => {

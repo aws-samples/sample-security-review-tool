@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CodePipeline001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codepipeline/001-s3-artifact-encryption.js';
+import { CodePipeline001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codepipeline/001-s3-artifact-encryption.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CODEPIPELINE-001: Use secure S3 artifact encryption in CodePipeline', () => {

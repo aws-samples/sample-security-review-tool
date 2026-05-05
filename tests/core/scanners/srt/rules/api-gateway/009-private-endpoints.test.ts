@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ApiGw009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/api-gateway/009-private-endpoints.js';
+import { ApiGw009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/api-gateway/009-private-endpoints.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ApiGw009Rule', () => {

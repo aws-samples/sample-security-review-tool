@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EC2002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/002-least-privilege-roles.js';
+import { EC2002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/002-least-privilege-roles.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EC2002Rule - EC2 Least Privilege IAM Roles Tests', () => {

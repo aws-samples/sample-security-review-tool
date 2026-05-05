@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CompLamb011Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/011-cloudwatch-alarms.js';
+import { CompLamb011Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/011-cloudwatch-alarms.cf.js';
 import { Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CodeBuild009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codebuild/009-s3-bucket-permissions.js';
+import { CodeBuild009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codebuild/009-s3-bucket-permissions.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CODEBUILD-009: Include required S3 permissions in CodeBuild IAM roles', () => {

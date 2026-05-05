@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Sns001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sns/001-sns-topic-policy-restriction.js';
+import { Sns001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sns/001-sns-topic-policy-restriction.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

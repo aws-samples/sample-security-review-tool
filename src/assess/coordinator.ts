@@ -1,7 +1,7 @@
 import { SrtLogger } from '../shared/logging/srt-logger.js';
 import { ui } from '../shared/ui.js';
 import type { Ora } from 'ora';
-import { CodeScanResult, TemplateResult } from './types.js';
+import { CodeScanResult, TemplateResult, TerraformTemplateResult } from './types.js';
 import { InitializationCoordinator } from './initialization/coordinator.js';
 import { ProjectContext } from '../shared/project/project-context.js';
 import { LicenseComplianceCoordinator } from './licensing/coordinator.js';
@@ -41,13 +41,15 @@ export class AssessCoordinator {
             await this.checkLicenseCompliance(license, updateLicenses);
             const codeScanResult = await this.runCodeScanners();
             const templateResults = await this.processTemplates(generateDiagrams, generateThreatModels);
+            const terraformResults = await this.processTerraformPlans(generateDiagrams, generateThreatModels);
             const projectSummary = await this.generateProjectSummary(templateResults);
 
             const assessmentSummary = await this.generateReports(
                 codeScanResult,
                 templateResults,
                 generateXlsx,
-                projectSummary
+                projectSummary,
+                terraformResults
             );
 
             if (assessmentSummary) {
@@ -113,6 +115,15 @@ export class AssessCoordinator {
         });
     }
 
+    private async processTerraformPlans(generateDiagrams: boolean, generateThreatModels: boolean): Promise<TerraformTemplateResult[]> {
+        const spin = ui.spinner('Processing Terraform plans...').start();
+        const templateCoordinator = new TemplateCoordinator(this.context, generateDiagrams, generateThreatModels, (msg) => this.spinProgress(spin, msg));
+        const terraformResults = await templateCoordinator.processTerraformPlans();
+        spin.succeed('Processed Terraform plans');
+
+        return terraformResults;
+    }
+
     private async generateProjectSummary(templateResults: TemplateResult[]): Promise<string | null> {
         return this.runPhase('Generating assessment summary...', 'Generated assessment summary', async (spin) => {
             const summarizer = new ProjectSummarizer(this.context, (msg) => this.spinProgress(spin, msg));
@@ -124,17 +135,20 @@ export class AssessCoordinator {
         codeScanResult: CodeScanResult,
         templateResults: TemplateResult[],
         generateXlsx: boolean,
-        projectSummary: string | null
+        projectSummary: string | null,
+        terraformResults: TerraformTemplateResult[] = []
     ): Promise<AssessmentSummary | null> {
-        return this.runPhase('Creating SRT report...', 'Created SRT report', async (spin) => {
-            const reportGenerator = new ReportGenerator(this.context, (msg) => this.spinProgress(spin, msg));
-            return reportGenerator.generateReports({
-                codeScanResult,
-                templateResults,
-                generateXlsx,
-                projectSummary
-            });
+        const spin = ui.spinner('Creating SRT report...').start();
+        const reportGenerator = new ReportGenerator(this.context, (msg) => this.spinProgress(spin, msg));
+        const summary = await reportGenerator.generateReports({
+            codeScanResult,
+            templateResults,
+            generateXlsx,
+            projectSummary,
+            terraformResults
         });
+        spin.succeed('Created SRT report');
+        return summary;
     }
 
     private captureAssessmentCompleted(summary: AssessmentSummary): void {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Elb006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/006-secure-security-groups.js';
+import { Elb006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/006-secure-security-groups.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ELB-006: Associate ELB with secure security groups', () => {

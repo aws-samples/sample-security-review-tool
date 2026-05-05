@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Sqs003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sqs/003-dead-letter-queue.js';
+import { Sqs003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sqs/003-dead-letter-queue.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

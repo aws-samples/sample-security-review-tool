@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FSx002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/002-vpc-endpoints.js';
+import { FSx002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/002-vpc-endpoints.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('FSx002Rule - VPC Endpoints Tests', () => {

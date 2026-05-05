@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EC2009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/009-termination-protection.js';
+import { EC2009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/009-termination-protection.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EC2009Rule - Termination Protection Tests', () => {

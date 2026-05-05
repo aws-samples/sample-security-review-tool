@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
-import ATH002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/athena/002-encryption-in-transit';
+import ATH002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/athena/002-encryption-in-transit.cf.js';
 import { Template } from 'cloudform-types';
 
 describe('ATH-002: Athena encryption in transit rule', () => {

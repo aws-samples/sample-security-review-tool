@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
-import EMR002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/emr/002-s3-logging.js';
+import EMR002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/emr/002-s3-logging.cf.js';
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner.js';
 
 describe('EMR-002: EMR cluster S3 logging rule', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Batch002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/batch/002-least-privilege-roles.js';
+import { Batch002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/batch/002-least-privilege-roles.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('BATCH-002: Use least-privilege IAM roles for Batch job definitions', () => {

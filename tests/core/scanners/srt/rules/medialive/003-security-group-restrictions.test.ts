@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MEDIALIVE003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/medialive/003-security-group-restrictions.js';
+import { MEDIALIVE003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/medialive/003-security-group-restrictions.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('003-security-group-restrictions: MediaLive Input Security Group Restrictions', () => {

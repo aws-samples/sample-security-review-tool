@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EC2014Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/014-public-ip-on-load-balancers.js';
+import { EC2014Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/014-public-ip-on-load-balancers.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EC2014Rule - Public IP on Load Balancers Tests', () => {

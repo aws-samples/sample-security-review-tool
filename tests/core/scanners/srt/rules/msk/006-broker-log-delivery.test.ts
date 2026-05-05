@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import MSK006Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/006-broker-log-delivery.js';
+import MSK006Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/006-broker-log-delivery.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('MSK006Rule - Broker Log Delivery', () => {

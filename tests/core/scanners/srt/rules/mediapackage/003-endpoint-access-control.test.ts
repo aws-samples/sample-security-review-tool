@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MEDIAPACKAGE003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediapackage/003-endpoint-access-control.js';
+import { MEDIAPACKAGE003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediapackage/003-endpoint-access-control.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('003-endpoint-access-control: MediaPackage Origin Endpoint Access Control', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Sqs007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sqs/007-sqs-admin-usage-separation.js';
+import { Sqs007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sqs/007-sqs-admin-usage-separation.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

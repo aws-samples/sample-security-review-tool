@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MEDIALIVE002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/medialive/002-specific-iam-roles.js';
+import { MEDIALIVE002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/medialive/002-specific-iam-roles.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('002-specific-iam-roles: MediaLive Specific IAM Roles', () => {

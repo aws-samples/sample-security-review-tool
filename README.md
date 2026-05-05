@@ -15,10 +15,11 @@ A guide for using the SRT CLI tool to perform security reviews on AWS CDK and Cl
   - Named or default AWS profiles (`~/.aws/credentials`)
   - Federated roles (e.g., IAM Identity Center)
 - AWS CDK (only required when using this tool for CDK projects)
+- Terraform CLI (only required when using this tool for Terraform projects)
 
 ## Installation
 
-Download the latest release of the SRT CLI Tool for your platform from the [releases page](https://github.com/aws/security-review-tool/releases).
+Download the latest release of the SRT CLI Tool for your platform from the [releases page](https://github.com/aws-samples/sample-security-review-tool/releases).
 
 After downloading, extract the package to a local folder.
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Elb003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/003-connection-draining.js';
+import { Elb003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/003-connection-draining.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ELB-003: Enable connection draining for Classic Load Balancer', () => {

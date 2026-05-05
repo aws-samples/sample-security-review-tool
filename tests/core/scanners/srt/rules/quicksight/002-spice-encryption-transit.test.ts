@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import QS002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/quicksight/002-spice-encryption-transit.js';
+import QS002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/quicksight/002-spice-encryption-transit.cf.js';
 import { CloudFormationResource } from "../../../../../../src/assess/scanning/security-matrix/security-rule-base";
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner.js';
 

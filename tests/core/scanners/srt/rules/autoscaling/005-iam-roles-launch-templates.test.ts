@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AUTOSCALING001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/autoscaling/005-iam-roles-launch-templates.js';
+import { AUTOSCALING001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/autoscaling/005-iam-roles-launch-templates.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('AUTOSCALING001Rule', () => {

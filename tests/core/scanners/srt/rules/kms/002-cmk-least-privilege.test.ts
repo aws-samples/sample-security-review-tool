@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { KMS002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/kms/002-cmk-least-privilege.js';
+import { KMS002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/kms/002-cmk-least-privilege.cf.js';
 
 describe('KMS-002: Restrict KMS key policies to least-privilege principles', () => {
   const rule = new KMS002Rule();

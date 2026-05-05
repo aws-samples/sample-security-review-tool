@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { S3002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/002-least-privilege-bucket-policy.js';
+import { S3002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/002-least-privilege-bucket-policy.cf.js';
 import { Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

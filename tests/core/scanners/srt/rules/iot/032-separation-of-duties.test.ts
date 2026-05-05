@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import IoTSiteWise032Rule from '../../../../../../src/assess/scanning/security-matrix/rules/iot/032-separation-of-duties.js';
+import IoTSiteWise032Rule from '../../../../../../src/assess/scanning/security-matrix/rules/iot/032-separation-of-duties.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('IoTSiteWise032Rule', () => {

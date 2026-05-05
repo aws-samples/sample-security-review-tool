@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EKS015Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/eks/015-non-root-user.js';
+import { EKS015Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/eks/015-non-root-user.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EKS015Rule', () => {

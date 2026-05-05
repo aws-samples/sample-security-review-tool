@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DMS001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/dms/001-multi-az.js';
+import { DMS001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/dms/001-multi-az.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('DMS001Rule', () => {

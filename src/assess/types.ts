@@ -13,6 +13,16 @@ export interface TemplateResult extends CloudFormationTemplateConfig {
     threatModelPath: string | null;
 }
 
+export interface TerraformTemplateResult {
+    tfProjectName: string;
+    tfProjectRootPath: string;
+    tfOutputFolderPath: string;
+    checkovSummaryPath: string | null;
+    terraformMatrixPath: string | null;
+    diagramPath: string | null;
+    threatModelPath: string | null;
+}
+
 export interface LicenseHeaderCheckResult {
     hasExistingHeaders: boolean;
     fileCount: number;

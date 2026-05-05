@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Cognito001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/cognito/001-unauthenticated-privileges.js';
+import { Cognito001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/cognito/001-unauthenticated-privileges.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Cognito001Rule', () => {

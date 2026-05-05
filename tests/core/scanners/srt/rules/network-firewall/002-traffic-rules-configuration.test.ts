@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NF002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/network-firewall/002-traffic-rules-configuration';
+import { NF002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/network-firewall/002-traffic-rules-configuration.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { hasIntrinsicFunction } from '../../../../../../src/assess/scanning/utils/cloudformation-intrinsic-utils';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MEDIASTORE008Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediastore/008-cors-policy.js';
+import { MEDIASTORE008Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediastore/008-cors-policy.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('008-cors-policy: MediaStore CORS Policy Implementation', () => {

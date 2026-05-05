@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AS004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/autoscaling/004-load-balancer-integration.js';
+import { AS004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/autoscaling/004-load-balancer-integration.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('AS004Rule', () => {

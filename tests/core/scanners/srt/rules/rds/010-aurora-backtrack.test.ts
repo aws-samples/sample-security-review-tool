@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Rds010Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/rds/010-aurora-backtrack.js';
+import { Rds010Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/rds/010-aurora-backtrack.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Rds010Rule', () => {

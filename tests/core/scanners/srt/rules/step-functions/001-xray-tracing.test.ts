@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { StepFunctions001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/step-functions/001-xray-tracing.js';
+import { StepFunctions001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/step-functions/001-xray-tracing.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('StepFunctions001Rule - Step Functions X-Ray Tracing Tests', () => {

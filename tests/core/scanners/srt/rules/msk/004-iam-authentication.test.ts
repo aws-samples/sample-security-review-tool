@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import MSK004Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/004-iam-authentication.js';
+import MSK004Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/004-iam-authentication.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('MSK004Rule - IAM Authentication', () => {

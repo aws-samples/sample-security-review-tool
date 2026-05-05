@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CompLamb003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/003-timeout-memory.js';
+import { CompLamb003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/003-timeout-memory.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CompLamb003Rule - Timeout and Memory Tests', () => {

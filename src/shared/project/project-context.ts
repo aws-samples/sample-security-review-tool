@@ -7,6 +7,8 @@ import { glob } from 'glob';
 import { CdkCommandParser } from '../cdk/cdk-command-parser.js';
 import { CdkProjectConfig } from '../cdk/types.js';
 import { IgnorePatternService } from '../file-system/ignore-pattern-service.js';
+import { TerraformDetector } from '../terraform/terraform-detector.js';
+import { TerraformProjectConfig } from '../terraform/types.js';
 
 export interface CloudFormationTemplateConfig {
   cfnTemplateName: string;
@@ -103,6 +105,11 @@ export class ProjectContext {
     }
 
     return this.getStandardTemplates(srtOutputFolderPath);
+  }
+
+  public async getTerraformPlans(): Promise<TerraformProjectConfig[]> {
+    const detector = new TerraformDetector(this);
+    return detector.detect();
   }
 
   public async getAllCdkProjects(): Promise<CdkProjectConfig[]> {

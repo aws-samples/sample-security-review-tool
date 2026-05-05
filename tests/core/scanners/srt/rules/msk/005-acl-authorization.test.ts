@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import MSK005Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/005-acl-authorization.js';
+import MSK005Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/005-acl-authorization.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('MSK005Rule - ACL Authorization', () => {

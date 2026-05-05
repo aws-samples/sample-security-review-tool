@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ESH004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/opensearch/004-dedicated-master-nodes.js';
+import { ESH004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/opensearch/004-dedicated-master-nodes.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ESH004Rule', () => {

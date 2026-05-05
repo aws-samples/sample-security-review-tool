@@ -1,6 +1,8 @@
 import * as path from 'path';
 import { CloudFormationResource, BaseRule } from './security-rule-base.js';
-import { allRules } from './rules/index.js';
+import { allCloudFormationRules, allTerraformRules } from './rules/index.js';
+import { BaseTerraformRule, TerraformResource } from './terraform-rule-base.js';
+import { readTerraformPlan } from './terraform-plan-reader.js';
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 import { ScanResult } from '../base-scanner.js';
 import { readCfnFile, parseCfnTemplate } from './cfn-utils.js';
@@ -8,7 +10,8 @@ import { Template } from 'cloudform-types';
 import { ScannerUtils } from '../utils/scanner-utils.js';
 
 export class SecurityMatrixScannerEngine {
-  private rules: BaseRule[] = [...allRules];
+  private rules: BaseRule[] = [...allCloudFormationRules];
+  private tfRules: BaseTerraformRule[] = [...allTerraformRules];
 
   public async run(projectRootFolderPath: string, templateFilePath: string, outputFilePath: string): Promise<boolean> {
     try {
@@ -31,6 +34,50 @@ export class SecurityMatrixScannerEngine {
       SrtLogger.logError('Error scanning CloudFormation template', error as Error);
       return false;
     }
+  }
+
+  public async runTerraform(projectName: string, planJsonPath: string, outputFilePath: string): Promise<boolean> {
+    try {
+      const resources = await readTerraformPlan(planJsonPath);
+
+      if (!resources || resources.length === 0) {
+        SrtLogger.logError('No resources found in Terraform plan', new Error(planJsonPath));
+        return false;
+      }
+
+      const results = this.evaluateTerraform(resources, projectName);
+
+      await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
+      await ScannerUtils.writeJsonFile(outputFilePath, results);
+
+      return true;
+    } catch (error) {
+      SrtLogger.logError('Error scanning Terraform plan', error as Error);
+      return false;
+    }
+  }
+
+  private evaluateTerraform(resources: TerraformResource[], projectName: string): ScanResult[] {
+    const results: ScanResult[] = [];
+
+    for (const resource of resources) {
+      const applicableRules = this.tfRules
+        .filter(rule => rule.appliesTo(resource.type))
+        .sort((a, b) => a.id.localeCompare(b.id));
+
+      for (const rule of applicableRules) {
+        try {
+          const result = rule.evaluate(resource, projectName, resources);
+          if (result) {
+            results.push(result);
+          }
+        } catch (error) {
+          SrtLogger.logError(`Error evaluating TF rule ${rule.id} for resource ${resource.address}`, error as Error);
+        }
+      }
+    }
+
+    return results;
   }
 
   private evaluate(template: Template, stackName: string): ScanResult[] {

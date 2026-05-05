@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
-import KDF002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/kinesis-data-firehose/002-destination-encryption.js';
+import KDF002Rule from '../../../../../../src/assess/scanning/security-matrix/rules/kinesis-data-firehose/002-destination-encryption.cf.js';
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner.js';
 
 describe('KDF-002: Kinesis Data Firehose destination encryption rule', () => {
