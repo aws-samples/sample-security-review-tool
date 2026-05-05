@@ -17,3 +17,7 @@ export const RuleImplementationFixOutputSchema = z.object({
     updatedSource: z.string().describe('The complete updated rule source file'),
     explanation: z.string().describe('Brief description of what was changed and why'),
 });
+
+export const RuleAnnotationOutputSchema = z.object({
+    jsdocComment: z.string().describe('The complete JSDoc comment block (including /** and */) to place above the class declaration'),
+});
