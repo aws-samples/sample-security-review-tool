@@ -1,7 +1,7 @@
 import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { IssueSchema, RuleImplementationAssessmentOutputSchema, RuleImplementationFixOutputSchema } from '../types.js';
 import { RETRY_PROMPT, SYSTEM_PROMPT, USER_PROMPT } from './prompt.js';
-import { RuleEntry } from '../../types.js';
+import { FixtureFormat, RuleEntry } from '../../types.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
@@ -10,13 +10,13 @@ import { srtRepoRoot } from '../../shared/fixture-paths.js';
 import { RuleCatalog } from '../../shared/rule-catalog/index.js';
 
 export class RuleImplementationFixAgent {
-    public async invoke(ruleId: string, issues: z.infer<typeof RuleImplementationAssessmentOutputSchema>): Promise<void> {
+    public async invoke(ruleId: string, fixtureFormat: FixtureFormat, issues: z.infer<typeof RuleImplementationAssessmentOutputSchema>): Promise<void> {
         for (const issue of issues.issues) {
             console.log(`Applying fix for issue: ${issue.description} (Property: ${issue.property}, Documentation: ${issue.documentation})`);
 
             await RuleCatalog.refresh();
 
-            const rule = await RuleCatalog.find(ruleId);
+            const rule = await RuleCatalog.find(ruleId, fixtureFormat);
 
             let retries = 0;
             let error: string | null = null;

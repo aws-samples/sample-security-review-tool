@@ -41,7 +41,6 @@ import { mskRules } from './msk/index.js';
 import { elbRules } from './elastic-load-balancing/index.js';
 import { elasticBeanstalkRules } from './elastic-beanstalk/index.js';
 import { batchRules } from './batch/index.js';
-
 import { mediastoreRules } from './mediastore/index.js';
 import { mediapackageRules } from './mediapackage/index.js';
 import { medialiveRules } from './medialive/index.js';
@@ -94,7 +93,6 @@ export const allCloudFormationRules = [
   ...elbRules,
   ...elasticBeanstalkRules,
   ...batchRules,
-
   ...mediastoreRules,
   ...mediapackageRules,
   ...medialiveRules,

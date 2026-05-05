@@ -1,6 +1,6 @@
 export type Scanner = 'security-matrix' | 'checkov' | 'bandit' | 'semgrep';
 
-export type FixtureFormat = 'cfn' | 'cdk' | 'python' | 'javascript' | 'go' | 'java' | 'yaml';
+export type FixtureFormat = 'cfn' | 'cdk' | 'terraform' | 'python' | 'javascript' | 'go' | 'java' | 'yaml';
 
 export interface RuleEntry {
     checkId: string;

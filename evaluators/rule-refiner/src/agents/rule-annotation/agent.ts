@@ -1,16 +1,16 @@
 import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { SYSTEM_PROMPT, USER_PROMPT } from './prompt.js';
 import { RuleAnnotationOutputSchema } from '../types.js';
-import { RuleCatalog } from '../../shared/rule-catalog/index.js';
+import { FixtureFormat, RuleCatalog } from '../../shared/rule-catalog/index.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import z from 'zod';
 
 export class RuleAnnotationAgent {
 
-    public async invoke(ruleId: string, limitations: string[]): Promise<void> {
+    public async invoke(ruleId: string, fixtureFormat: FixtureFormat, limitations: string[]): Promise<void> {
         await RuleCatalog.refresh();
-        const rule = await RuleCatalog.find(ruleId);
+        const rule = await RuleCatalog.find(ruleId, fixtureFormat);
         const sourcePath = path.resolve(rule.sourceLocation);
         const currentSource = await fs.readFile(sourcePath, 'utf-8');
 

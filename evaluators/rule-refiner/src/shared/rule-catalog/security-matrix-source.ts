@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { glob } from 'glob';
-import { allRules } from '../../../../../src/assess/scanning/security-matrix/rules/index.js';
-import type { RuleEntry } from './types.js';
+import { allCloudFormationRules, allTerraformRules } from '../../../../../src/assess/scanning/security-matrix/rules/index.js';
+import type { FixtureFormat, RuleEntry } from './types.js';
 import { sha256OfFile, sha256OfString } from './hash.js';
 
 const SCANNER = 'security-matrix' as const;
@@ -11,26 +11,41 @@ export async function loadSecurityMatrixRules(srtRepoRoot: string): Promise<Rule
     const rulesDir = path.join(srtRepoRoot, 'src', 'assess', 'scanning', 'security-matrix', 'rules');
     const sourceIndex = await buildRuleIdToSourceIndex(rulesDir);
 
-    return allRules.map(rule => {
-        const sourceFile = sourceIndex.get(rule.id);
-        const sourceLocation = sourceFile ?? path.join(rulesDir, `${rule.id}-unknown.ts`);
-        const ruleBody = sourceFile ? fs.readFileSync(sourceFile, 'utf8') : '';
-        const sourceHash = sourceFile ? sha256OfFile(sourceFile) : sha256OfString(rule.id);
+    const cfnEntries = allCloudFormationRules.map(rule =>
+        buildRuleEntry(rule, sourceIndex, rulesDir, ['cfn', 'cdk'])
+    );
 
-        return {
-            checkId: rule.id,
-            scanner: SCANNER,
-            service: inferServiceFromPath(sourceFile, rulesDir),
-            priority: rule.priority,
-            description: rule.description,
-            fixGuidance: extractRepresentativeFixGuidance(ruleBody) || '(fix text emitted at scan time)',
-            sourceLocation,
-            sourceHash,
-            applicableResourceTypes: rule.applicableResourceTypes.slice(),
-            applicableFormats: ['cfn', 'cdk'],
-            ruleBody,
-        };
-    });
+    const terraformEntries = allTerraformRules.map(rule =>
+        buildRuleEntry(rule, sourceIndex, rulesDir, ['terraform'])
+    );
+
+    return [...cfnEntries, ...terraformEntries];
+}
+
+function buildRuleEntry(
+    rule: { id: string; priority: string; description: string; applicableResourceTypes: string[] },
+    sourceIndex: Map<string, string>,
+    rulesDir: string,
+    applicableFormats: FixtureFormat[],
+): RuleEntry {
+    const sourceFile = sourceIndex.get(rule.id);
+    const sourceLocation = sourceFile ?? path.join(rulesDir, `${rule.id}-unknown.ts`);
+    const ruleBody = sourceFile ? fs.readFileSync(sourceFile, 'utf8') : '';
+    const sourceHash = sourceFile ? sha256OfFile(sourceFile) : sha256OfString(rule.id);
+
+    return {
+        checkId: rule.id,
+        scanner: SCANNER,
+        service: inferServiceFromPath(sourceFile, rulesDir),
+        priority: rule.priority as RuleEntry['priority'],
+        description: rule.description,
+        fixGuidance: extractRepresentativeFixGuidance(ruleBody) || '(fix text emitted at scan time)',
+        sourceLocation,
+        sourceHash,
+        applicableResourceTypes: rule.applicableResourceTypes.slice(),
+        applicableFormats,
+        ruleBody,
+    };
 }
 
 async function buildRuleIdToSourceIndex(rulesDir: string): Promise<Map<string, string>> {

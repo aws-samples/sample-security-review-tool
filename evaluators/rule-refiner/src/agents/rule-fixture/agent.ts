@@ -1,10 +1,8 @@
-import { RuleCatalog } from "../../shared/rule-catalog/index.js";
-
-export type FixtureType = 'cdk' | 'cloudformation';
+import { FixtureFormat, RuleCatalog } from "../../shared/rule-catalog/index.js";
 
 export class RuleFixtureAgent {
-    public async invoke(ruleId: string, fixtureType: FixtureType): Promise<void> {
-        const rule = await RuleCatalog.find(ruleId);
-        
+    public async invoke(ruleId: string, fixtureFormat: FixtureFormat): Promise<void> {
+        const rule = await RuleCatalog.find(ruleId, fixtureFormat);
+
     }
 }

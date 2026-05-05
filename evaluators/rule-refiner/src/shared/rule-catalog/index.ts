@@ -1,4 +1,4 @@
-import type { CatalogFilter, RuleEntry } from './types.js';
+import type { CatalogFilter, FixtureFormat, RuleEntry } from './types.js';
 import { loadSecurityMatrixRules } from './security-matrix-source.js';
 import { loadCheckovRules } from './checkov-source.js';
 import { loadBanditRules } from './bandit-source.js';
@@ -34,8 +34,11 @@ export class RuleCatalog {
         return (await RuleCatalog.getInstance()).rules.filter(rule => this.matches(rule, filter));
     }
 
-    public static async find(checkId: string): Promise<RuleEntry> {
-        const result = (await RuleCatalog.getInstance()).rules.find(rule => rule.checkId === checkId);
+    public static async find(checkId: string, fixtureFormat: FixtureFormat): Promise<RuleEntry> {
+        const result = (await RuleCatalog.getInstance()).rules.find(rule => 
+            rule.checkId === checkId && 
+            rule.applicableFormats.includes(fixtureFormat)
+        );
 
         if (!result) throw new Error(`Rule with checkId ${checkId} not found.`);
 
