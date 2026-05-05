@@ -18,7 +18,7 @@ A guide for using the SRT CLI tool to perform security reviews on AWS CDK and Cl
 
 ## Installation
 
-Download the latest release of the SRT CLI Tool for your platform from the [releases page](https://github.com/aws/security-review-tool/releases).
+Download the latest release of the SRT CLI Tool for your platform from the [releases page](https://github.com/aws-samples/sample-security-review-tool/releases).
 
 After downloading, extract the package to a local folder.
 
