@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import MSK009Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/009-cloudtrail-monitoring.js';
+import MSK009Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/009-cloudtrail-monitoring.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('MSK009Rule - CloudTrail Monitoring', () => {

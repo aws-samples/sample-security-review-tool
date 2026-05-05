@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Timestream001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/timestream/001-cloudtrail-loggings.js';
+import { Timestream001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/timestream/001-cloudtrail-loggings.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Timestream001Rule', () => {

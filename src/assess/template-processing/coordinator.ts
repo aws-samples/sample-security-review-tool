@@ -7,8 +7,9 @@ import { SrtLogger } from '../../shared/logging/srt-logger.js';
 import { Threat, ThreatReportGenerator } from './threat-model-report-generator.js';
 import { DIAGRAM_GENERATOR_PROMPT } from './diagram-generator-prompt.js';
 import { THREAT_MODEL_GENERATOR_PROMPT } from './threat-model-generator-prompt.js';
-import { TemplateResult } from '../types.js';
+import { TemplateResult, TerraformTemplateResult } from '../types.js';
 import { CloudFormationTemplateConfig, ProjectContext } from '../../shared/project/project-context.js';
+import { TerraformProjectConfig } from '../../shared/terraform/types.js';
 
 export class TemplateCoordinator {
 	constructor(
@@ -20,11 +21,83 @@ export class TemplateCoordinator {
 
 	public async processTemplates(): Promise<TemplateResult[]> {
 		const cfnTemplates = await this.context.getCloudFormationTemplates();
-		if (cfnTemplates.length === 0) return [];
-
-		const templateResults = await Promise.all(cfnTemplates.map(input => this.processTemplate(input)));
+		const templateResults = cfnTemplates.length > 0
+			? await Promise.all(cfnTemplates.map(input => this.processTemplate(input)))
+			: [];
 
 		return templateResults;
+	}
+
+	public async processTerraformPlans(): Promise<TerraformTemplateResult[]> {
+		const tfPlans = await this.context.getTerraformPlans();
+		if (tfPlans.length === 0) return [];
+
+		const results = await Promise.all(tfPlans.map(plan => this.processTerraformPlan(plan)));
+		return results;
+	}
+
+	private async processTerraformPlan(tfProject: TerraformProjectConfig): Promise<TerraformTemplateResult> {
+		const result: TerraformTemplateResult = {
+			tfProjectName: tfProject.name,
+			tfProjectRootPath: tfProject.rootPath,
+			tfOutputFolderPath: tfProject.outputFolderPath,
+			checkovSummaryPath: null,
+			terraformMatrixPath: null,
+			diagramPath: null,
+			threatModelPath: null
+		};
+
+		const [checkovSummaryPath, terraformMatrixPath] = await Promise.all([
+			this.executeTerraformCheckovScan(tfProject),
+			this.executeTerraformMatrixScan(tfProject)
+		]);
+
+		result.checkovSummaryPath = checkovSummaryPath;
+		result.terraformMatrixPath = terraformMatrixPath;
+
+		return result;
+	}
+
+	private async executeTerraformMatrixScan(tfProject: TerraformProjectConfig): Promise<string | null> {
+		try {
+			this.onProgress(`  › Starting terraform matrix scan for ${tfProject.name}...`);
+
+			const scanner = new SecurityMatrixScannerEngine();
+			const filePath = path.join(tfProject.outputFolderPath, 'terraform-matrix.json');
+			const success = await scanner.runTerraform(tfProject.name, tfProject.planJsonPath, filePath);
+
+			this.onProgress(`  ✔ Completed terraform matrix scan for ${tfProject.name}`);
+			return success ? filePath : null;
+		} catch (error) {
+			this.onProgress(`  ✗ Failed terraform matrix scan for ${tfProject.name}`);
+			SrtLogger.logError('Error running terraform matrix scan', error as Error);
+			return null;
+		}
+	}
+
+	private async executeTerraformCheckovScan(tfProject: TerraformProjectConfig): Promise<string | null> {
+		try {
+			this.onProgress(`  › Starting Checkov scan for ${tfProject.name}...`);
+
+			const checkovScanner = new CheckovScanner();
+			const summaryPath = await checkovScanner.runTerraform(
+				this.context.getProjectRootFolderPath(),
+				tfProject.rootPath,
+				tfProject.outputFolderPath
+			);
+
+			if (summaryPath) {
+				this.onProgress(`  ✔ Completed Checkov scan for ${tfProject.name}`);
+			} else {
+				this.onProgress(`  ✗ Failed Checkov scan for ${tfProject.name}`);
+			}
+
+			return summaryPath;
+		} catch (error) {
+			this.onProgress(`  ✗ Failed Checkov scan for ${tfProject.name}`);
+			SrtLogger.logError('Error during Terraform Checkov scan', error as Error);
+			return null;
+		}
 	}
 
 	private async processTemplate(cfnTemplate: CloudFormationTemplateConfig): Promise<TemplateResult> {

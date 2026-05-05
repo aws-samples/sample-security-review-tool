@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { O002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/organizations/002-restrict-admin-privileges.js';
+import { O002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/organizations/002-restrict-admin-privileges.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

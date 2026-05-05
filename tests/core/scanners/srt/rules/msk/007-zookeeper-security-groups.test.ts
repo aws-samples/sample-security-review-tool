@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import MSK007Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/007-zookeeper-security-groups.js';
+import MSK007Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/007-zookeeper-security-groups.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('MSK007Rule - ZooKeeper Security Groups', () => {

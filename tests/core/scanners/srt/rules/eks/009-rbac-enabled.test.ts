@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EKS009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/eks/009-rbac-enabled.js';
+import { EKS009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/eks/009-rbac-enabled.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EKS009Rule', () => {

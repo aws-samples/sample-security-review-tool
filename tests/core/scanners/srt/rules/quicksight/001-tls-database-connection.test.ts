@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import QS001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/quicksight/001-tls-database-connection.js';
+import QS001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/quicksight/001-tls-database-connection.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner.js';
 

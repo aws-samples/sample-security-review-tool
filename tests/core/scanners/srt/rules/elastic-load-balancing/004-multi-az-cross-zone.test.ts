@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Elb004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/004-multi-az-cross-zone.js';
+import { Elb004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/004-multi-az-cross-zone.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ELB-004: Use at least two AZs with Cross-Zone Load Balancing', () => {

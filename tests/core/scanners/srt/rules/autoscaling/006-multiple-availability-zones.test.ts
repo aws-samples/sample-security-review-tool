@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AS006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/autoscaling/006-multiple-availability-zones.js';
+import { AS006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/autoscaling/006-multiple-availability-zones.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('AS006Rule', () => {

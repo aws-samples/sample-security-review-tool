@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MEDIAPACKAGE007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediapackage/007-key-rotation-interval.js';
+import { MEDIAPACKAGE007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediapackage/007-key-rotation-interval.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('007-key-rotation-interval: MediaPackage Key Rotation Interval', () => {

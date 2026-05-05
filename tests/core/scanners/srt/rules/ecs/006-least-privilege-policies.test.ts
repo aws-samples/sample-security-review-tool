@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Ecs006Rule, ECS006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/006-least-privilege-policies.js';
+import { Ecs006Rule, ECS006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/006-least-privilege-policies.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

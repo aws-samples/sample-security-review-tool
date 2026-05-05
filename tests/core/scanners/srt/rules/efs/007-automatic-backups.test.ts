@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EFS007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/efs/007-automatic-backups';
+import { EFS007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/efs/007-automatic-backups.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EFS007Rule - Automatic Backups Tests', () => {

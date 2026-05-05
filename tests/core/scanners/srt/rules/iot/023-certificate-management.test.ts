@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { IoT023Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/023-certificate-management.js';
+import { IoT023Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/023-certificate-management.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('IoT023Rule - Ensure IoT device certificates are managed', () => {

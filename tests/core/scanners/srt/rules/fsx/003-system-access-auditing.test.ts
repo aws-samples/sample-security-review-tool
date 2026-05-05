@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FSx003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/003-system-access-auditing.js';
+import { FSx003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/003-system-access-auditing.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('FSx003Rule - System Access Auditing Tests', () => {

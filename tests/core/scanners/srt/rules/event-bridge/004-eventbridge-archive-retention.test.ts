@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Evb004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/event-bridge/004-eventbridge-archive-retention.js';
+import { Evb004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/event-bridge/004-eventbridge-archive-retention.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

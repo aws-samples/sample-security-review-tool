@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CompLamb002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/002-secrets-manager.js';
+import { CompLamb002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/002-secrets-manager.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CompLamb002Rule - Secrets Manager Tests', () => {

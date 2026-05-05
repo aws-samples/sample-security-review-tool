@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CFR003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/003-access-logging.js';
+import { CFR003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/003-access-logging.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CFR003Rule', () => {

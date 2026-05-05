@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SSM003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ssm/007-non-sensitive-parameters.js';
+import { SSM003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ssm/007-non-sensitive-parameters.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('SSM003Rule', () => {

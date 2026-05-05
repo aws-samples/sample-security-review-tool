@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SL001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/security-lake/001-subscriber-least-privilege.js';
+import { SL001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/security-lake/001-subscriber-least-privilege.cf.js';
 
 describe('SL-001: Restrict AWS Security Lake subscriber permissions according to least privilege', () => {
   const rule = new SL001Rule();

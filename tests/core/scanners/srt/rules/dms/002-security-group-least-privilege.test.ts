@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DMS002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/dms/002-security-group-least-privilege.js';
+import { DMS002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/dms/002-security-group-least-privilege.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('DMS-002: Restrict DMS replication instance security groups by least privilege', () => {

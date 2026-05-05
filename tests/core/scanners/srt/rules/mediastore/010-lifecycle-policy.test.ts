@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MEDIASTORE010Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediastore/010-lifecycle-policy.js';
+import { MEDIASTORE010Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/mediastore/010-lifecycle-policy.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('010-lifecycle-policy: MediaStore Object Lifecycle Policy', () => {

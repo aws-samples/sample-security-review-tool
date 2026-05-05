@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EC2003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/003-secure-security-groups.js';
+import { EC2003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/003-secure-security-groups.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EC2003Rule - Secure Security Groups Tests', () => {

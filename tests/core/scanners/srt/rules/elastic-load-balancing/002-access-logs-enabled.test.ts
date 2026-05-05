@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Elb002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/002-access-logs-enabled.js';
+import { Elb002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/002-access-logs-enabled.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ELB-002: Enable ELB/ALB access logs', () => {

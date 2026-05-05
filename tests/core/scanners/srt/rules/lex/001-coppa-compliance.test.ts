@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Lex001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lex/001-coppa-compliance.js';
+import { Lex001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lex/001-coppa-compliance.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Lex001Rule', () => {

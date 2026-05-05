@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FSxN003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/n003-ssh-private-key-access.js';
+import { FSxN003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/n003-ssh-private-key-access.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('FSxN003Rule - SSH Private Key Access Tests', () => {

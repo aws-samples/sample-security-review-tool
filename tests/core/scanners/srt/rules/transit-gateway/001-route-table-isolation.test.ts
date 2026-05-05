@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TG001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/transit-gateway/001-route-table-isolation.js';
+import { TG001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/transit-gateway/001-route-table-isolation.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('TG001Rule', () => {

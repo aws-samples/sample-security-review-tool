@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import iot028Rule from '../../../../../../src/assess/scanning/security-matrix/rules/iot/028-backup-recovery-plan.ts';
+import iot028Rule from '../../../../../../src/assess/scanning/security-matrix/rules/iot/028-backup-recovery-plan.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('IoT028Rule - Define backup and recovery plan', () => {

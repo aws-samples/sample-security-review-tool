@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import MSK008Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/008-zookeeper-tls.js';
+import MSK008Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/008-zookeeper-tls.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('MSK008Rule - ZooKeeper TLS Documentation', () => {

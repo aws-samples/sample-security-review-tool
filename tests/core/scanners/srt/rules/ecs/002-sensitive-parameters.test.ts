@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { Ecs002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/002-sensitive-parameters.js';
+import { Ecs002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/002-sensitive-parameters.cf.js';
 import { Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

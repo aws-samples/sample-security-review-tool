@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { ECS001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/001-private-subnet-alb.js';
+import { ECS001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/001-private-subnet-alb.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ECS001Rule', () => {

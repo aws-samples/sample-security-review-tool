@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Ddb002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/dynamodb/002-cloudtrail-data-events.js';
+import { Ddb002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/dynamodb/002-cloudtrail-data-events.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Ddb002Rule', () => {

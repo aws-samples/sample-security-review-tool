@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SageMaker003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sagemaker/003-no-direct-internet.js';
+import { SageMaker003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/sagemaker/003-no-direct-internet.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('SageMaker003Rule', () => {

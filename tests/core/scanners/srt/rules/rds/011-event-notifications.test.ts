@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Rds011Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/rds/011-event-notifications.js';
+import { Rds011Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/rds/011-event-notifications.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Rds011Rule', () => {

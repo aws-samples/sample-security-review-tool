@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { S3008Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/008-lifecycle-policies.js';
+import { S3008Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/008-lifecycle-policies.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('S3008Rule', () => {

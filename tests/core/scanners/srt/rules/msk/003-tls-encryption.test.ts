@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import MSK003Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/003-tls-encryption.js';
+import MSK003Rule from '../../../../../../src/assess/scanning/security-matrix/rules/msk/003-tls-encryption.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('MSK003Rule - TLS Encryption Between Brokers', () => {

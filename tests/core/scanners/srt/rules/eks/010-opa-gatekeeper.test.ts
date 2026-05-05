@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EKS010Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/eks/010-opa-gatekeeper.js';
+import { EKS010Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/eks/010-opa-gatekeeper.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EKS010Rule', () => {

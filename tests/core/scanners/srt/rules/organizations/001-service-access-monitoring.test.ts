@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { O001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/organizations/001-service-access-monitoring.js';
+import { O001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/organizations/001-service-access-monitoring.cf.js';
 
 describe('ORG-001: Enable AWS Organizations service access according to least-privilege', () => {
   const rule = new O001Rule();

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EC2005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/005-limited-egress-rules.js';
+import { EC2005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ec2/005-limited-egress-rules.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EC2005Rule - Limited Egress Rules Tests', () => {

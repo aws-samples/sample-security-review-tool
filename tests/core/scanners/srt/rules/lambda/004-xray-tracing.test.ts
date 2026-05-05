@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CompLamb004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/004-xray-tracing.js';
+import { CompLamb004Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/004-xray-tracing.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CompLamb004Rule - X-Ray Tracing Tests', () => {

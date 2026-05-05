@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FSxN001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/n001-security-groups-restrict-access.js';
+import { FSxN001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/n001-security-groups-restrict-access.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('FSxN001Rule - Security Groups Restrict Access Tests', () => {

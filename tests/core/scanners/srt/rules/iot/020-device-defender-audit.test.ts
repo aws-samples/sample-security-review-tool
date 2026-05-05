@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { IoT020Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/020-device-defender-audit.js';
+import { IoT020Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/020-device-defender-audit.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('IoT020Rule - Use IoT Device Defender to audit device fleet', () => {

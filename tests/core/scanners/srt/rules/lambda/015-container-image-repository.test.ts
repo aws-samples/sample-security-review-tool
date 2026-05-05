@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CompLamb015Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/015-container-image-repository.js';
+import { CompLamb015Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/015-container-image-repository.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CompLamb015Rule - Container Image Repository Tests', () => {

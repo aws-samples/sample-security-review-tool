@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CompLamb005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/005-least-privilege-roles.js';
+import { CompLamb005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/005-least-privilege-roles.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CompLamb005Rule - Least Privilege IAM Roles Tests', () => {

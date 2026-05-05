@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ECR001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecr/001-public-registry-access.js';
+import { ECR001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecr/001-public-registry-access.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ECR001Rule', () => {

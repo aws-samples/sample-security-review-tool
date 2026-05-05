@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { KMS007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/kms/007-monitoring-configuration.js';
+import { KMS007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/kms/007-monitoring-configuration.cf.js';
 
 describe('KMS-007: Configure monitoring infrastructure for KMS events', () => {
   const rule = new KMS007Rule();

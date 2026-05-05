@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Elasticache002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elasticache/002-redis-auth.js';
+import { Elasticache002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elasticache/002-redis-auth.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Elasticache002Rule', () => {

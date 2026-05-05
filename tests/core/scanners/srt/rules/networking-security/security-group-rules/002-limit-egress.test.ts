@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { NetSg002Rule } from '../../../../../../../src/assess/scanning/security-matrix/rules/security-group/002-limit-egress.js'
+import { NetSg002Rule } from '../../../../../../../src/assess/scanning/security-matrix/rules/security-group/002-limit-egress.cf.js'
 import { CloudFormationResource } from '../../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('NetSg002Rule - Limit Egress Tests', () => {

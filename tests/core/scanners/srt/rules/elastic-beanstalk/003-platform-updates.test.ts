@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ElasticBeanstalk003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-beanstalk/003-platform-updates.js';
+import { ElasticBeanstalk003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-beanstalk/003-platform-updates.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ElasticBeanstalk003Rule', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FSxN002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/n002-restrict-ssh-api-access.js';
+import { FSxN002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/fsx/n002-restrict-ssh-api-access.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('FSxN002Rule - Restrict SSH and API Access Tests', () => {

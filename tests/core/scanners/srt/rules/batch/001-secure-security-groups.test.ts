@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Batch001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/batch/001-secure-security-groups.js';
+import { Batch001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/batch/001-secure-security-groups.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('BATCH-001: Use secure security groups for Batch compute environments', () => {

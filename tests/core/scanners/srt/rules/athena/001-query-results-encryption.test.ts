@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
-import ATH001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/athena/001-query-results-encryption';
+import ATH001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/athena/001-query-results-encryption.cf.js';
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner';
 
 describe('ATH-001: Athena query results encryption rule', () => {

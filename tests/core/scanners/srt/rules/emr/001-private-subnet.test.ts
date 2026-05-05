@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
-import EMR001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/emr/001-private-subnet.js';
+import EMR001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/emr/001-private-subnet.cf.js';
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner.js';
 
 describe('EMR-001: EMR cluster private subnet rule', () => {

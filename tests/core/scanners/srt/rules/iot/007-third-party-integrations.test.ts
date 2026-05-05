@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { IoT007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/007-third-party-integrations.js';
+import { IoT007Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iot/007-third-party-integrations.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('IoT007Rule', () => {

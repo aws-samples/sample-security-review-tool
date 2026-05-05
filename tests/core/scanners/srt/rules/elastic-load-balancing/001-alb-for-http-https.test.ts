@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Elb001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/001-alb-for-http-https.js';
+import { Elb001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/001-alb-for-http-https.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ELB-001: Use ALB for HTTP/HTTPS applications', () => {

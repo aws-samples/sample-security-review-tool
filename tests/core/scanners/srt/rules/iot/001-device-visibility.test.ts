@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import IoT001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/iot/001-device-visibility.js';
+import IoT001Rule from '../../../../../../src/assess/scanning/security-matrix/rules/iot/001-device-visibility.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 // Helper function to create a basic IoT Thing resource

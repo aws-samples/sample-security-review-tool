@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CodePipeline002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codepipeline/002-secrets-manager-usage.js';
+import { CodePipeline002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codepipeline/002-secrets-manager-usage.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CODEPIPELINE-002: Use AWS Secrets Manager for credentials in CodePipeline', () => {

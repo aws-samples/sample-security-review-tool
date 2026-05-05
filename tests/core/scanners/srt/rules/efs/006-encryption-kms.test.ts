@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EFS006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/efs/006-encryption-kms';
+import { EFS006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/efs/006-encryption-kms.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('EFS006Rule - Encryption KMS Tests', () => {

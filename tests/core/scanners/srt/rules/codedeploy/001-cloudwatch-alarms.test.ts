@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CodeDeploy001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codedeploy/001-cloudwatch-alarms.js';
+import { CodeDeploy001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/codedeploy/001-cloudwatch-alarms.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CODEDEPLOY-001: Implement CloudWatch alarms for CodeDeploy monitoring', () => {

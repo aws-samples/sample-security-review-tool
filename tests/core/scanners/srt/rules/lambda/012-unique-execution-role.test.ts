@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CompLamb012Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/012-unique-execution-role.js';
+import { CompLamb012Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/lambda/012-unique-execution-role.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('CompLamb012Rule - Unique Execution Role Tests', () => {

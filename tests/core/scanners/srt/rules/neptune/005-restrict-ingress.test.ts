@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Neptune005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/neptune/005-restrict-ingress.js';
+import { Neptune005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/neptune/005-restrict-ingress.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Neptune005Rule', () => {

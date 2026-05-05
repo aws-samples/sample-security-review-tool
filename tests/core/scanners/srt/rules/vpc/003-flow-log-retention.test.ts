@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Vpc003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/vpc/003-flow-log-retention.js';
+import { Vpc003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/vpc/003-flow-log-retention.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

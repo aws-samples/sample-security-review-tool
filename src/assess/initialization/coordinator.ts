@@ -2,6 +2,7 @@ import { ProjectContext } from '../../shared/project/project-context.js';
 import { ProjectInitializer } from './project-initializer.js';
 import { GitInitializer } from './git-initializer.js';
 import { CdkInitializer } from './cdk-initializer.js';
+import { TerraformInitializer } from './terraform-initializer.js';
 import { DsrMigrator } from '../../shared/project/dsr-migrator.js';
 
 export class InitializationCoordinator {
@@ -19,5 +20,8 @@ export class InitializationCoordinator {
 
         const cdkInit = new CdkInitializer(this.context, this.onProgress);
         await cdkInit.initialize();
+
+        const tfInit = new TerraformInitializer(this.context, this.onProgress);
+        await tfInit.initialize();
     }
 }

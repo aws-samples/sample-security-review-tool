@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Redshift005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/redshift/005-snapshot-retention.js';
+import { Redshift005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/redshift/005-snapshot-retention.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Redshift005Rule', () => {

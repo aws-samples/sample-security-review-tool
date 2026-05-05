@@ -1,8 +1,8 @@
-import rule002 from './002-least-privilege-roles.js';
-import rule003 from './003-secure-security-groups.js';
-import rule005 from './005-limited-egress-rules.js';
-import rule009 from './009-termination-protection.js';
-import rule014 from './014-public-ip-on-load-balancers.js';
+import rule002 from './002-least-privilege-roles.cf.js';
+import rule003 from './003-secure-security-groups.cf.js';
+import rule005 from './005-limited-egress-rules.cf.js';
+import rule009 from './009-termination-protection.cf.js';
+import rule014 from './014-public-ip-on-load-balancers.cf.js';
 
 // Note: EC27, EC28, and EC210 are not implemented as they're not mentioned in the documentation
 
@@ -33,3 +33,17 @@ export {
   // rule013 as useImdsv2Rule,             // Skipped: Fully covered by Checkov rule CKV_AWS_79
   rule014 as publicIpOnLoadBalancersRule,
 };
+
+import tfRule001 from './002-least-privilege-roles.tf.js';
+import tfRule002 from './003-secure-security-groups.tf.js';
+import tfRule003 from './005-limited-egress-rules.tf.js';
+import tfRule004 from './009-termination-protection.tf.js';
+import tfRule005 from './014-public-ip-on-load-balancers.tf.js';
+
+export const tfEc2Rules = [
+  tfRule001,
+  tfRule002,
+  tfRule003,
+  tfRule004,
+  tfRule005,
+];

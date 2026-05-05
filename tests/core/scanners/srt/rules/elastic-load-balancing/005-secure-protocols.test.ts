@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Elb005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/005-secure-protocols.js';
+import { Elb005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/elastic-load-balancing/005-secure-protocols.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ELB-005: Use secure protocols and disable weak SSL/TLS versions', () => {

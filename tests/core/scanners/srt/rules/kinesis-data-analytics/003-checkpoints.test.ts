@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
-import KDA003Rule from '../../../../../../src/assess/scanning/security-matrix/rules/kinesis-data-analytics/003-checkpoints';
+import KDA003Rule from '../../../../../../src/assess/scanning/security-matrix/rules/kinesis-data-analytics/003-checkpoints.cf.js';
 import { ScanResult } from '../../../../../../src/core/scanners/base-scanner';
 
 describe('KDA-003: Kinesis Data Analytics checkpoints rule', () => {

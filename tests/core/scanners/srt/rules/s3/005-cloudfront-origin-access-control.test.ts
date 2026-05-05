@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { S3005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/005-cloudfront-origin-access-control.js';
+import { S3005Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/005-cloudfront-origin-access-control.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

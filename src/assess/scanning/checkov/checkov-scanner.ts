@@ -34,6 +34,34 @@ export class CheckovScanner {
     }
   }
 
+  public async runTerraform(projectRootFolderPath: string, tfProjectRoot: string, outputFolderPath: string): Promise<string | null> {
+    try {
+      const scanFilePath = path.join(outputFolderPath, 'checkov-scan.json');
+      const summaryFilePath = path.join(outputFolderPath, 'checkov-summary.json');
+
+      await this.scanTerraformDirectory(tfProjectRoot, scanFilePath);
+      await this.summarize(scanFilePath, summaryFilePath, projectRootFolderPath);
+
+      return summaryFilePath;
+    } catch (error) {
+      SrtLogger.logError('Error during Terraform Checkov scan', error as Error);
+      return null;
+    }
+  }
+
+  private async scanTerraformDirectory(tfProjectRoot: string, outputFilePath: string): Promise<void> {
+    const resultPath = path.dirname(outputFilePath);
+    await ScannerUtils.ensureDirectoryExists(resultPath);
+
+    const checkovPath = this.venvConfig.checkovCmd;
+    const command = `"${this.venvConfig.pythonPath}" "${checkovPath}" -d "${tfProjectRoot}" --framework terraform -o json --output-file-path "${resultPath}" --soft-fail --quiet`;
+
+    await this.cmd.exec(command, tfProjectRoot);
+
+    const tempOutputPath = path.join(resultPath, "results_json.json");
+    await fs.rename(tempOutputPath, outputFilePath);
+  }
+
   private async scan(templateFilePath: string, outputFilePath: string): Promise<void> {
     const resultPath = path.dirname(outputFilePath);
     await ScannerUtils.ensureDirectoryExists(resultPath);

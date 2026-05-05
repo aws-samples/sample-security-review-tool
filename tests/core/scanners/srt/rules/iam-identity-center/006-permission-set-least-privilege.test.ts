@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { IdC006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iam-identity-center/006-permission-set-least-privilege.js';
+import { IdC006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iam-identity-center/006-permission-set-least-privilege.cf.js';
 
 describe('IdC-006: Assign IAM permission sets according to the principle of least privilege', () => {
   const rule = new IdC006Rule();

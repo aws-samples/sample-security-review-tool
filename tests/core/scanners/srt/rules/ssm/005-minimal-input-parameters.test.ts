@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SSM001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ssm/005-minimal-input-parameters.js';
+import { SSM001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ssm/005-minimal-input-parameters.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('SSM001Rule', () => {

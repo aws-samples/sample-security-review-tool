@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Sec006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/secrets-management/006-customer-managed-keys.js';
+import { Sec006Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/secrets-management/006-customer-managed-keys.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('Sec006Rule', () => {

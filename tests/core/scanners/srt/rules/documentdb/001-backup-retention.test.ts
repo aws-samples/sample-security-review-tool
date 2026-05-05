@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DocumentDB001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/documentdb/001-backup-retention.js';
+import { DocumentDB001Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/documentdb/001-backup-retention.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('DocumentDB001Rule', () => {

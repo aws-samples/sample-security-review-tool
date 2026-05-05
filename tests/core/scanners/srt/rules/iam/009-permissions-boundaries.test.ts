@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Iam009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iam/009-permissions-boundaries.js';
+import { Iam009Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/iam/009-permissions-boundaries.cf.js';
 import { CloudFormationResource, Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 import { Template } from 'cloudform-types';
 

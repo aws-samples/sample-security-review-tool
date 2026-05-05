@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { ECS003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/003-task-network-isolation.js';
+import { ECS003Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/ecs/003-task-network-isolation.cf.js';
 import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
 
 describe('ECS003Rule', () => {

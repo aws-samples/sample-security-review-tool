@@ -1,10 +1,11 @@
-import { CodeScanResult, TemplateResult } from '../types.js';
+import { CodeScanResult, TemplateResult, TerraformTemplateResult } from '../types.js';
 
 export interface ReportingOptions {
     codeScanResult: CodeScanResult;
     templateResults: TemplateResult[];
     generateXlsx: boolean;
     projectSummary: string | null;
+    terraformResults?: TerraformTemplateResult[];
 }
 
 export interface AssessmentSummary {
