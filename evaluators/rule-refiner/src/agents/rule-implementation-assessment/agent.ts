@@ -1,6 +1,6 @@
 import { Agent, BedrockModel, McpClient } from "@strands-agents/sdk";
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { SYSTEM_PROMPT, USER_PROMPT } from "./prompt.js";
+import { getSystemPrompt, USER_PROMPT } from "./prompt.js";
 import { RuleImplementationAssessmentOutputSchema } from "../types.js";
 import { FixtureFormat, RuleCatalog } from "../../shared/rule-catalog/index.js";
 import z from "zod";
@@ -15,18 +15,18 @@ export class RuleImplementationAssessmentAgent {
         const userPrompt = USER_PROMPT.replace('{{RULE_IMPLEMENTATION}}', rule.ruleBody);
 
         try {
-            const result = await this.getAgent(awsKnowledgeMcpClient).invoke(userPrompt);
+            const result = await this.getAgent(awsKnowledgeMcpClient, fixtureFormat).invoke(userPrompt);
             return result.structuredOutput as z.infer<typeof RuleImplementationAssessmentOutputSchema>;
         } finally {
             awsKnowledgeMcpClient.disconnect();
         }
     }
 
-    private getAgent(awsKnowledgeMcpClient: McpClient): Agent {
+    private getAgent(awsKnowledgeMcpClient: McpClient, fixtureFormat: FixtureFormat): Agent {
         return new Agent({
             model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
             tools: [awsKnowledgeMcpClient],
-            systemPrompt: SYSTEM_PROMPT,
+            systemPrompt: getSystemPrompt(fixtureFormat),
             structuredOutputSchema: RuleImplementationAssessmentOutputSchema
         });
     }

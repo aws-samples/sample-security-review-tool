@@ -1,9 +1,9 @@
 import z from 'zod';
 
 export const IssueSchema = z.object({
-    property: z.string().describe('The CloudFormation property or code location involved'),
+    property: z.string().describe('The resource property, attribute, or code location involved'),
     description: z.string().describe('What is wrong'),
-    documentation: z.string().describe('The AWS doc reference that supports this finding'),
+    documentation: z.string().describe('The AWS or Terraform provider doc reference that supports this finding'),
     severity: z.enum(['high', 'low']).describe('High = incorrect behavior. Low = edge case or minor gap'),
 });
 
