@@ -8,6 +8,7 @@ import { SrtLogger } from "./shared/logging/srt-logger.js";
 import { StatusCommand } from "./status/command.js";
 import { UpdateCommand } from "./update/command.js";
 import { ReleaseChecker } from "./update/release/release-checker.js";
+import { UvManager } from "./shared/scanner-tools/uv-manager.js";
 
 SrtLogger.initialize();
 
@@ -39,6 +40,8 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
         if (!config) {
             throw new Error('Configuration not found. Run: srt config');
         }
+
+        await UvManager.ensureUvAvailable();
     }
 
     if (commandName !== "update") {

@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 import { CommandRunner } from '../../../shared/command-execution/command-runner.js';
 import { ScannerToolManager } from '../../../shared/scanner-tools/scanner-tool-manager.js';
-import { VenvConfig } from '../../../shared/scanner-tools/types.js';
+import { ScanTool } from '../../../shared/scanner-tools/types.js';
 import { ScanResult } from '../base-scanner.js';
 import { ScannerUtils } from '../utils/scanner-utils.js';
 import { CheckovPolicies } from './checkov_fixes.js';
@@ -11,13 +11,7 @@ import { CheckovReport, CheckovSecurityCheck } from './checkov_report.js';
 
 export class CheckovScanner {
   private readonly cmd = new CommandRunner();
-  private readonly scanToolManager: ScannerToolManager;
-  private readonly venvConfig: VenvConfig;
-
-  constructor() {
-    this.scanToolManager = new ScannerToolManager();
-    this.venvConfig = this.scanToolManager.getVenvConfig();
-  }
+  private readonly scanToolManager = new ScannerToolManager();
 
   public async run(projectRootFolderPath: string, templateFilePath: string, outputFolderPath: string): Promise<string | null> {
     try {
@@ -50,11 +44,12 @@ export class CheckovScanner {
   }
 
   private async scanTerraformDirectory(tfProjectRoot: string, outputFilePath: string): Promise<void> {
+    const { uvPath } = await this.scanToolManager.getToolConfig();
     const resultPath = path.dirname(outputFilePath);
     await ScannerUtils.ensureDirectoryExists(resultPath);
 
-    const checkovPath = this.venvConfig.checkovCmd;
-    const command = `"${this.venvConfig.pythonPath}" "${checkovPath}" -d "${tfProjectRoot}" --framework terraform -o json --output-file-path "${resultPath}" --soft-fail --quiet`;
+    const prefix = ScannerToolManager.getToolRunPrefix(uvPath, ScanTool.CHECKOV);
+    const command = `${prefix} -d "${tfProjectRoot}" --framework terraform -o json --output-file-path "${resultPath}" --soft-fail --quiet`;
 
     await this.cmd.exec(command, tfProjectRoot);
 
@@ -63,11 +58,12 @@ export class CheckovScanner {
   }
 
   private async scan(templateFilePath: string, outputFilePath: string): Promise<void> {
+    const { uvPath } = await this.scanToolManager.getToolConfig();
     const resultPath = path.dirname(outputFilePath);
     await ScannerUtils.ensureDirectoryExists(resultPath);
 
-    const checkovPath = this.venvConfig.checkovCmd;
-    const command = `"${this.venvConfig.pythonPath}" "${checkovPath}" -f "${templateFilePath}" -o json --output-file-path "${resultPath}" --soft-fail --quiet`;
+    const prefix = ScannerToolManager.getToolRunPrefix(uvPath, ScanTool.CHECKOV);
+    const command = `${prefix} -f "${templateFilePath}" -o json --output-file-path "${resultPath}" --soft-fail --quiet`;
 
     await this.cmd.exec(command, path.dirname(templateFilePath));
 
@@ -137,6 +133,6 @@ export class CheckovScanner {
     return lowerCdkPath.includes('custom::') ||
       pathSegments[1]?.startsWith('logretention') ||
       pathSegments[1]?.startsWith('bucketnotificationshandler') ||
-      pathSegments[1]?.includes('679f53fac002430cb0da5b7982bd2287'); // CDK Custom Resource Provider ID
+      pathSegments[1]?.includes('679f53fac002430cb0da5b7982bd2287');
   }
 }

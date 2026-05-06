@@ -2,6 +2,7 @@ import * as path from 'path';
 import { execFile } from 'child_process';
 import { FixChange } from '../../../types.js';
 import { ProjectContext } from '../../../../shared/project/project-context.js';
+import { UvManager } from '../../../../shared/scanner-tools/uv-manager.js';
 import { ScannerToolManager } from '../../../../shared/scanner-tools/scanner-tool-manager.js';
 import { ScanTool } from '../../../../shared/scanner-tools/types.js';
 import { StrategyResult, ValidationStrategy } from '../types.js';
@@ -18,16 +19,14 @@ const TEMPLATE_EXTENSIONS = ['.yaml', '.yml', '.json'];
 export class CfnLintStrategy implements ValidationStrategy {
     public readonly name = 'cfn-lint';
 
-    private readonly toolManager = new ScannerToolManager();
-
     public async validate(changes: FixChange[], context: ProjectContext): Promise<StrategyResult[]> {
         const templateChanges = await this.filterTemplates(changes, context);
         if (templateChanges.length === 0) return [];
 
-        const cfnLintPath = await this.resolveCfnLintPath();
+        const uvPath = await UvManager.ensureUvAvailable();
         const results: StrategyResult[] = [];
         for (const change of templateChanges) {
-            results.push(await this.lint(cfnLintPath, change.filePath));
+            results.push(await this.lint(uvPath, change.filePath));
         }
         return results;
     }
@@ -44,26 +43,10 @@ export class CfnLintStrategy implements ValidationStrategy {
         return candidates;
     }
 
-    private async resolveCfnLintPath(): Promise<string> {
-        const managed = await this.toolManager.isToolInstalled(ScanTool.CFN_LINT);
-        if (managed) return this.toolManager.getToolPath('cfn-lint');
-
-        const onPath = await this.isOnPath('cfn-lint');
-        if (onPath) return 'cfn-lint';
-
-        throw new Error('cfn-lint is not installed. Run `srt config` to install prerequisites.');
-    }
-
-    private isOnPath(command: string): Promise<boolean> {
-        const which = process.platform === 'win32' ? 'where' : 'which';
-        return new Promise(resolve => {
-            execFile(which, [command], error => resolve(!error));
-        });
-    }
-
-    private async lint(cfnLintPath: string, filePath: string): Promise<StrategyResult> {
+    private async lint(uvPath: string, filePath: string): Promise<StrategyResult> {
         const strategy = `${this.name}:${path.basename(filePath)}`;
-        const { exitCode, stdout, stderr } = await this.exec(cfnLintPath, ['-f', 'json', filePath]);
+        const toolArgs = ScannerToolManager.getToolRunArgs(ScanTool.CFN_LINT);
+        const { exitCode, stdout, stderr } = await this.exec(uvPath, [...toolArgs, '-f', 'json', filePath]);
 
         if (exitCode === 0) {
             return { strategy, isValid: true };

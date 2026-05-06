@@ -2,7 +2,7 @@ import * as path from 'path';
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 import { CommandRunner } from '../../../shared/command-execution/command-runner.js';
 import { ScannerToolManager } from '../../../shared/scanner-tools/scanner-tool-manager.js';
-import { VenvConfig } from '../../../shared/scanner-tools/types.js';
+import { ScanTool } from '../../../shared/scanner-tools/types.js';
 import { BaseScanner, ScanResult } from '../base-scanner.js';
 import { ScannerUtils } from '../utils/scanner-utils.js';
 import { SemgrepFixes } from './semgrep-fixes.js';
@@ -10,22 +10,20 @@ import { ProjectContext } from '../../../shared/project/project-context.js';
 
 export class SemgrepScanner extends BaseScanner {
   private readonly cmd = new CommandRunner();
-  private readonly scanToolManager: ScannerToolManager;
-  private readonly venvConfig: VenvConfig;
+  private readonly scanToolManager = new ScannerToolManager();
 
   constructor(context: ProjectContext) {
     super(context);
-    this.scanToolManager = new ScannerToolManager();
-    this.venvConfig = this.scanToolManager.getVenvConfig();
   }
 
   public async scan(projectRootFolderPath: string, outputFilePath: string): Promise<void> {
     try {
-      const semgrepPath = this.venvConfig.semgrepCmd;
+      const { uvPath } = await this.scanToolManager.getToolConfig();
       const excludePaths = this.context.getIgnoredDirectoryNames();
 
       const excludeArgs = excludePaths.map(p => `--exclude "${p}"`).join(' ');
-      const finalCommand = `"${this.venvConfig.pythonPath}" "${semgrepPath}" scan --config=auto ${excludeArgs} --json --output="${outputFilePath}" "${projectRootFolderPath}"`;
+      const prefix = ScannerToolManager.getToolRunPrefix(uvPath, ScanTool.SEMGREP);
+      const finalCommand = `${prefix} scan --config=auto ${excludeArgs} --json --output="${outputFilePath}" "${projectRootFolderPath}"`;
 
       await this.cmd.exec(finalCommand, projectRootFolderPath);
     } catch (error) {

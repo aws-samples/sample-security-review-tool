@@ -1,7 +1,7 @@
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 import { CommandRunner } from '../../../shared/command-execution/command-runner.js';
 import { ScannerToolManager } from '../../../shared/scanner-tools/scanner-tool-manager.js';
-import { VenvConfig } from '../../../shared/scanner-tools/types.js';
+import { ScanTool } from '../../../shared/scanner-tools/types.js';
 import { BaseScanner } from '../base-scanner.js';
 import { ScannerUtils } from '../utils/scanner-utils.js';
 import { ProjectContext } from '../../../shared/project/project-context.js';
@@ -9,20 +9,18 @@ import { ProjectContext } from '../../../shared/project/project-context.js';
 export class SyftScanner extends BaseScanner {
   private static readonly MAX_LICENSE_LENGTH = 32760;
   private readonly cmd = new CommandRunner();
-  private readonly scanToolManager: ScannerToolManager;
-  private readonly venvConfig: VenvConfig;
+  private readonly scanToolManager = new ScannerToolManager();
 
   constructor(context: ProjectContext) {
     super(context);
-    this.scanToolManager = new ScannerToolManager();
-    this.venvConfig = this.scanToolManager.getVenvConfig();
   }
 
   public async scan(projectRootFolderPath: string, outputFilePath: string): Promise<void> {
     try {
-      const syftPath = this.venvConfig.syftCmd;
+      const { uvPath } = await this.scanToolManager.getToolConfig();
       const excludeArgs = this.context.getIgnoredDirectoryNames().map(dir => `--exclude "**/${dir}/**"`).join(' ');
-      const finalCommand = `"${this.venvConfig.pythonPath}" "${syftPath}" "${projectRootFolderPath}" ${excludeArgs} -o json="${outputFilePath}"`;
+      const prefix = ScannerToolManager.getToolRunPrefix(uvPath, ScanTool.SYFT);
+      const finalCommand = `${prefix} "${projectRootFolderPath}" ${excludeArgs} -o json="${outputFilePath}"`;
 
       await this.cmd.exec(finalCommand, projectRootFolderPath);
     } catch (error) {
@@ -82,7 +80,6 @@ export class SyftScanner extends BaseScanner {
   }
 
   protected async countFindings(summaryFilePath: string): Promise<number> {
-    // Syft is a package inventory tool, not a security scanner so no findings
     return 0;
   }
 }

@@ -1,14 +1,13 @@
 import { Command, Option } from "commander";
 import chalk from 'chalk';
 import * as path from 'path';
-import { input, select } from '@inquirer/prompts';
+import { select } from '@inquirer/prompts';
 import { Licenses } from "./licensing/licenses.js";
 import { ReleaseChecker } from '../update/release/release-checker.js';
 import { StatusCommand } from "../status/command.js";
 import { ui } from '../shared/ui.js';
 import { AssessCoordinator } from './coordinator.js';
 import { AssessHelpers } from "./helpers.js";
-import { ScannerSetup } from '../config/scanner/scanner-setup.js';
 
 export class AssessCommand {
     public static register(program: Command): void {
@@ -53,15 +52,6 @@ export class AssessCommand {
     }
 
     private static async execute(options: any): Promise<void> {
-        const scannerSetup = new ScannerSetup();
-        const allInstalled = await scannerSetup.checkAllInstalled();
-
-        if (!allInstalled) {
-            console.error(chalk.red(`\n${ui.error('Prerequisites not installed.')}`));
-            console.log(chalk.yellow("Run 'srt config' first to install prerequisites.\n"));
-            process.exit(1);
-        }
-
         const projectRootFolderPath = options?.path || process.cwd();
         const cdkOutPaths = options?.cdkOut?.length > 0
             ? options.cdkOut.map((p: string) => path.resolve(p))

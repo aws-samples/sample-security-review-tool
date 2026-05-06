@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CfnLintStrategy } from '../../../../src/fix/agent/validation/strategies/cfn-lint-strategy.js';
 import { ProjectContext } from '../../../../src/shared/project/project-context.js';
 import { FixChange } from '../../../../src/fix/types.js';
-import { ScannerToolManager } from '../../../../src/shared/scanner-tools/scanner-tool-manager.js';
+import { UvManager } from '../../../../src/shared/scanner-tools/uv-manager.js';
 
 function fakeContext(isCfn: boolean): ProjectContext {
     return {
@@ -17,10 +17,10 @@ function change(filePath: string): FixChange {
     return { filePath, original: '', updated: '', startingLineNumber: 1 };
 }
 
-function cfnLintPath(): string | null {
+function findUvPath(): string | null {
     const candidates = [
-        path.join(os.homedir(), '.srt', '.venv', 'bin', 'cfn-lint'),
-        '/tmp/cfn-lint-test/bin/cfn-lint',
+        path.join(os.homedir(), '.srt', 'bin', 'uv'),
+        '/usr/local/bin/uv',
     ];
     for (const candidate of candidates) {
         try {
@@ -33,16 +33,15 @@ function cfnLintPath(): string | null {
     return null;
 }
 
-const resolvedCfnLintPath = cfnLintPath();
-const describeCfnLint = resolvedCfnLintPath ? describe : describe.skip;
+const resolvedUvPath = findUvPath();
+const describeCfnLint = resolvedUvPath ? describe : describe.skip;
 
 describeCfnLint('CfnLintStrategy', () => {
     let workingDir: string;
 
     beforeEach(async () => {
         workingDir = await fs.mkdtemp(path.join(os.tmpdir(), 'cfn-lint-strategy-'));
-        vi.spyOn(ScannerToolManager.prototype, 'isToolInstalled').mockResolvedValue(true);
-        vi.spyOn(ScannerToolManager.prototype, 'getToolPath').mockReturnValue(resolvedCfnLintPath!);
+        vi.spyOn(UvManager, 'ensureUvAvailable').mockResolvedValue(resolvedUvPath!);
     });
 
     afterEach(async () => {
@@ -99,8 +98,10 @@ describeCfnLint('CfnLintStrategy', () => {
         expect(results).toEqual([]);
     });
 
-    it('throws when cfn-lint is not installed', async () => {
-        vi.spyOn(ScannerToolManager.prototype, 'isToolInstalled').mockResolvedValue(false);
+    it('throws when uv is not available', async () => {
+        vi.spyOn(UvManager, 'ensureUvAvailable').mockRejectedValue(
+            new Error('Failed to verify uv installation. Please check your internet connection and try again.')
+        );
 
         const filePath = path.join(workingDir, 'template.yaml');
         await fs.writeFile(filePath, [
@@ -112,6 +113,6 @@ describeCfnLint('CfnLintStrategy', () => {
 
         await expect(
             new CfnLintStrategy().validate([change(filePath)], fakeContext(true)),
-        ).rejects.toThrow('cfn-lint is not installed');
+        ).rejects.toThrow('Failed to verify uv installation');
     });
 });

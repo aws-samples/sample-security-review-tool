@@ -5,14 +5,13 @@ import { ScannerUtils } from '../utils/scanner-utils.js';
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 import { CommandRunner } from '../../../shared/command-execution/command-runner.js';
 import { ScannerToolManager } from '../../../shared/scanner-tools/scanner-tool-manager.js';
-import { VenvConfig } from '../../../shared/scanner-tools/types.js';
+import { ScanTool } from '../../../shared/scanner-tools/types.js';
 import { ProjectContext } from '../../../shared/project/project-context.js';
 import { BanditFixes } from './bandit-fixes.js';
 
 export class BanditScanner extends BaseScanner {
   private readonly cmd = new CommandRunner();
-  private readonly scanToolManager: ScannerToolManager;
-  private readonly venvConfig: VenvConfig;
+  private readonly scanToolManager = new ScannerToolManager();
   private readonly priorityOverrides: Record<string, string> = {
     'B105': 'High',
     'B106': 'High'
@@ -20,13 +19,11 @@ export class BanditScanner extends BaseScanner {
 
   constructor(context: ProjectContext) {
     super(context);
-
-    this.scanToolManager = new ScannerToolManager();
-    this.venvConfig = this.scanToolManager.getVenvConfig();
   }
 
   public async scan(_projectRootFolderPath: string, outputFilePath: string): Promise<void> {
     try {
+      const { uvPath } = await this.scanToolManager.getToolConfig();
       const excludeDirs = this.getExcludeDirs();
 
       const excludePaths = excludeDirs.map(dir => {
@@ -39,9 +36,9 @@ export class BanditScanner extends BaseScanner {
       const excludeParam = excludePaths.length > 0 ? `--exclude "${excludePaths.join(',')}"` : '';
 
       const suppressStderr = process.platform === 'win32' ? '2>NUL' : '2>/dev/null';
-      const banditPath = this.venvConfig.banditCmd;
 
-      const finalCommand = `"${this.venvConfig.pythonPath}" "${banditPath}" ${excludeParam} -r . -f json -o "${outputFilePath}" -q --exit-zero ${suppressStderr}`;
+      const prefix = ScannerToolManager.getToolRunPrefix(uvPath, ScanTool.BANDIT);
+      const finalCommand = `${prefix} ${excludeParam} -r . -f json -o "${outputFilePath}" -q --exit-zero ${suppressStderr}`;
       await this.cmd.exec(finalCommand, this.context.getProjectRootFolderPath());
     } catch (error) {
       SrtLogger.logError('Error during Bandit scan', error as Error);
@@ -89,8 +86,10 @@ export class BanditScanner extends BaseScanner {
     };
   }
 
-  public async convertNotebooks(notebookFiles: string[], venvConfig: VenvConfig, onProgress: (msg: string) => void = () => {}): Promise<string[]> {
+  public async convertNotebooks(notebookFiles: string[], onProgress: (msg: string) => void = () => {}): Promise<string[]> {
     onProgress(`  › Exporting code from ${notebookFiles.length} notebook(s) for analysis...`);
+
+    const { uvPath } = await this.scanToolManager.getToolConfig();
 
     const conversionPromises = notebookFiles.map(async (notebookFile) => {
       const filename = path.basename(notebookFile);
@@ -102,7 +101,8 @@ export class BanditScanner extends BaseScanner {
         const outputName = `${baseName}-converted`;
         const pythonFile = path.join(notebookDir, `${outputName}.py`);
 
-        const nbconvertCmd = `"${venvConfig.pythonPath}" "${venvConfig.jupyterlabCmd}" nbconvert --log-level WARN --to script "${notebookFile}" --output "${outputName}"`;
+        const prefix = ScannerToolManager.getToolRunPrefix(uvPath, ScanTool.JUPYTER);
+        const nbconvertCmd = `${prefix} nbconvert --log-level WARN --to script "${notebookFile}" --output "${outputName}"`;
 
         await this.cmd.exec(nbconvertCmd, notebookDir);
 

@@ -5,7 +5,6 @@ import { BaseScanner } from './base-scanner.js';
 import { BanditScanner } from './bandit/bandit-scanner.js';
 import { SemgrepScanner } from './semgrep/semgrep-scanner.js';
 import { SyftScanner } from './syft/syft-scanner.js';
-import { VenvConfig } from '../../shared/scanner-tools/types.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
 import { CodeScanResult } from '../types.js';
 
@@ -36,8 +35,7 @@ export class ScannerCoordinator {
         const banditScanner = this.scanners.get('bandit') as BanditScanner;
         const notebookFiles = await this.context.findJupyterNotebooks();
         if (notebookFiles.length > 0) {
-          const venvConfig = (banditScanner as any).venvConfig as VenvConfig;
-          convertedFiles = await banditScanner.convertNotebooks(notebookFiles, venvConfig, this.onProgress);
+          convertedFiles = await banditScanner.convertNotebooks(notebookFiles, this.onProgress);
         }
       }
 

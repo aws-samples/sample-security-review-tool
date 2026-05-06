@@ -11,20 +11,17 @@ describe('ScannerToolManager', () => {
       expect(ScannerToolManager.extractToolName('jupyter notebook')).toBe('Jupyter');
     });
 
-    it('should extract AuxiliaryTool names correctly', () => {
+    it('should detect nbconvert as Jupyter nbconvert', () => {
       expect(ScannerToolManager.extractToolName('jupyter nbconvert --to script')).toBe('Jupyter nbconvert');
-      expect(ScannerToolManager.extractToolName('cdk synth')).toBe('Cdk');
-      expect(ScannerToolManager.extractToolName('pip install package')).toBe('Pip');
-      expect(ScannerToolManager.extractToolName('python -m venv')).toBe('Venv');
     });
 
-    it('should return "Scanner" for unknown scanners', () => {
+    it('should return "Tool" for unknown commands', () => {
       expect(ScannerToolManager.extractToolName('unknown command')).toBe('Tool');
     });
 
     it('should handle paths and complex commands', () => {
-      expect(ScannerToolManager.extractToolName('"/path/to/venv/bin/checkov" -f file')).toBe('Venv');
-      expect(ScannerToolManager.extractToolName('"/path/to/python" "/path/to/semgrep" scan')).toBe('Semgrep');
+      expect(ScannerToolManager.extractToolName('uv tool run checkov -- -f file')).toBe('Checkov');
+      expect(ScannerToolManager.extractToolName('uv tool run semgrep -- scan')).toBe('Semgrep');
     });
   });
 });

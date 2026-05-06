@@ -7,23 +7,6 @@ export enum ScanTool {
     CFN_LINT = 'cfn-lint'
 }
 
-export enum AuxiliaryTool {
-    Nbconvert = 'nbconvert',
-    Cdk = 'cdk',
-    Pip = 'pip',
-    Venv = 'venv'
-}
-
-export interface VenvConfig {
-    rootDir: string;
-    venvDir: string;
-    binDir: string;
-    pythonCmd: string;
-    pythonPath: string;
-    checkovCmd: string;
-    semgrepCmd: string;
-    banditCmd: string;
-    syftCmd: string;
-    jupyterlabCmd: string;
-    cfnLintCmd: string;
+export interface ToolConfig {
+    uvPath: string;
 }
