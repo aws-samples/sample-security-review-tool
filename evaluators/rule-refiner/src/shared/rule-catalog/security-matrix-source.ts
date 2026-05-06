@@ -24,11 +24,11 @@ export async function loadSecurityMatrixRules(srtRepoRoot: string): Promise<Rule
 
 function buildRuleEntry(
     rule: { id: string; priority: string; description: string; applicableResourceTypes: string[] },
-    sourceIndex: Map<string, string>,
+    sourceIndex: Map<string, string[]>,
     rulesDir: string,
     applicableFormats: FixtureFormat[],
 ): RuleEntry {
-    const sourceFile = sourceIndex.get(rule.id);
+    const sourceFile = selectSourceFile(sourceIndex.get(rule.id), applicableFormats);
     const sourceLocation = sourceFile ?? path.join(rulesDir, `${rule.id}-unknown.ts`);
     const ruleBody = sourceFile ? fs.readFileSync(sourceFile, 'utf8') : '';
     const sourceHash = sourceFile ? sha256OfFile(sourceFile) : sha256OfString(rule.id);
@@ -48,15 +48,25 @@ function buildRuleEntry(
     };
 }
 
-async function buildRuleIdToSourceIndex(rulesDir: string): Promise<Map<string, string>> {
+function selectSourceFile(candidates: string[] | undefined, applicableFormats: FixtureFormat[]): string | undefined {
+    if (!candidates || candidates.length === 0) return undefined;
+    if (candidates.length === 1) return candidates[0];
+
+    const suffix = applicableFormats.includes('terraform') ? '.tf.ts' : '.cf.ts';
+    return candidates.find(f => f.endsWith(suffix)) ?? candidates[0];
+}
+
+async function buildRuleIdToSourceIndex(rulesDir: string): Promise<Map<string, string[]>> {
     const files = await glob('**/*.ts', { cwd: rulesDir, nodir: true, ignore: ['**/index.ts'] });
-    const index = new Map<string, string>();
+    const index = new Map<string, string[]>();
     for (const relative of files) {
         const absolute = path.join(rulesDir, relative);
         const contents = fs.readFileSync(absolute, 'utf8');
         const id = extractRuleIdFromSource(contents);
-        if (id && !index.has(id)) {
-            index.set(id, absolute);
+        if (id) {
+            const existing = index.get(id) ?? [];
+            existing.push(absolute);
+            index.set(id, existing);
         }
     }
     return index;
