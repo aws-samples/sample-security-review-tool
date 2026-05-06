@@ -3,6 +3,7 @@ import * as path from 'path';
 import { ScanResult } from '../../../assess/scanning/types.js';
 import { ProjectContext } from '../../../shared/project/project-context.js';
 import { CdkConstructResolver } from '../../cdk/cdk-construct-resolver.js';
+import { TerraformSourceResolver } from './terraform-source-resolver.js';
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 
 export interface LoadedSource {
@@ -34,6 +35,10 @@ export class ContextLoader {
             const cdkSource = await this.loadCdkSource(issue);
             if (cdkSource) return { sources: [cdkSource] };
         }
+        if (issue.source === 'terraform-matrix') {
+            const tfSource = await this.loadTerraformSource(issue);
+            if (tfSource) return { sources: [tfSource] };
+        }
         const fallback = await this.loadFallbackSource(issue);
         return { sources: fallback ? [fallback] : [] };
     }
@@ -51,6 +56,19 @@ export class ContextLoader {
         } catch (error) {
             SrtLogger.logError('Failed to resolve CDK construct for fix agent', error as Error, {
                 cdkPath: issue.cdkPath,
+                path: issue.path,
+            });
+            return null;
+        }
+    }
+
+    private async loadTerraformSource(issue: ScanResult): Promise<LoadedSource | null> {
+        try {
+            const resolver = new TerraformSourceResolver(this.context);
+            return await resolver.resolve(issue);
+        } catch (error) {
+            SrtLogger.logError('Failed to resolve Terraform source for fix agent', error as Error, {
+                resourceName: issue.resourceName,
                 path: issue.path,
             });
             return null;

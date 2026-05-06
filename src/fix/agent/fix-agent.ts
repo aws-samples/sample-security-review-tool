@@ -6,7 +6,7 @@ import { ProjectContext } from '../../shared/project/project-context.js';
 import { BedrockConfig } from '../../config/aws/bedrock-config.js';
 import { SrtLogger } from '../../shared/logging/srt-logger.js';
 import { Fix } from '../types.js';
-import { SYSTEM_PROMPT } from './prompts/system-prompt.js';
+import { getSystemPrompt } from './prompts/system-prompt.js';
 import { buildUserPrompt } from './prompts/user-prompt-builder.js';
 import { ContextLoader } from './prompts/context-loader.js';
 import { EditSession } from './staging/edit-session.js';
@@ -36,6 +36,7 @@ export class StrandsFixAgent {
     public async run(issue: ScanResult): Promise<StrandsAgentResult> {
         const loadedContext = await new ContextLoader(this.context).load(issue);
         const guard = new WorkspaceGuard(this.context.getProjectRootFolderPath());
+        const systemPrompt = getSystemPrompt(issue.source);
         const session: AgentSession = {
             editSession: new EditSession(guard),
             loadedContext,
@@ -47,9 +48,9 @@ export class StrandsFixAgent {
         };
 
         const userPrompt = buildUserPrompt(issue, this.context.getProjectRootFolderPath(), loadedContext);
-        this.logger.sessionStarted(issue, SYSTEM_PROMPT.length, userPrompt);
+        this.logger.sessionStarted(issue, systemPrompt.length, userPrompt);
 
-        const agent = this.createAgent(session);
+        const agent = this.createAgent(session, systemPrompt);
         const stopReason = await this.invokeAgent(agent, userPrompt, session, issue);
 
         const result: StrandsAgentResult = {
@@ -68,7 +69,7 @@ export class StrandsFixAgent {
         return { changes: result.edits, comments: result.comments };
     }
 
-    private createAgent(session: AgentSession): Agent {
+    private createAgent(session: AgentSession, systemPrompt: string): Agent {
         const profile = BedrockConfig.getProfile();
         const region = BedrockConfig.getRegion();
         const model = new BedrockModel({
@@ -82,7 +83,7 @@ export class StrandsFixAgent {
 
         return new Agent({
             model,
-            systemPrompt: SYSTEM_PROMPT,
+            systemPrompt,
             tools: [
                 createApplyFixTool(session, this.context),
                 createGiveUpTool(session),

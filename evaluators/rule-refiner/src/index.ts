@@ -1,3 +1,6 @@
+import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 import type { FixtureFormat } from './types.js';
 import { RuleImplementationAssessmentAgent } from './agents/rule-implementation-assessment/agent.js';
 import { RuleImplementationFixAgent } from './agents/rule-implementation-fix/agent.js';
@@ -9,7 +12,11 @@ import { FixInstructionUpdaterAgent } from './agents/fix-instruction-updater/age
 import { RuleCatalog } from './shared/rule-catalog/index.js';
 import { extractVariants } from './shared/variant-extractor.js';
 import { fixtureDirFor, srtRepoRoot } from './shared/fixture-paths.js';
-import * as path from 'path';
+import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
+
+const logsFolderPath = path.join(os.homedir(), '.srt', 'logs');
+fs.mkdirSync(logsFolderPath, { recursive: true });
+SrtLogger.initialize(logsFolderPath);
 
 interface ParsedArgs {
     ruleId: string;

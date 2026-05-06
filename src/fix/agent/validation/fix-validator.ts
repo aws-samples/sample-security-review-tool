@@ -4,6 +4,7 @@ import { EditRecorder } from '../staging/edit-recorder.js';
 import { CdkSynthStrategy } from './strategies/cdk-synth-strategy.js';
 import { CfnLintStrategy } from './strategies/cfn-lint-strategy.js';
 import { LanguageCheckStrategy } from './strategies/language-check-strategy.js';
+import { TerraformValidateStrategy } from './strategies/terraform-validate-strategy.js';
 import { StrategyResult, ValidationResult, ValidationStrategy } from './types.js';
 
 /**
@@ -25,6 +26,7 @@ export class FixValidator {
             new CdkSynthStrategy(),
             new CfnLintStrategy(),
             new LanguageCheckStrategy(),
+            new TerraformValidateStrategy(),
         ];
     }
 
