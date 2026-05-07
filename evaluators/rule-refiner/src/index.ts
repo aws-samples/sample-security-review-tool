@@ -92,6 +92,8 @@ async function validateFixInstructions(ruleId: string, fixtureFormat: FixtureFor
         for (const formatVariant of formatVariants) {
             console.log(`  Validating fix instructions: ${variant.variantId}/${formatVariant}`);
 
+            let previousNewIssues: string | null = null;
+
             for (let attempt = 0; attempt < maxRetries; attempt++) {
                 const fixtureDir = fixtureDirFor(fixturesRoot, 'security-matrix', formatVariant, rule.checkId, variant.variantId);
 
@@ -113,13 +115,20 @@ async function validateFixInstructions(ruleId: string, fixtureFormat: FixtureFor
                     break;
                 }
 
+                const currentNewIssues = result.newIssuesIntroduced.sort().join(',');
+                if (currentNewIssues === previousNewIssues) {
+                    console.warn(`    FAILED: repeated identical issues — fixture likely incompatible with fix instructions: ${result.failureDetails}`);
+                    break;
+                }
+                previousNewIssues = currentNewIssues;
+
                 if (attempt === maxRetries - 1) {
                     console.warn(`    FAILED after ${maxRetries} attempts: ${result.failureDetails}`);
                     break;
                 }
 
                 console.log(`    Attempt ${attempt + 1} failed: ${result.failureDetails}. Updating fix instructions...`);
-                await updaterAgent.invoke(ruleId, fixtureFormat, variant, result);
+                await updaterAgent.invoke(ruleId, fixtureFormat, variant, result, fixtureDir);
                 await RuleCatalog.refresh();
 
                 const refreshedRule = await RuleCatalog.find(ruleId, fixtureFormat);

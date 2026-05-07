@@ -36,7 +36,13 @@ Bad fix guidance:
 The failure details tell you WHY the previous fix guidance didn't work:
 - "Fix did not resolve the finding" → the fix agent's changes didn't address the actual check. Make guidance more specific about what property/value the rule checks.
 - "Fix agent could not generate a fix" → guidance was too vague or referenced non-existent constructs. Be more explicit.
-- "Fix introduced new issues" → the fix agent's changes triggered other rules. Add a "Do NOT" warning about the problematic change.`;
+- "Fix introduced new issues" → the fix agent's changes triggered other rules. Check the fixture content to understand what resources exist. If the new issues are caused by resources the fix agent HAD TO CREATE because the fixture lacks prerequisite resources (e.g., an S3 bucket for a new Trail), the fix guidance should instruct the agent to use the give_up tool rather than creating new resources. Only resources already present in the fixture should be modified.
+
+═══ How to use fixture content ═══
+
+The fixture content shows you EXACTLY what resources the fix agent has to work with. If the fix guidance references modifying an existing resource that doesn't appear in the fixture, the fix agent will be forced to create it — which typically triggers other security rules. In this case, rewrite the guidance to either:
+1. Target only resources that exist in the fixture, OR
+2. Instruct the agent to use give_up if no suitable resource exists`;
 
 export const USER_PROMPT = `The following fix guidance failed validation. Rewrite it to address the failure.
 
@@ -47,6 +53,10 @@ export const USER_PROMPT = `The following fix guidance failed validation. Rewrit
 <failure_details>
 {{FAILURE_DETAILS}}
 </failure_details>
+
+<fixture_content>
+{{FIXTURE_CONTENT}}
+</fixture_content>
 
 <full_rule_source>
 {{RULE_SOURCE}}

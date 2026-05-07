@@ -39,7 +39,8 @@ Requirements for lib/stack.ts:
 - Each variant's fixture must trigger that variant's specific code path
 - Include BOTH compliant and non-compliant resources when the rule has multiple checks, so all paths are exercised
 - Keep fixtures minimal — only resources needed to trigger the rule and satisfy CloudFormation/CDK validity
-- Do not use Fn::If, Fn::Sub with conditionals, or other intrinsics that make values unresolvable (the rule returns null for those)`;
+- Do not use Fn::If, Fn::Sub with conditionals, or other intrinsics that make values unresolvable (the rule returns null for those)
+- CRITICAL: Read the rule's fix guidance strings carefully. If the fix guidance says to modify an EXISTING resource of a specific type (e.g., "Modify an EXISTING AWS::CloudTrail::Trail"), you MUST include that resource in the fixture. Configure it to be non-compliant for the target rule only — all OTHER security properties (encryption, logging, access controls, etc.) should be set to compliant values. The fixture must be fixable by modifying existing resources only, without creating new resource types.`;
 
 const TERRAFORM_SYSTEM_PROMPT = `You generate test fixtures for Terraform security scanning rules. Your fixtures are used to validate that the rule's fix instructions work correctly.
 
@@ -66,7 +67,8 @@ Requirements for main.tf:
 - Study the rule source carefully — each createResult/createScanResult call represents a distinct code path
 - Each variant's fixture must trigger that variant's specific code path
 - Keep fixtures minimal — only resources needed to trigger the rule and satisfy Terraform validity
-- Use proper resource references (e.g., aws_s3_bucket.example.id) rather than hardcoded strings where Terraform expects references`;
+- Use proper resource references (e.g., aws_s3_bucket.example.id) rather than hardcoded strings where Terraform expects references
+- CRITICAL: Read the rule's fix guidance strings carefully. If the fix guidance says to modify an EXISTING resource of a specific type (e.g., "Modify an EXISTING aws_cloudtrail"), you MUST include that resource in the fixture. Configure it to be non-compliant for the target rule only — all OTHER security attributes should be set to compliant values. The fixture must be fixable by modifying existing resources only, without creating new resource types.`;
 
 export function getSystemPrompt(fixtureFormat: FixtureFormat): string {
     switch (fixtureFormat) {

@@ -17,19 +17,29 @@ export class RuleImplementationFixAgent {
             await RuleCatalog.refresh();
 
             const rule = await RuleCatalog.find(ruleId, fixtureFormat);
+            const originalSource = rule.ruleBody;
 
             let retries = 0;
             let error: string | null = null;
+            let fixed = false;
 
             while (retries < 3) {
                 await this.applyFixToSource(rule, issue, error);
 
                 const validationResult = await this.validateFix();
 
-                if (validationResult.isValid) break;
+                if (validationResult.isValid) {
+                    fixed = true;
+                    break;
+                }
 
                 error = validationResult.errorMessage;
                 retries++;
+            }
+
+            if (!fixed) {
+                await fs.writeFile(path.resolve(rule.sourceLocation), originalSource, 'utf-8');
+                throw new Error(`Failed to apply fix after 3 attempts (compilation errors persist): ${issue.description}`);
             }
         }
     }
