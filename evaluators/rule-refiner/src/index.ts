@@ -13,10 +13,13 @@ import { RuleCatalog } from './shared/rule-catalog/index.js';
 import { extractVariants } from './shared/variant-extractor.js';
 import { fixtureDirFor, srtRepoRoot } from './shared/fixture-paths.js';
 import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
+import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
 
 const logsFolderPath = path.join(os.homedir(), '.srt', 'logs');
 fs.mkdirSync(logsFolderPath, { recursive: true });
 SrtLogger.initialize(logsFolderPath);
+
+BedrockConfig.initialize('default', 'us-east-1');
 
 interface ParsedArgs {
     ruleId: string;
@@ -97,6 +100,7 @@ async function validateFixInstructions(ruleId: string, fixtureFormat: FixtureFor
                     checkId: rule.checkId,
                     variantId: variant.variantId,
                     formatVariant,
+                    fixGuidanceOverride: variant.fixGuidance,
                 });
 
                 if (!result.scanFoundIssue) {
@@ -117,6 +121,11 @@ async function validateFixInstructions(ruleId: string, fixtureFormat: FixtureFor
                 console.log(`    Attempt ${attempt + 1} failed: ${result.failureDetails}. Updating fix instructions...`);
                 await updaterAgent.invoke(ruleId, fixtureFormat, variant, result);
                 await RuleCatalog.refresh();
+
+                const refreshedRule = await RuleCatalog.find(ruleId, fixtureFormat);
+                const refreshedVariants = extractVariants(refreshedRule.ruleBody);
+                const refreshedVariant = refreshedVariants.find(v => v.variantId === variant.variantId);
+                variant.fixGuidance = refreshedVariant?.fixGuidance ?? refreshedRule.fixGuidance;
             }
         }
     }

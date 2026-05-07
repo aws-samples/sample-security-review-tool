@@ -13,6 +13,8 @@ A rule is correct when:
 - It accounts for AWS default values where relevant (some properties have secure defaults when omitted; others have insecure defaults).
 - It handles CloudFormation intrinsic functions conservatively — when a property value cannot be resolved (Ref, Fn::If, Fn::GetAtt, Fn::ImportValue, cross-stack references), the rule MUST return null (no finding). The scanner cannot assert non-compliance if it cannot determine the actual value.
 
+The scanning pipeline code is provided alongside the rule. Before assessing whether the rule correctly handles intrinsic functions or resource references, examine the pipeline to understand what transformations are applied to the template before the rule receives it. If the pipeline resolves certain intrinsics (e.g., Ref) into plain values, then rule logic that checks for those intrinsics as objects will never match — this is a false-positive risk.
+
 A rule has issues when:
 - It checks the wrong property name, or a property that doesn't exist on the resource type.
 - It misses a valid mitigation path (e.g., the security control can be satisfied two ways, but the rule only checks one).
@@ -41,6 +43,8 @@ A rule is correct when:
 - It accounts for Terraform and AWS default values where relevant (some attributes have secure defaults when omitted; others have insecure defaults).
 - It handles unresolvable values conservatively — when an attribute value cannot be determined at plan time (values that are null, marked as known_after_apply, or contain unresolved expressions), the rule MUST return null (no finding). The scanner cannot assert non-compliance if it cannot determine the actual value.
 
+The scanning pipeline code is provided alongside the rule. Before assessing whether the rule correctly handles resource attributes or cross-resource references, examine the pipeline to understand how Terraform plan JSON is parsed and what data structure the rule actually receives. If the pipeline transforms or flattens values before the rule sees them, rule logic must match the transformed shape.
+
 A rule has issues when:
 - It checks the wrong attribute name, or an attribute that doesn't exist on the Terraform resource type.
 - It misses a valid mitigation path (e.g., the security control can be satisfied via a companion resource like aws_s3_bucket_lifecycle_configuration, but the rule only checks inline attributes).
@@ -68,4 +72,10 @@ export const USER_PROMPT = `Assess the following security rule implementation:
 
 <rule>
 {{RULE_IMPLEMENTATION}}
-</rule>`;
+</rule>
+
+The following is the scanning pipeline code that parses templates and invokes the rule. The template the rule receives has already been processed by this code. Pay close attention to what transformations are applied — the rule must be assessed based on what it actually receives, not raw CloudFormation/Terraform.
+
+<scanning-pipeline>
+{{PIPELINE_CONTEXT}}
+</scanning-pipeline>`;

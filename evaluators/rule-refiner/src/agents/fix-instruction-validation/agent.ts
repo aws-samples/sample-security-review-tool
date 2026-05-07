@@ -11,12 +11,13 @@ export interface FixInstructionValidationInput {
     checkId: string;
     variantId: string;
     formatVariant: string;
+    fixGuidanceOverride?: string;
 }
 
 export class FixInstructionValidationAgent {
 
     public async invoke(input: FixInstructionValidationInput): Promise<FixInstructionValidationResult> {
-        const { fixtureDir, checkId, variantId, formatVariant } = input;
+        const { fixtureDir, checkId, variantId, formatVariant, fixGuidanceOverride } = input;
 
         const scanResult = await this.scan(fixtureDir, checkId);
         if (!scanResult.success) {
@@ -42,6 +43,10 @@ export class FixInstructionValidationAgent {
                 newIssuesIntroduced: [],
                 failureDetails: 'Fixture did not trigger the target rule',
             };
+        }
+
+        if (fixGuidanceOverride) {
+            scanResult.targetFinding.fix = fixGuidanceOverride;
         }
 
         const fixResult = await this.applyFix(fixtureDir, scanResult.targetFinding);
