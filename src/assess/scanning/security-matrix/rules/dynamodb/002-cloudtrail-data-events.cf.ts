@@ -1,5 +1,6 @@
-import { BaseRule, CloudFormationResource } from '../../security-rule-base.js';
+import { BaseRule, CloudFormationResource, Resource } from '../../security-rule-base.js';
 import { ScanResult } from '../../../base-scanner.js';
+import { Template } from 'cloudform-types';
 
 /**
  * DDB-002: DynamoDB tables must have CloudTrail data plane event logging
@@ -45,27 +46,23 @@ IMPORTANT: Do NOT set objectOwnership on S3 buckets — the CDK default handles 
       'DDB-002',
       'HIGH',
       'DynamoDB data plane events are not captured by CloudTrail logging',
-      ['AWS::DynamoDB::Table', 'AWS::CloudTrail::Trail']
+      ['AWS::DynamoDB::Table']
     );
   }
 
+  public evaluateResource(stackName: string, template: Template, resource: Resource): ScanResult | null {
+    if (!this.appliesTo(resource.Type) || !resource.Properties) return null;
+
+    const hasTrailCoverage = Object.entries(template.Resources || {}).some(([_, r]) => r.Type === 'AWS::CloudTrail::Trail' && this.hasDynamoDBDataEvents(r));
+
+    if (!hasTrailCoverage) {
+      return this.createResult(stackName, template, resource, this.description, this.fixPrompt);
+    }
+
+    return null;
+  }
+
   public evaluate(resource: CloudFormationResource, stackName: string, allResources?: CloudFormationResource[]): ScanResult | null {
-    if (!this.appliesTo(resource.Type) || !resource.Properties) {
-      return null;
-    }
-
-    // For DynamoDB tables, check if any CloudTrail captures DynamoDB data events
-    if (resource.Type === 'AWS::DynamoDB::Table') {
-      if (!allResources?.some(res => res.Type === 'AWS::CloudTrail::Trail' && this.hasDynamoDBDataEvents(res))) {
-        return this.createScanResult(
-          resource,
-          stackName,
-          `${this.description}`,
-          this.fixPrompt
-        );
-      }
-    }
-
     return null;
   }
 
@@ -73,14 +70,14 @@ IMPORTANT: Do NOT set objectOwnership on S3 buckets — the CDK default handles 
    * Check if a CloudTrail trail has DynamoDB data events configured
    * via either basic EventSelectors or AdvancedEventSelectors
    */
-  private hasDynamoDBDataEvents(trail: CloudFormationResource): boolean {
+  private hasDynamoDBDataEvents(trail: Resource): boolean {
     return this.hasBasicEventSelectorForDynamoDB(trail) || this.hasAdvancedEventSelectorForDynamoDB(trail);
   }
 
   /**
    * Check basic EventSelectors for DynamoDB data events
    */
-  private hasBasicEventSelectorForDynamoDB(trail: CloudFormationResource): boolean {
+  private hasBasicEventSelectorForDynamoDB(trail: Resource): boolean {
     const eventSelectors = trail.Properties?.EventSelectors;
 
     if (!Array.isArray(eventSelectors)) {
@@ -119,7 +116,7 @@ IMPORTANT: Do NOT set objectOwnership on S3 buckets — the CDK default handles 
    * - eventCategory Equals "Data"
    * - resources.type Equals "AWS::DynamoDB::Table"
    */
-  private hasAdvancedEventSelectorForDynamoDB(trail: CloudFormationResource): boolean {
+  private hasAdvancedEventSelectorForDynamoDB(trail: Resource): boolean {
     const advancedSelectors = trail.Properties?.AdvancedEventSelectors;
 
     if (!Array.isArray(advancedSelectors)) {
