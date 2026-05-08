@@ -1,45 +1,33 @@
 import { describe, it, expect } from 'vitest';
 import { Ddb002Rule } from '../../../../../../src/assess/scanning/security-matrix/rules/dynamodb/002-cloudtrail-data-events.cf.js';
-import { CloudFormationResource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
+import { Resource } from '../../../../../../src/assess/scanning/security-matrix/security-rule-base.js';
+import { Template } from 'cloudform-types';
 
 describe('Ddb002Rule', () => {
   const rule = new Ddb002Rule();
   const stackName = 'test-stack';
 
-  // Helper functions to create test resources
-  function createDynamoDBTableResource(props: Record<string, any> = {}): CloudFormationResource {
-    return {
-      Type: 'AWS::DynamoDB::Table',
-      Properties: {
-        AttributeDefinitions: [
-          {
-            AttributeName: 'id',
-            AttributeType: 'S'
-          }
-        ],
-        KeySchema: [
-          {
-            AttributeName: 'id',
-            KeyType: 'HASH'
-          }
-        ],
-        BillingMode: 'PAY_PER_REQUEST',
-        ...props
-      },
-      LogicalId: props.LogicalId || 'TestDynamoDBTable'
+  function createTemplate(tableProps: Record<string, any> = {}, trailProps?: Record<string, any>): Template {
+    const resources: Record<string, any> = {
+      TestDynamoDBTable: {
+        Type: 'AWS::DynamoDB::Table',
+        Properties: {
+          AttributeDefinitions: [{ AttributeName: 'id', AttributeType: 'S' }],
+          KeySchema: [{ AttributeName: 'id', KeyType: 'HASH' }],
+          BillingMode: 'PAY_PER_REQUEST',
+          ...tableProps
+        }
+      }
     };
-  }
 
-  function createCloudTrailTrailResource(props: Record<string, any> = {}): CloudFormationResource {
-    return {
-      Type: 'AWS::CloudTrail::Trail',
-      Properties: {
-        IsLogging: true,
-        S3BucketName: 'test-bucket',
-        ...props
-      },
-      LogicalId: props.LogicalId || 'TestCloudTrailTrail'
-    };
+    if (trailProps) {
+      resources.TestCloudTrailTrail = {
+        Type: 'AWS::CloudTrail::Trail',
+        Properties: { IsLogging: true, S3BucketName: 'test-bucket', ...trailProps }
+      };
+    }
+
+    return { Resources: resources };
   }
 
   describe('Basic Rule Properties', () => {
@@ -53,7 +41,6 @@ describe('Ddb002Rule', () => {
 
     it('should apply to the correct resource types', () => {
       expect(rule.appliesTo('AWS::DynamoDB::Table')).toBe(true);
-      expect(rule.appliesTo('AWS::CloudTrail::Trail')).toBe(true);
       expect(rule.appliesTo('AWS::DynamoDB::GlobalTable')).toBe(false);
       expect(rule.appliesTo('AWS::EC2::Instance')).toBe(false);
     });
@@ -61,142 +48,85 @@ describe('Ddb002Rule', () => {
 
   describe('DynamoDB Table Tests', () => {
     it('should detect missing CloudTrail trail', () => {
-      // Arrange
-      const table = createDynamoDBTableResource();
-      const allResources = [table];
-      
-      // Act
-      const result = rule.evaluate(table, stackName, allResources);
-      
-      // Assert
+      const template = createTemplate();
+      const result = rule.evaluateResource(stackName, template, template.Resources!['TestDynamoDBTable'] as Resource);
+
       expect(result).not.toBeNull();
       expect(result?.issue).toContain('DynamoDB data plane events are not captured by CloudTrail logging');
     });
 
     it('should detect CloudTrail trail without DynamoDB data events', () => {
-      // Arrange
-      const table = createDynamoDBTableResource();
-      const trail = createCloudTrailTrailResource({
-        EventSelectors: [
-          {
-            ReadWriteType: 'All',
-            IncludeManagementEvents: true,
-            DataResources: [
-              {
-                Type: 'AWS::S3::Object',
-                Values: ['arn:aws:s3:::*/*']
-              }
-            ]
-          }
-        ]
+      const template = createTemplate({}, {
+        EventSelectors: [{
+          ReadWriteType: 'All',
+          IncludeManagementEvents: true,
+          DataResources: [{ Type: 'AWS::S3::Object', Values: ['arn:aws:s3:::*/*'] }]
+        }]
       });
-      const allResources = [table, trail];
-      
-      // Act
-      const result = rule.evaluate(table, stackName, allResources);
-      
-      // Assert
+      const result = rule.evaluateResource(stackName, template, template.Resources!['TestDynamoDBTable'] as Resource);
+
       expect(result).not.toBeNull();
       expect(result?.issue).toContain('DynamoDB data plane events are not captured by CloudTrail logging');
     });
 
     it('should pass with properly configured CloudTrail trail', () => {
-      // Arrange
-      const table = createDynamoDBTableResource();
-      const trail = createCloudTrailTrailResource({
-        EventSelectors: [
-          {
-            ReadWriteType: 'All',
-            IncludeManagementEvents: true,
-            DataResources: [
-              {
-                Type: 'AWS::DynamoDB::Table',
-                Values: ['arn:aws:dynamodb:::*']
-              }
-            ]
-          }
-        ]
+      const template = createTemplate({}, {
+        EventSelectors: [{
+          ReadWriteType: 'All',
+          IncludeManagementEvents: true,
+          DataResources: [{ Type: 'AWS::DynamoDB::Table', Values: ['arn:aws:dynamodb:::*'] }]
+        }]
       });
-      const allResources = [table, trail];
-      
-      // Act
-      const result = rule.evaluate(table, stackName, allResources);
-      
-      // Assert
+      const result = rule.evaluateResource(stackName, template, template.Resources!['TestDynamoDBTable'] as Resource);
+
       expect(result).toBeNull();
     });
 
     it('should pass with wildcard data resource values', () => {
-      // Arrange
-      const table = createDynamoDBTableResource();
-      const trail = createCloudTrailTrailResource({
-        EventSelectors: [
-          {
-            ReadWriteType: 'All',
-            IncludeManagementEvents: true,
-            DataResources: [
-              {
-                Type: 'AWS::DynamoDB::Table',
-                Values: ['*']
-              }
-            ]
-          }
-        ]
+      const template = createTemplate({}, {
+        EventSelectors: [{
+          ReadWriteType: 'All',
+          IncludeManagementEvents: true,
+          DataResources: [{ Type: 'AWS::DynamoDB::Table', Values: ['*'] }]
+        }]
       });
-      const allResources = [table, trail];
-      
-      // Act
-      const result = rule.evaluate(table, stackName, allResources);
-      
-      // Assert
+      const result = rule.evaluateResource(stackName, template, template.Resources!['TestDynamoDBTable'] as Resource);
+
       expect(result).toBeNull();
     });
   });
 
-
   describe('Edge Cases', () => {
     it('should handle missing Properties in resource', () => {
-      // Arrange
-      const table = {
-        Type: 'AWS::DynamoDB::Table',
-        LogicalId: 'MissingProperties'
-      } as CloudFormationResource;
-      const allResources = [table];
-      
-      // Act
-      const result = rule.evaluate(table, stackName, allResources);
-      
-      // Assert
-      expect(result).toBeNull(); // Should gracefully handle missing properties
-    });
+      const template: Template = {
+        Resources: {
+          TestTable: { Type: 'AWS::DynamoDB::Table' } as any
+        }
+      };
+      const result = rule.evaluateResource(stackName, template, template.Resources!['TestTable'] as Resource);
 
-    it('should handle missing allResources parameter', () => {
-      // Arrange
-      const table = createDynamoDBTableResource();
-      
-      // Act
-      const result = rule.evaluate(table, stackName);
-      
-      // Assert
-      expect(result).not.toBeNull(); // Should flag missing CloudTrail configuration
-      expect(result?.issue).toContain('DynamoDB data plane events are not captured by CloudTrail logging');
+      expect(result).toBeNull();
     });
 
     it('should ignore non-DynamoDB resources', () => {
-      // Arrange
-      const resource: CloudFormationResource = {
-        Type: 'AWS::S3::Bucket',
-        Properties: {
-          BucketName: 'test-bucket'
-        },
-        LogicalId: 'TestBucket'
+      const template: Template = {
+        Resources: {
+          TestBucket: { Type: 'AWS::S3::Bucket', Properties: { BucketName: 'test-bucket' } }
+        }
       };
-      
-      // Act
-      const result = rule.evaluate(resource, stackName);
-      
-      // Assert
-      expect(result).toBeNull(); // Should ignore non-applicable resources
+      const result = rule.evaluateResource(stackName, template, template.Resources!['TestBucket'] as Resource);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('evaluate (legacy stub)', () => {
+    it('should return null', () => {
+      const result = rule.evaluate(
+        { Type: 'AWS::DynamoDB::Table', Properties: {}, LogicalId: 'Test' },
+        stackName
+      );
+      expect(result).toBeNull();
     });
   });
 });
