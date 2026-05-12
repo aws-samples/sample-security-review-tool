@@ -1,0 +1,136 @@
+{
+  "ruleId": "DDB-002",
+  "format": "cfn",
+  "generatedAt": "2026-05-11T20:48:58.007Z",
+  "positiveDescription": "DynamoDB data plane events must be captured by CloudTrail logging",
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Assessed DynamoDB table exists in the template, but the template contains no AWS::CloudTrail::Trail resource at all.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Without any trail in the template, no CloudTrail data plane events for the DynamoDB table can be captured. CloudTrail data events are not logged by default and require explicit configuration. Per resolved decision, cross-template/organization trails are out of scope."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A trail exists but has neither EventSelectors nor AdvancedEventSelectors configured (only management events implicitly).",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "By default trails do not log data events. Without EventSelectors.DataResources or AdvancedEventSelectors that match DynamoDB tables, data plane events for the table are not captured."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A trail has EventSelectors.DataResources of Type AWS::DynamoDB::Table that includes the assessed table's ARN, but the trail resource has no IsLogging property set.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision, an absent IsLogging property is treated as not-enabled. A trail that is not logging captures no events even when selectors are correctly configured."
+    },
+    {
+      "id": "REQ-04",
+      "description": "A trail has EventSelectors with DataResources configured, but Type is AWS::S3::Object or AWS::Lambda::Function (not AWS::DynamoDB::Table).",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "DataResources targeting other resource types do not capture DynamoDB data events. The Type must be AWS::DynamoDB::Table (basic) or resources.type eq AWS::DynamoDB::Table (advanced) to cover DynamoDB."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A trail has EventSelectors.DataResources of Type AWS::DynamoDB::Table that includes the assessed table's ARN and IsLogging explicitly set to false.",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Even though the data event selector targets the table, a trail that is explicitly not logging will not capture any events. A disabled trail provides no compliant coverage."
+    },
+    {
+      "id": "REQ-06",
+      "description": "A trail has an EventSelector targeting AWS::DynamoDB::Table that covers the assessed table, IsLogging true, but ReadWriteType is set to ReadOnly (or WriteOnly).",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, any data plane event capture (read-only or write-only) is sufficient to satisfy this rule. Partial read/write coverage is considered compliant."
+    },
+    {
+      "id": "REQ-07",
+      "description": "A trail has AdvancedEventSelectors that match resources.type eq AWS::DynamoDB::Table, but include a NotEquals condition on resources.ARN that explicitly excludes the assessed table's ARN.",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "An advanced event selector that explicitly excludes the assessed table's ARN means that table's data events will not be logged, even if other DynamoDB tables are covered."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Trail's DataResources Values list (or AdvancedEventSelectors field selector values) contains an unresolvable Fn::ImportValue or Fn::If, making it impossible to determine whether the assessed DynamoDB table's ARN is included.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the critical coverage value cannot be resolved at scan time, the rule cannot assert non-compliance. Conservative behavior is to pass to avoid false positives."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Trail's IsLogging property value is an unresolvable intrinsic (e.g., Fn::If with unknown condition or Fn::ImportValue) while DataResources correctly cover the assessed DynamoDB table.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the IsLogging state is unknowable, the rule cannot assert that logging is disabled, and must not produce a false positive."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Template has multiple trails: one trail does not cover the assessed DynamoDB table (or has IsLogging false), but another trail has DataResources of Type AWS::DynamoDB::Table that includes the assessed table (specific ARN or wildcard) and IsLogging true.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Coverage from any single compliant trail is sufficient. The rule should pass when at least one trail in the template captures DynamoDB data events for the assessed table."
+    },
+    {
+      "id": "REQ-11",
+      "description": "A trail has EventSelectors with DataResources where Type is AWS::DynamoDB::Table but Values is an empty array.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty Values array means no DynamoDB tables are selected for data event logging, so the assessed table is not covered."
+    },
+    {
+      "id": "REQ-12",
+      "description": "A trail has EventSelectors as an empty array and no AdvancedEventSelectors, with IsLogging true.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty event selector array means no data events are configured for capture, including DynamoDB data events."
+    },
+    {
+      "id": "REQ-13",
+      "description": "A trail has DataResources Type AWS::DynamoDB::Table with Values containing a wildcard prefix such as 'arn:aws:dynamodb' that matches all DynamoDB tables in the account, IsLogging true.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "A broad ARN prefix that covers all DynamoDB tables satisfies the requirement that the assessed table's data plane events are captured."
+    },
+    {
+      "id": "REQ-14",
+      "description": "A trail uses AdvancedEventSelectors with a field selector resources.type Equals AWS::DynamoDB::Table and no further resources.ARN restriction (logs all DynamoDB tables), with IsLogging true.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "An advanced event selector matching resources.type=AWS::DynamoDB::Table without ARN restrictions logs data events for all DynamoDB tables in the account, including the assessed table."
+    },
+    {
+      "id": "REQ-15",
+      "description": "A trail has DataResources Type AWS::DynamoDB::Table with Values containing the assessed table's specific ARN (via Fn::GetAtt/Ref/Fn::Sub resolving to the assessed table's logical ID), IsLogging true, ReadWriteType All (or omitted, defaulting to All).",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "An explicit ARN reference to the assessed table in DataResources.Values configures CloudTrail to log data plane events for that specific table, satisfying the rule."
+    },
+    {
+      "id": "REQ-16",
+      "description": "A trail uses AdvancedEventSelectors with field selectors resources.type Equals AWS::DynamoDB::Table AND resources.ARN Equals the assessed table's ARN, with IsLogging true.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "An advanced event selector that explicitly includes the assessed table's ARN configures CloudTrail to log its data plane events, satisfying the rule."
+    },
+    {
+      "id": "REQ-17",
+      "description": "A trail's DataResources Type is AWS::DynamoDB::Table with Values listing ARNs of OTHER DynamoDB tables, not the assessed one.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Selectors covering other DynamoDB tables do not capture data events for the assessed table. Coverage must apply to the specific assessed table."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/logging-using-cloudtrail.html",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudtrail-trail-dataresource.md",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudtrail-trail-eventselector.md",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudtrail-trail.md",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_AdvancedEventSelector.html",
+    "https://aws.amazon.com/blogs/database/amazon-dynamodb-now-supports-audit-logging-and-monitoring-using-aws-cloudtrail/"
+  ]
+}

@@ -76,7 +76,7 @@ describe('Ecs006Rule', () => {
       expect(result).toBeNull();
     });
 
-    test('should return null for ECS TaskDefinition without TaskRoleArn', () => {
+    test('should flag ECS TaskDefinition without TaskRoleArn', () => {
       const resource: CloudFormationResource = {
         Type: 'AWS::ECS::TaskDefinition',
         Properties: {
@@ -86,7 +86,8 @@ describe('Ecs006Rule', () => {
       };
 
       const result = rule.evaluate(resource, stackName, [resource]);
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result?.fix).toContain('Define a TaskRoleArn');
     });
 
     test('should flag ECS TaskDefinition with TaskRoleArn that cannot be found in the template', () => {
@@ -441,10 +442,10 @@ describe('Ecs006Rule', () => {
             }]
           },
           ManagedPolicyArns: [
-            'arn:aws:iam::aws:policy/AmazonS3FullAccess',
-            'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess',
-            'arn:aws:iam::aws:policy/AmazonSQSFullAccess',
-            'arn:aws:iam::aws:policy/AmazonSNSFullAccess'
+            'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess',
+            'arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess',
+            'arn:aws:iam::aws:policy/AmazonSQSReadOnlyAccess',
+            'arn:aws:iam::aws:policy/AmazonSNSReadOnlyAccess'
           ]
         },
         LogicalId: 'TaskRole'

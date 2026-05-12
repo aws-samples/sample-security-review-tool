@@ -14,7 +14,7 @@ import { Template } from 'cloudform-types';
  * the role via the Roles property, rather than inline on the role itself.
  */
 export class Ecs006Rule extends BaseRule {
-    private static readonly DANGEROUS_MANAGED_POLICIES = ['AdministratorAccess', 'PowerUserAccess'];
+    private static readonly DANGEROUS_MANAGED_POLICIES = ['AdministratorAccess', 'PowerUserAccess', 'FullAccess'];
     private static readonly MAX_MANAGED_POLICIES = 3;
 
     constructor() {
@@ -46,7 +46,10 @@ export class Ecs006Rule extends BaseRule {
 
     private evaluateTaskDefinition(resource: CloudFormationResource, stackName: string, allResources: CloudFormationResource[]): ScanResult | null {
         const taskRoleArn = resource.Properties?.TaskRoleArn;
-        if (!taskRoleArn) return null; // Covered by ECS-005
+        if (!taskRoleArn) {
+            return this.createScanResult(resource, stackName, this.description,
+                'Define a TaskRoleArn with minimal permissions required for the task to function.');
+        }
 
         const taskRoleId = this.extractRoleLogicalId(taskRoleArn);
         if (!taskRoleId) {
@@ -92,12 +95,9 @@ export class Ecs006Rule extends BaseRule {
     }
 
     private extractRoleLogicalId(taskRoleArn: any): string | undefined {
-        if (typeof taskRoleArn === 'object' && taskRoleArn['Ref']) {
-            return taskRoleArn['Ref'];
-        }
-        if (typeof taskRoleArn === 'object' && taskRoleArn['Fn::GetAtt']) {
-            return taskRoleArn['Fn::GetAtt'][0];
-        }
+        if (typeof taskRoleArn === 'string') return taskRoleArn;
+        if (typeof taskRoleArn === 'object' && taskRoleArn['Ref']) return taskRoleArn['Ref'];
+        if (typeof taskRoleArn === 'object' && taskRoleArn['Fn::GetAtt']) return taskRoleArn['Fn::GetAtt'][0];
         return undefined;
     }
 
@@ -110,6 +110,7 @@ export class Ecs006Rule extends BaseRule {
     }
 
     private roleRefMatches(taskRoleArn: any, roleLogicalId: string): boolean {
+        if (taskRoleArn === roleLogicalId) return true;
         if (typeof taskRoleArn === 'object' && taskRoleArn['Ref'] === roleLogicalId) return true;
         if (typeof taskRoleArn === 'object' && taskRoleArn['Fn::GetAtt']?.[0] === roleLogicalId) return true;
         return false;
