@@ -104,6 +104,19 @@ export const parseCfnTemplate = (template: Template): Template => {
         return val;
     }
 
+    function filterGetAtt(val: any) {
+        if (val && val.hasOwnProperty("Fn::GetAtt")) {
+            const getAttValue = val["Fn::GetAtt"];
+            if (Array.isArray(getAttValue) && getAttValue.length >= 1) {
+                return getAttValue[0];
+            }
+            if (typeof getAttValue === 'string') {
+                return getAttValue.split('.')[0];
+            }
+        }
+        return val;
+    }
+
     function filterParams(val: any) {
         if (typeof val === "string") {
             if (template.Parameters) {
@@ -182,6 +195,7 @@ export const parseCfnTemplate = (template: Template): Template => {
 
     function replaceRecursively(val: any) {
         val = findAndReplaceIf(val, filterRef);
+        val = findAndReplaceIf(val, filterGetAtt);
         val = findAndReplaceIf(val, filterSub);
         val = findAndReplaceIf(val, filterFindInMap);
         val = findAndReplaceIf(val, arrayProps);

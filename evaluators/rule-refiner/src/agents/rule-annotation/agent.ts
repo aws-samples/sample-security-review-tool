@@ -8,27 +8,22 @@ import z from 'zod';
 
 export class RuleAnnotationAgent {
 
-    public async invoke(ruleId: string, fixtureFormat: FixtureFormat, limitations: string[]): Promise<void> {
+    public async invoke(ruleId: string, fixtureFormat: FixtureFormat): Promise<void> {
         await RuleCatalog.refresh();
         const rule = await RuleCatalog.find(ruleId, fixtureFormat);
         const sourcePath = path.resolve(rule.sourceLocation);
         const currentSource = await fs.readFile(sourcePath, 'utf-8');
 
         const evaluationDate = new Date().toISOString().split('T')[0];
-        const jsdocComment = await this.generateComment(currentSource, limitations, evaluationDate);
+        const jsdocComment = await this.generateComment(currentSource, evaluationDate);
 
         const annotatedSource = this.insertJsdocComment(currentSource, jsdocComment);
         await fs.writeFile(sourcePath, annotatedSource, 'utf-8');
     }
 
-    private async generateComment(ruleSource: string, limitations: string[], evaluationDate: string): Promise<string> {
-        const limitationsText = limitations.length > 0
-            ? limitations.map(l => `- ${l}`).join('\n')
-            : '(none identified)';
-
+    private async generateComment(ruleSource: string, evaluationDate: string): Promise<string> {
         const userPrompt = USER_PROMPT
             .replace('{{RULE_SOURCE}}', ruleSource)
-            .replace('{{LIMITATIONS}}', limitationsText)
             .replace('{{DATE}}', evaluationDate);
 
         const result = await this.getAgent().invoke(userPrompt);

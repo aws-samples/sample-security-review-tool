@@ -5,7 +5,7 @@ The comment must clearly communicate:
 2. A brief description of the rule's approach/strategy (e.g., "uses template-aware evaluation", "inspects nested policy statements").
 3. What specific checks the rule performs (as a bulleted list under "Checks:").
 4. How it resolves CloudFormation references (if applicable).
-5. Known limitations (as a bulleted list under "Known limitations:").
+5. Known limitations (as a bulleted list under "Known limitations:"). Identify these by analyzing the rule source for architectural gaps such as cross-stack references, conditional constructs, dynamic values, or unsupported resource configurations that cannot be statically evaluated.
 6. An @evaluated tag with the provided date.
 
 Style guidelines:
@@ -25,10 +25,6 @@ export const USER_PROMPT = `Write a JSDoc documentation comment for the followin
 <rule_source>
 {{RULE_SOURCE}}
 </rule_source>
-
-<known_limitations>
-{{LIMITATIONS}}
-</known_limitations>
 
 <evaluation_date>
 {{DATE}}

@@ -139,10 +139,11 @@ export class FixInstructionValidationAgent {
         const postFixIssues = this.readActiveIssues(fixtureDir);
         const targetStillFires = postFixIssues.some(i => i.check_id === checkId);
 
-        const preCheckIds = new Set(preFixIssues.map(i => i.check_id));
+        const issueKey = (i: ScanResult) => `${i.check_id}::${i.resourceName}`;
+        const preIssueKeys = new Set(preFixIssues.map(issueKey));
         const newIssues = postFixIssues
-            .filter(i => !preCheckIds.has(i.check_id))
-            .map(i => i.check_id ?? 'unknown');
+            .filter(i => !preIssueKeys.has(issueKey(i)))
+            .map(i => `${i.check_id} on ${i.resourceName}`);
 
         return { targetStillFires, newIssues };
     }
