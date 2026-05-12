@@ -1,3 +1,13 @@
+export type FailureCause =
+    | 'rule_logic'
+    | 'fixture_missing_resource'
+    | 'fixture_parse_error'
+    | 'fixture_wrong_structure'
+    | 'value_mismatch'
+    | 'cross_resource_not_found'
+    | 'intrinsic_not_handled'
+    | 'unknown';
+
 export interface ValidationDiagnostics {
     ruleWasInvoked: boolean;
     matchedResourceTypes: string[];
@@ -5,7 +15,8 @@ export interface ValidationDiagnostics {
     evaluationError?: string;
     parseError?: string;
     fixtureStructureValid: boolean;
-    suggestedCause: 'rule_logic' | 'fixture_missing_resource' | 'fixture_parse_error' | 'fixture_wrong_structure' | 'unknown';
+    suggestedCause: FailureCause;
+    resolvedTemplate?: string;
 }
 
 export interface ValidationResult {

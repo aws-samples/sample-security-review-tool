@@ -70,6 +70,7 @@ function validateCloudFormationRequirement(rule: BaseRule, checkId: string, requ
         const rawTemplate = buildCloudFormationTemplate(fixture.templateSnippet);
         template = parseCfnTemplate(rawTemplate);
         diagnostics.fixtureStructureValid = true;
+        diagnostics.resolvedTemplate = JSON.stringify(template.Resources, null, 2);
     } catch (error) {
         diagnostics.parseError = (error as Error).message;
         diagnostics.suggestedCause = 'fixture_parse_error';
@@ -98,8 +99,9 @@ function validateCloudFormationRequirement(rule: BaseRule, checkId: string, requ
     try {
         fired = evaluateAllResources(rule, template, checkId);
     } catch (error) {
-        diagnostics.evaluationError = (error as Error).message;
-        diagnostics.suggestedCause = 'rule_logic';
+        const errorMessage = (error as Error).message;
+        diagnostics.evaluationError = errorMessage;
+        diagnostics.suggestedCause = classifyEvaluationError(errorMessage);
         return { requirementId: requirement.id, passed: false, expected: requirement.expectedBehavior, actual: 'error', diagnostics };
     }
 
@@ -111,6 +113,14 @@ function validateCloudFormationRequirement(rule: BaseRule, checkId: string, requ
     }
 
     return { requirementId: requirement.id, passed, expected: requirement.expectedBehavior, actual, diagnostics };
+}
+
+function classifyEvaluationError(errorMessage: string): ValidationDiagnostics['suggestedCause'] {
+    const lower = errorMessage.toLowerCase();
+    if (lower.includes('cannot read properties of undefined') || lower.includes('is not a function')) return 'value_mismatch';
+    if (lower.includes('not found in template')) return 'cross_resource_not_found';
+    if (lower.includes('fn::if') || lower.includes('fn::importvalue')) return 'intrinsic_not_handled';
+    return 'rule_logic';
 }
 
 function evaluateAllResources(rule: BaseRule, template: Template, checkId: string): boolean {

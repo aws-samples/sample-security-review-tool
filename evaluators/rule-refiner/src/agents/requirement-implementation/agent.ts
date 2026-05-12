@@ -11,14 +11,14 @@ import type { GeneratedFixture } from '../fixture-generator/types.js';
 import type { ValidationResult } from './types.js';
 
 export class RequirementImplementationAgent {
-    public async invoke(ruleId: string, fixtureFormat: string, requirement: RuleRequirement, fixture: GeneratedFixture, allRequirementsSoFar: RuleRequirement[], regressions: ValidationResult[], allFixtures: Map<string, GeneratedFixture>): Promise<void> {
+    public async invoke(ruleId: string, fixtureFormat: string, requirement: RuleRequirement, fixture: GeneratedFixture, allRequirementsSoFar: RuleRequirement[], regressions: ValidationResult[], allFixtures: Map<string, GeneratedFixture>, resolvedTemplate?: string): Promise<void> {
         await RuleCatalog.refresh();
 
         const rule = await RuleCatalog.find(ruleId, fixtureFormat as any);
         const ruleBody = fs.readFileSync(rule.sourceLocation, 'utf8');
         const rulesDir = path.join(srtRepoRoot(), 'src', 'assess', 'scanning', 'security-matrix', 'rules');
 
-        const userPrompt = buildUserPrompt(ruleBody, rule.sourceLocation, requirement, fixture, regressions, allRequirementsSoFar, allFixtures);
+        const userPrompt = buildUserPrompt(ruleBody, rule.sourceLocation, requirement, fixture, regressions, allRequirementsSoFar, allFixtures, resolvedTemplate);
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {

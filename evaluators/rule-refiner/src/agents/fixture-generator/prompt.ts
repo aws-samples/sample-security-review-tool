@@ -1,5 +1,11 @@
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type { RuleRequirement } from '../../types/requirements.js';
 import type { FixtureRegenerationContext } from './types.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PREPROCESSING_DOC = readFileSync(resolve(__dirname, '../../reference-docs/preprocessing-behavior.md'), 'utf-8');
 
 export const SYSTEM_PROMPT = `You generate minimal CloudFormation or Terraform test fixtures for individual security rule requirements.
 
@@ -37,26 +43,13 @@ Output a JSON array of TerraformResource objects:
 - If expectedBehavior is 'flag': the fixture must represent a NON-COMPLIANT state — the rule should produce a finding.
 - If expectedBehavior is 'pass': the fixture must represent a COMPLIANT state — the rule should return null.
 
-## Intrinsic Functions
-
-For scenarios involving unresolvable intrinsics, use Fn::If or Fn::ImportValue. These remain as opaque objects that the rule cannot statically evaluate.
-
-## Template Preprocessing (cfn-utils)
-
-Before the rule evaluates the fixture, the template is preprocessed by parseCfnTemplate which resolves intrinsic functions:
-
-- Ref to a resource → resolves to the logical resource ID string (e.g., Ref: MyTable → "MyTable")
-- Fn::GetAtt → resolves to the logical resource ID (first element only). E.g., !GetAtt MyTable.Arn → "MyTable" (NOT an ARN)
-- Fn::Sub → resolves pseudo-parameters (AWS::Region → "us-east-1", AWS::AccountId → "123456789012") and resource references (\${MyTable} → "MyTable")
-- Fn::FindInMap → resolves using the template's Mappings section
-
-This means: when a fixture uses !GetAtt MyTable.Arn in a property value (e.g., in a trail's EventSelector Values), the rule will see the string "MyTable" — not an ARN.
-
-Only Fn::If and Fn::ImportValue remain unresolved (treated as opaque intrinsics by the rule).
-
 ## Fixture Realism
 
-When referencing a resource's ARN, use !GetAtt Resource.Arn (the standard CloudFormation idiom) rather than constructing the ARN manually with Fn::Sub. When referencing a resource itself, use !Ref. Use the most natural and idiomatic CloudFormation patterns for each scenario.`;
+When referencing a resource's ARN, use !GetAtt Resource.Arn (the standard CloudFormation idiom) rather than constructing the ARN manually with Fn::Sub. When referencing a resource itself, use !Ref. Use the most natural and idiomatic CloudFormation patterns for each scenario.
+
+## Template Preprocessing
+
+${PREPROCESSING_DOC}`;
 
 export function buildUserPrompt(requirement: RuleRequirement, applicableResourceTypes: string[], format: 'cfn' | 'terraform', regenerationContext?: FixtureRegenerationContext): string {
     const lines: string[] = [];

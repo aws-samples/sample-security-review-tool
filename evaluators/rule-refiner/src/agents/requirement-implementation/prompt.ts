@@ -1,11 +1,20 @@
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type { RuleRequirement } from '../../types/requirements.js';
 import type { GeneratedFixture } from '../fixture-generator/types.js';
 import type { ValidationDiagnostics, ValidationResult } from './types.js';
 
-export const SYSTEM_PROMPT = `You implement specific requirements in security scanning rules. You receive one requirement to implement and must modify the rule source to satisfy it without breaking previously-satisfied requirements.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PREPROCESSING_DOC = readFileSync(resolve(__dirname, '../../reference-docs/preprocessing-behavior.md'), 'utf-8');
+const BASE_RULE_DOC = readFileSync(resolve(__dirname, '../../reference-docs/base-rule-api.md'), 'utf-8');
+const SCANNER_DOC = readFileSync(resolve(__dirname, '../../reference-docs/scanner-engine.md'), 'utf-8');
 
-Guidelines:
-- Make minimal changes — add or modify only the logic needed for the given requirement.
+export const SYSTEM_PROMPT = `You implement security scanning rules. You receive requirements (with test fixtures) and must write rule logic that satisfies all of them.
+
+## Guidelines
+
+- Make minimal changes — add or modify only the logic needed for the requirements.
 - Preserve all imports, class structure, exports, and unrelated logic.
 - Do not refactor, rename, or restructure the file.
 - Always read the current file before writing.
@@ -14,17 +23,23 @@ Guidelines:
 If the expected behavior is 'flag', ensure the rule DOES produce a finding for the described case.
 If the expected behavior is 'pass', ensure the rule does NOT produce a finding for the described case.
 
-Use the test fixture to understand the resource structure your rule will evaluate. Note: before the rule runs, the fixture is preprocessed by parseCfnTemplate which resolves intrinsic functions:
-- Ref to a resource → the logical resource ID string (e.g., "MyTable")
-- Fn::GetAtt → the logical resource ID (e.g., !GetAtt MyTable.Arn becomes "MyTable", NOT an ARN)
-- Fn::Sub → pseudo-parameters and resource references are substituted (e.g., \${AWS::Region} → "us-east-1", \${MyTable} → "MyTable")
-- Only Fn::If and Fn::ImportValue remain as unresolved intrinsic objects
+## How Rules Are Invoked
 
-When writing rule logic that inspects values which may originate from Fn::GetAtt or Ref (e.g., ARN lists in event selectors), expect resolved logical ID strings — not ARN strings or intrinsic objects.
+${SCANNER_DOC}
+
+## BaseRule API
+
+${BASE_RULE_DOC}
+
+## Template Preprocessing
+
+${PREPROCESSING_DOC}
+
+## Regression Handling
 
 If regression feedback is provided, it means a previously-passing requirement now fails after your last edit. You must fix the regression while still satisfying the current requirement. Study both the failing test case and the current requirement to find an implementation that satisfies both.`;
 
-export function buildUserPrompt(ruleBody: string, sourceLocation: string, requirement: RuleRequirement, fixture: GeneratedFixture, regressions: ValidationResult[], allRequirementsSoFar: RuleRequirement[], fixturesForRegressions: Map<string, GeneratedFixture>): string {
+export function buildUserPrompt(ruleBody: string, sourceLocation: string, requirement: RuleRequirement, fixture: GeneratedFixture, regressions: ValidationResult[], allRequirementsSoFar: RuleRequirement[], fixturesForRegressions: Map<string, GeneratedFixture>, resolvedTemplate?: string): string {
     const lines: string[] = [];
 
     lines.push(`Rule source file: ${sourceLocation}`);
@@ -41,10 +56,18 @@ export function buildUserPrompt(ruleBody: string, sourceLocation: string, requir
     lines.push(`Expected behavior: ${requirement.expectedBehavior}`);
     lines.push(`Rationale: ${requirement.rationale}`);
     lines.push('');
-    lines.push('Test fixture (the exact template the validator will use):');
-    lines.push('```');
+    lines.push('Raw fixture (the template before preprocessing):');
+    lines.push('```yaml');
     lines.push(fixture.templateSnippet);
     lines.push('```');
+
+    if (resolvedTemplate) {
+        lines.push('');
+        lines.push('Resolved fixture (what the rule will actually see after parseCfnTemplate runs):');
+        lines.push('```json');
+        lines.push(resolvedTemplate);
+        lines.push('```');
+    }
 
     if (regressions.length > 0) {
         lines.push('');
@@ -64,6 +87,13 @@ export function buildUserPrompt(ruleBody: string, sourceLocation: string, requir
                 lines.push(`  Fixture:`);
                 lines.push('  ```');
                 lines.push(regFixture.templateSnippet.split('\n').map(l => '  ' + l).join('\n'));
+                lines.push('  ```');
+            }
+
+            if (regression.diagnostics.resolvedTemplate) {
+                lines.push(`  Resolved fixture:`);
+                lines.push('  ```json');
+                lines.push(regression.diagnostics.resolvedTemplate.split('\n').map(l => '  ' + l).join('\n'));
                 lines.push('  ```');
             }
         }
@@ -95,6 +125,15 @@ export function formatDiagnostics(diagnostics: ValidationDiagnostics): string {
         case 'rule_logic':
             lines.push('→ The rule was invoked on the correct resource type but did not produce the expected result. Review the detection logic for this scenario.');
             break;
+        case 'value_mismatch':
+            lines.push('→ The rule tried to access a property that does not exist or has an unexpected type. Check the resolved template below to see what values are actually present.');
+            break;
+        case 'cross_resource_not_found':
+            lines.push('→ The rule tried to look up a related resource that is not in the template. Check your cross-resource lookup logic against the resolved template.');
+            break;
+        case 'intrinsic_not_handled':
+            lines.push('→ The rule encountered an unresolved intrinsic (Fn::If or Fn::ImportValue) but did not handle it. These remain as objects after preprocessing.');
+            break;
         case 'fixture_missing_resource':
             lines.push('→ The fixture does not contain a resource type the rule evaluates. This is a FIXTURE problem — escalation will regenerate the fixture.');
             break;
@@ -104,6 +143,14 @@ export function formatDiagnostics(diagnostics: ValidationDiagnostics): string {
         case 'fixture_wrong_structure':
             lines.push('→ The fixture structure is invalid. This is a FIXTURE problem — escalation will regenerate the fixture.');
             break;
+    }
+
+    if (diagnostics.resolvedTemplate) {
+        lines.push('');
+        lines.push('Resolved template (what the rule actually received):');
+        lines.push('```json');
+        lines.push(diagnostics.resolvedTemplate);
+        lines.push('```');
     }
 
     return lines.join('\n');
