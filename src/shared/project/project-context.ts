@@ -10,11 +10,16 @@ import { IgnorePatternService } from '../file-system/ignore-pattern-service.js';
 import { TerraformDetector } from '../terraform/terraform-detector.js';
 import { TerraformProjectConfig } from '../terraform/types.js';
 
-export interface CloudFormationTemplateConfig {
-  cfnTemplateName: string;
-  cfnTemplateFilePath: string;
-  cfnTemplateOutputFolderPath: string;
-  cdkProjectName?: string;
+export class CloudFormationTemplateConfig {
+  readonly displayName: string;
+
+  constructor(
+    readonly name: string, 
+    readonly filePath: string, 
+    readonly outputFolderPath: string, 
+    readonly cdkProjectName?: string) {
+      this.displayName = cdkProjectName ? `${cdkProjectName}/${name}` : name;
+     }
 }
 
 export interface PythonVenvConfig {
@@ -192,12 +197,12 @@ export class ProjectContext {
           ? path.join(srtOutputFolderPath, project.name)
           : srtOutputFolderPath;
 
-        return {
-          cfnTemplateName: templateBaseName,
-          cfnTemplateFilePath: x,
-          cfnTemplateOutputFolderPath: path.join(baseOutputPath, outputFolderName),
-          cdkProjectName: project.name
-        };
+        return new CloudFormationTemplateConfig(
+          templateBaseName,
+          x,
+          path.join(baseOutputPath, outputFolderName),
+          project.name
+        );
       });
     } catch (error) {
       return [];
@@ -263,11 +268,11 @@ export class ProjectContext {
         outputFolderName = `${relativePath}-${templateName}`;
       }
 
-      return {
-        cfnTemplateName: templateName,
-        cfnTemplateFilePath: x,
-        cfnTemplateOutputFolderPath: path.join(srtOutputFolderPath, outputFolderName)
-      };
+      return new CloudFormationTemplateConfig(
+        templateName,
+        x,
+        path.join(srtOutputFolderPath, outputFolderName)
+      );
     });
   }
 

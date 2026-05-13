@@ -1,4 +1,4 @@
-import { DescriptionRewriterAgent } from '../agents/description-rewriter/agent.js';
+import { DescriptionRewriterAgent } from '../agents/description-writer/agent.js';
 import type { FixtureFormat } from '../shared/types/rule-catalog.js';
 
 export async function rewriteDescription(ruleId: string, format: FixtureFormat): Promise<void> {

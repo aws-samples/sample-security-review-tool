@@ -5,7 +5,7 @@ import { RuleCatalog } from '../shared/rule-catalog/index.js';
 import { srtRepoRoot } from '../shared/fixture-paths.js';
 import { validateRequirement } from '../agents/requirements-implementer/requirement-validator.js';
 import { RequirementImplementationAgent } from '../agents/requirements-implementer/agent.js';
-import { FixtureGeneratorAgent } from '../agents/fixture-generator/agent.js';
+import { FixtureGeneratorAgent } from '../agents/test-generator/agent.js';
 import { buildCloudFormationTemplate } from '../agents/requirements-implementer/template-builder.js';
 import { parseCfnTemplate } from '../../../../src/assess/scanning/security-matrix/cfn-utils.js';
 import type { RuleEntry } from '../shared/types/rule-catalog.js';

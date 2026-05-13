@@ -24,6 +24,8 @@ const RuleRequirementSchema = z.object({
     category: RequirementCategorySchema.describe('Scenario category from the mandatory list'),
     expectedBehavior: z.enum(['flag', 'pass']).describe('Whether the rule should fire (flag) or not (pass)'),
     rationale: z.string().describe('Why this expected behavior is correct, referencing AWS docs or rule semantics'),
+    implemented: z.boolean().describe('Whether this requirement has been implemented'),
+    tested: z.boolean().describe('Whether this requirement has been tested'),
 });
 
 const AmbiguityOptionSchema = z.object({
@@ -48,8 +50,8 @@ export interface RequirementsGeneratorOptions {
 }
 
 export class RequirementsGeneratorAgent {
-    public async invoke(checkId: string, fixtureFormat: FixtureFormat, options: RequirementsGeneratorOptions = {}): Promise<RequirementsSpec> {
-        const filePath = requirementsPathFor(checkId, fixtureFormat);
+    public async invoke(ruleId: string, fixtureFormat: FixtureFormat, options: RequirementsGeneratorOptions = {}): Promise<RequirementsSpec> {
+        const filePath = requirementsPathFor(ruleId, fixtureFormat);
 
         if (!options.regenerate && fs.existsSync(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -58,7 +60,7 @@ export class RequirementsGeneratorAgent {
 
         await RuleCatalog.refresh();
 
-        const rule = await RuleCatalog.find(checkId, fixtureFormat);
+        const rule = await RuleCatalog.find(ruleId, fixtureFormat);
         const format = fixtureFormat === 'terraform' ? 'terraform' : 'cfn';
         const userPrompt = buildUserPrompt(rule.description);
         const mcpClient = createAwsKnowledgeMcpClient();
@@ -82,15 +84,15 @@ export class RequirementsGeneratorAgent {
             }
 
             const spec: RequirementsSpec = {
-                ruleId: checkId,
+                ruleId: ruleId,
                 format,
                 generatedAt: new Date().toISOString(),
-                positiveDescription: rule.description,
+                description: rule.description,
                 requirements: output.requirements,
                 awsDocReferences: output.awsDocReferences,
             };
 
-            this.persist(spec, checkId, format);
+            this.persist(spec, ruleId, format);
             
             return spec;
         } finally {

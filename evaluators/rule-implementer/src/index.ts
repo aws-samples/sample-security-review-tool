@@ -6,7 +6,7 @@ import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
 import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
 import { rewriteDescription } from './phases/description.js';
 import { generateRequirements } from './phases/requirements.js';
-import { generateFixtures } from './phases/fixtures.js';
+import { generateTests } from './phases/tests.js';
 import { implementRule } from './phases/implementation.js';
 import { annotateRule } from './phases/annotation.js';
 
@@ -21,16 +21,17 @@ async function main(): Promise<void> {
 
     console.log(`\nImplementing rule ${ruleId} (${fixtureFormat})\n`);
 
-    console.log('Phase 1: Description rewrite');
+    console.log('Phase 1: Description generation');
     await rewriteDescription(ruleId, fixtureFormat);
 
     console.log('\nPhase 2: Requirements generation');
     const spec = await generateRequirements(ruleId, fixtureFormat, { regenerate });
     console.log(`  Generated ${spec.requirements.length} requirements`);
 
-    console.log('\nPhase 3: Fixture generation');
-    const rule = await RuleCatalog.find(ruleId, fixtureFormat);
-    const fixtureSets = await generateFixtures(spec, rule);
+    console.log('\nPhase 3: Test generation');
+    const fixtureSets = await generateTests(ruleId, fixtureFormat, spec);
+
+    return;
 
     console.log('\nPhase 4: Rule implementation');
     const implResult = await implementRule(spec, fixtureSets);
@@ -43,7 +44,7 @@ async function main(): Promise<void> {
     await annotateRule(ruleId, fixtureFormat);
 
     console.log(`\n✓ Done.`);
-    console.log(`  Rule: ${rule.sourceLocation}`);
+    //console.log(`  Rule: ${rule.sourceLocation}`);
     console.log(`  Tests: ${implResult.testFilePath}`);
     console.log(`  Requirements: ${implResult.passed}/${implResult.totalRequirements} passing`);
 }

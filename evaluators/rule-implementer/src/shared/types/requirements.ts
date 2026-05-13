@@ -22,7 +22,7 @@ export interface RequirementsSpec {
     ruleId: string;
     format: 'cfn' | 'terraform';
     generatedAt: string;
-    positiveDescription: string;
+    description: string;
     requirements: RuleRequirement[];
     awsDocReferences: string[];
 }

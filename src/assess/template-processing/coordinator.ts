@@ -7,7 +7,7 @@ import { SrtLogger } from '../../shared/logging/srt-logger.js';
 import { Threat, ThreatReportGenerator } from './threat-model-report-generator.js';
 import { DIAGRAM_GENERATOR_PROMPT } from './diagram-generator-prompt.js';
 import { THREAT_MODEL_GENERATOR_PROMPT } from './threat-model-generator-prompt.js';
-import { TemplateResult, TerraformTemplateResult } from '../types.js';
+import { IaCTemplateResult } from '../types.js';
 import { CloudFormationTemplateConfig, ProjectContext } from '../../shared/project/project-context.js';
 import { TerraformProjectConfig } from '../../shared/terraform/types.js';
 
@@ -19,30 +19,27 @@ export class TemplateCoordinator {
 		private onProgress: (progress: string) => void = () => { }
 	) { }
 
-	public async processTemplates(): Promise<TemplateResult[]> {
+	public async processIaC(): Promise<IaCTemplateResult[]> {
 		const cfnTemplates = await this.context.getCloudFormationTemplates();
-		const templateResults = cfnTemplates.length > 0
-			? await Promise.all(cfnTemplates.map(input => this.processTemplate(input)))
+		const tfPlans = await this.context.getTerraformPlans();
+
+		const cfnTemplateResults = cfnTemplates.length > 0
+			? await Promise.all(cfnTemplates.map(input => this.processCfnTemplate(input)))
 			: [];
 
-		return templateResults;
+		const tfPlanResults = tfPlans.length > 0
+			? await Promise.all(tfPlans.map(plan => this.processTerraformPlan(plan)))
+			: [];
+
+		return [...cfnTemplateResults, ...tfPlanResults];
 	}
 
-	public async processTerraformPlans(): Promise<TerraformTemplateResult[]> {
-		const tfPlans = await this.context.getTerraformPlans();
-		if (tfPlans.length === 0) return [];
-
-		const results = await Promise.all(tfPlans.map(plan => this.processTerraformPlan(plan)));
-		return results;
-	}
-
-	private async processTerraformPlan(tfProject: TerraformProjectConfig): Promise<TerraformTemplateResult> {
-		const result: TerraformTemplateResult = {
-			tfProjectName: tfProject.name,
-			tfProjectRootPath: tfProject.rootPath,
-			tfOutputFolderPath: tfProject.outputFolderPath,
+	private async processTerraformPlan(tfProject: TerraformProjectConfig): Promise<IaCTemplateResult> {
+		const result: IaCTemplateResult = {			
+			iacType: 'Terraform',
+			name: tfProject.name,
 			checkovSummaryPath: null,
-			terraformMatrixPath: null,
+			securityMatrixPath: null,
 			diagramPath: null,
 			threatModelPath: null
 		};
@@ -53,7 +50,7 @@ export class TemplateCoordinator {
 		]);
 
 		result.checkovSummaryPath = checkovSummaryPath;
-		result.terraformMatrixPath = terraformMatrixPath;
+		result.securityMatrixPath = terraformMatrixPath;
 
 		return result;
 	}
@@ -64,7 +61,7 @@ export class TemplateCoordinator {
 
 			const scanner = new SecurityMatrixScannerEngine();
 			const filePath = path.join(tfProject.outputFolderPath, 'terraform-matrix.json');
-			const success = await scanner.runTerraform(tfProject.name, tfProject.planJsonPath, filePath);
+			const success = await scanner.scanTf(tfProject.name, tfProject.planJsonPath, filePath);
 
 			this.onProgress(`  ✔ Completed terraform matrix scan for ${tfProject.name}`);
 			return success ? filePath : null;
@@ -100,26 +97,23 @@ export class TemplateCoordinator {
 		}
 	}
 
-	private async processTemplate(cfnTemplate: CloudFormationTemplateConfig): Promise<TemplateResult> {
-		const result: TemplateResult = {
-			cfnTemplateName: cfnTemplate.cfnTemplateName,
-			cfnTemplateFilePath: cfnTemplate.cfnTemplateFilePath,
-			cfnTemplateOutputFolderPath: cfnTemplate.cfnTemplateOutputFolderPath,
-			cdkProjectName: cfnTemplate.cdkProjectName,
+	private async processCfnTemplate(cfnTemplate: CloudFormationTemplateConfig): Promise<IaCTemplateResult> {
+		const result: IaCTemplateResult = {
+			iacType: 'CloudFormation',
+			name: cfnTemplate.name,
 			checkovSummaryPath: null,
 			securityMatrixPath: null,
 			diagramPath: null,
 			threatModelPath: null
 		};
 
-		const templateContents = await this.getCloudFormationTemplateFileContents(cfnTemplate.cfnTemplateFilePath);
-		const displayName = this.getTemplateDisplayName(cfnTemplate);
+		const templateContents = await this.getCloudFormationTemplateFileContents(cfnTemplate.filePath);
 
 		const [diagramPath, threatModelPath, checkovSummaryPath, securityMatrixPath] = await Promise.all([
-			this.generateDiagramArtifact(displayName, templateContents, cfnTemplate.cfnTemplateOutputFolderPath),
-			this.generateThreatModelArtifact(displayName, templateContents, cfnTemplate.cfnTemplateOutputFolderPath),
-			this.executeCheckovScan(cfnTemplate, displayName),
-			this.executeSecurityMatrixScan(cfnTemplate, displayName)
+			this.generateDiagramArtifact(cfnTemplate.displayName, templateContents, cfnTemplate.outputFolderPath),
+			this.generateThreatModelArtifact(cfnTemplate.displayName, templateContents, cfnTemplate.outputFolderPath),
+			this.executeCheckovScan(cfnTemplate, cfnTemplate.displayName),
+			this.executeSecurityMatrixScan(cfnTemplate, cfnTemplate.displayName)
 		]);
 
 		result.diagramPath = diagramPath;
@@ -133,12 +127,6 @@ export class TemplateCoordinator {
 	private async getCloudFormationTemplateFileContents(templateFilePath: string): Promise<string> {
 		const content = await fileUtils.readTextFile(templateFilePath);
 		return content || '';
-	}
-
-	private getTemplateDisplayName(cfnTemplate: CloudFormationTemplateConfig): string {
-		return cfnTemplate.cdkProjectName
-			? `${cfnTemplate.cdkProjectName}/${cfnTemplate.cfnTemplateName}`
-			: cfnTemplate.cfnTemplateName;
 	}
 
 	private async generateDiagramArtifact(displayName: string, templateContents: string, outputFolderPath: string): Promise<string | null> {
@@ -200,8 +188,8 @@ export class TemplateCoordinator {
 		const checkovScanner = new CheckovScanner();
 		const summaryPath = await checkovScanner.run(
 			this.context.getProjectRootFolderPath(),
-			cfnTemplate.cfnTemplateFilePath,
-			cfnTemplate.cfnTemplateOutputFolderPath
+			cfnTemplate.filePath,
+			cfnTemplate.outputFolderPath
 		);
 
 		if (summaryPath) {
@@ -218,8 +206,8 @@ export class TemplateCoordinator {
 			this.onProgress(`  › Starting security matrix scan for ${displayName}...`);
 
 			const securityMatrixScanner = new SecurityMatrixScannerEngine();
-			const filePath = path.join(cfnTemplate.cfnTemplateOutputFolderPath, 'security-matrix.json');
-			const success = await securityMatrixScanner.run(this.context.getProjectRootFolderPath(), cfnTemplate.cfnTemplateFilePath, filePath);
+			const filePath = path.join(cfnTemplate.outputFolderPath, 'security-matrix.json');
+			const success = await securityMatrixScanner.scanCfn(this.context.getProjectRootFolderPath(), cfnTemplate.filePath, filePath);
 
 			this.onProgress(`  ✔ Completed security matrix scan for ${displayName}`);
 

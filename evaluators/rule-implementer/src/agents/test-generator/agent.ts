@@ -4,8 +4,9 @@ import { SYSTEM_PROMPT, buildUserPrompt } from './prompt.js';
 import { validateFixtureStructure } from './structural-validator.js';
 import { createAwsKnowledgeMcpClient } from '../../shared/aws-knowledge-mcp-client.js';
 import type { RuleRequirement } from '../../shared/types/requirements.js';
-import type { RuleEntry } from '../../shared/types/rule-catalog.js';
+import type { FixtureFormat, RuleEntry } from '../../shared/types/rule-catalog.js';
 import type { GeneratedFixture, FixtureRegenerationContext } from '../../shared/types/fixtures.js';
+import { RuleCatalog } from '../../shared/rule-catalog/index.js';
 
 const MAX_STRUCTURAL_RETRIES = 2;
 
@@ -15,7 +16,8 @@ const OutputSchema = z.object({
 });
 
 export class FixtureGeneratorAgent {
-    public async invoke(requirement: RuleRequirement, rule: RuleEntry, format: 'cfn' | 'terraform', regenerationContext?: FixtureRegenerationContext): Promise<GeneratedFixture> {
+    public async invoke(requirement: RuleRequirement, ruleId: string, fixtureFormat: FixtureFormat, regenerationContext?: FixtureRegenerationContext): Promise<GeneratedFixture> {
+        const rule = await RuleCatalog.find(ruleId, fixtureFormat);
         const applicableResourceTypes = rule.applicableResourceTypes ?? [];
         let lastResult: Omit<GeneratedFixture, 'generationAttempt'> | undefined;
         let lastError: string | undefined;
@@ -25,8 +27,8 @@ export class FixtureGeneratorAgent {
                 ? regenerationContext
                 : this.buildRetryContext(requirement, lastResult!.templateSnippet, lastError!, regenerationContext);
 
-            const result = await this.generate(requirement, rule, format, applicableResourceTypes, contextForAttempt);
-            const validation = validateFixtureStructure(result.templateSnippet, applicableResourceTypes, format);
+            const result = await this.generate(requirement, rule, fixtureFormat, applicableResourceTypes, contextForAttempt);
+            const validation = validateFixtureStructure(result.templateSnippet, applicableResourceTypes, fixtureFormat);
 
             if (validation.valid) {
                 return { ...result, resourceTypes: validation.resourceTypes, generationAttempt: attempt };
@@ -40,7 +42,7 @@ export class FixtureGeneratorAgent {
         return { ...lastResult!, generationAttempt: MAX_STRUCTURAL_RETRIES };
     }
 
-    private async generate(requirement: RuleRequirement, rule: RuleEntry, format: 'cfn' | 'terraform', applicableResourceTypes: string[], regenerationContext?: FixtureRegenerationContext): Promise<Omit<GeneratedFixture, 'generationAttempt'>> {
+    private async generate(requirement: RuleRequirement, rule: RuleEntry, fixtureFormat: FixtureFormat, applicableResourceTypes: string[], regenerationContext?: FixtureRegenerationContext): Promise<Omit<GeneratedFixture, 'generationAttempt'>> {
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {
@@ -51,7 +53,7 @@ export class FixtureGeneratorAgent {
                 structuredOutputSchema: OutputSchema,
             });
 
-            const userPrompt = buildUserPrompt(requirement, applicableResourceTypes, format, regenerationContext);
+            const userPrompt = buildUserPrompt(requirement, applicableResourceTypes, fixtureFormat, regenerationContext);
             const result = await agent.invoke(userPrompt);
             const output = result.structuredOutput as z.infer<typeof OutputSchema>;
 

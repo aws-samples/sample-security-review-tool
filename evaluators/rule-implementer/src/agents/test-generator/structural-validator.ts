@@ -1,4 +1,5 @@
 import { yamlParse } from 'yaml-cfn';
+import { FixtureFormat } from '../../shared/types/rule-catalog.js';
 
 export interface StructuralValidation {
     valid: boolean;
@@ -6,8 +7,8 @@ export interface StructuralValidation {
     resourceTypes: string[];
 }
 
-export function validateFixtureStructure(templateSnippet: string, applicableResourceTypes: string[], format: 'cfn' | 'terraform'): StructuralValidation {
-    if (format === 'terraform') {
+export function validateFixtureStructure(templateSnippet: string, applicableResourceTypes: string[], fixtureFormat: FixtureFormat): StructuralValidation {
+    if (fixtureFormat === 'terraform') {
         return validateTerraformStructure(templateSnippet, applicableResourceTypes);
     }
     return validateCloudFormationStructure(templateSnippet, applicableResourceTypes);

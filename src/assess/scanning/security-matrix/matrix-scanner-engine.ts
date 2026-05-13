@@ -13,7 +13,7 @@ export class SecurityMatrixScannerEngine {
   private rules: BaseRule[] = [...allCloudFormationRules];
   private tfRules: BaseTerraformRule[] = [...allTerraformRules];
 
-  public async run(projectRootFolderPath: string, templateFilePath: string, outputFilePath: string): Promise<boolean> {
+  public async scanCfn(projectRootFolderPath: string, templateFilePath: string, outputFilePath: string): Promise<boolean> {
     try {
       const template = await readCfnFile(templateFilePath);
       const parsedTemplate = parseCfnTemplate(template);
@@ -24,7 +24,7 @@ export class SecurityMatrixScannerEngine {
       }
 
       const templateRelativeFilePath = path.relative(projectRootFolderPath, templateFilePath);
-      const results = this.evaluate(parsedTemplate, templateRelativeFilePath);
+      const results = this.evaluateCfn(parsedTemplate, templateRelativeFilePath);
 
       await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
       await ScannerUtils.writeJsonFile(outputFilePath, results);
@@ -36,51 +36,7 @@ export class SecurityMatrixScannerEngine {
     }
   }
 
-  public async runTerraform(projectName: string, planJsonPath: string, outputFilePath: string): Promise<boolean> {
-    try {
-      const resources = await readTerraformPlan(planJsonPath);
-
-      if (!resources || resources.length === 0) {
-        SrtLogger.logError('No resources found in Terraform plan', new Error(planJsonPath));
-        return false;
-      }
-
-      const results = this.evaluateTerraform(resources, projectName);
-
-      await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
-      await ScannerUtils.writeJsonFile(outputFilePath, results);
-
-      return true;
-    } catch (error) {
-      SrtLogger.logError('Error scanning Terraform plan', error as Error);
-      return false;
-    }
-  }
-
-  private evaluateTerraform(resources: TerraformResource[], projectName: string): ScanResult[] {
-    const results: ScanResult[] = [];
-
-    for (const resource of resources) {
-      const applicableRules = this.tfRules
-        .filter(rule => rule.appliesTo(resource.type))
-        .sort((a, b) => a.id.localeCompare(b.id));
-
-      for (const rule of applicableRules) {
-        try {
-          const result = rule.evaluate(resource, projectName, resources);
-          if (result) {
-            results.push(result);
-          }
-        } catch (error) {
-          SrtLogger.logError(`Error evaluating TF rule ${rule.id} for resource ${resource.address}`, error as Error);
-        }
-      }
-    }
-
-    return results;
-  }
-
-  private evaluate(template: Template, stackName: string): ScanResult[] {
+  private evaluateCfn(template: Template, stackName: string): ScanResult[] {
     const results: ScanResult[] = [];
 
     for (const resourceId in template.Resources) {
@@ -119,6 +75,50 @@ export class SecurityMatrixScannerEngine {
           }
         } catch (error) {
           SrtLogger.logError(`Error evaluating rule ${rule.id} for resource ${resourceId}`, error as Error);
+        }
+      }
+    }
+
+    return results;
+  }
+
+  public async scanTf(projectName: string, planJsonPath: string, outputFilePath: string): Promise<boolean> {
+    try {
+      const resources = await readTerraformPlan(planJsonPath);
+
+      if (!resources || resources.length === 0) {
+        SrtLogger.logError('No resources found in Terraform plan', new Error(planJsonPath));
+        return false;
+      }
+
+      const results = this.evaluateTf(resources, projectName);
+
+      await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
+      await ScannerUtils.writeJsonFile(outputFilePath, results);
+
+      return true;
+    } catch (error) {
+      SrtLogger.logError('Error scanning Terraform plan', error as Error);
+      return false;
+    }
+  }
+
+  private evaluateTf(resources: TerraformResource[], projectName: string): ScanResult[] {
+    const results: ScanResult[] = [];
+
+    for (const resource of resources) {
+      const applicableRules = this.tfRules
+        .filter(rule => rule.appliesTo(resource.type))
+        .sort((a, b) => a.id.localeCompare(b.id));
+
+      for (const rule of applicableRules) {
+        try {
+          const result = rule.evaluate(resource, projectName, resources);
+          if (result) {
+            results.push(result);
+          }
+        } catch (error) {
+          SrtLogger.logError(`Error evaluating TF rule ${rule.id} for resource ${resource.address}`, error as Error);
         }
       }
     }

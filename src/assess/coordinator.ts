@@ -1,7 +1,7 @@
 import { SrtLogger } from '../shared/logging/srt-logger.js';
 import { ui } from '../shared/ui.js';
 import type { Ora } from 'ora';
-import { CodeScanResult, TemplateResult, TerraformTemplateResult } from './types.js';
+import { CodeScanResult, IaCTemplateResult } from './types.js';
 import { InitializationCoordinator } from './initialization/coordinator.js';
 import { ProjectContext } from '../shared/project/project-context.js';
 import { LicenseComplianceCoordinator } from './licensing/coordinator.js';
@@ -40,16 +40,14 @@ export class AssessCoordinator {
             await this.initializeProject();
             await this.checkLicenseCompliance(license, updateLicenses);
             const codeScanResult = await this.runCodeScanners();
-            const templateResults = await this.processTemplates(generateDiagrams, generateThreatModels);
-            const terraformResults = await this.processTerraformPlans(generateDiagrams, generateThreatModels);
+            const templateResults = await this.processIaC(generateDiagrams, generateThreatModels);
             const projectSummary = await this.generateProjectSummary(templateResults);
 
             const assessmentSummary = await this.generateReports(
                 codeScanResult,
                 templateResults,
                 generateXlsx,
-                projectSummary,
-                terraformResults
+                projectSummary
             );
 
             if (assessmentSummary) {
@@ -108,23 +106,14 @@ export class AssessCoordinator {
         });
     }
 
-    private async processTemplates(generateDiagrams: boolean, generateThreatModels: boolean): Promise<TemplateResult[]> {
+    private async processIaC(generateDiagrams: boolean, generateThreatModels: boolean): Promise<IaCTemplateResult[]> {
         return this.runPhase('Processing CloudFormation templates...', 'Processed CloudFormation templates', async (spin) => {
-            const templateCoordinator = new TemplateCoordinator(this.context, generateDiagrams, generateThreatModels, (msg) => this.spinProgress(spin, msg));
-            return templateCoordinator.processTemplates();
+            const iacCoordinator = new TemplateCoordinator(this.context, generateDiagrams, generateThreatModels, (msg) => this.spinProgress(spin, msg));
+            return iacCoordinator.processIaC();
         });
     }
 
-    private async processTerraformPlans(generateDiagrams: boolean, generateThreatModels: boolean): Promise<TerraformTemplateResult[]> {
-        const spin = ui.spinner('Processing Terraform plans...').start();
-        const templateCoordinator = new TemplateCoordinator(this.context, generateDiagrams, generateThreatModels, (msg) => this.spinProgress(spin, msg));
-        const terraformResults = await templateCoordinator.processTerraformPlans();
-        spin.succeed('Processed Terraform plans');
-
-        return terraformResults;
-    }
-
-    private async generateProjectSummary(templateResults: TemplateResult[]): Promise<string | null> {
+    private async generateProjectSummary(templateResults: IaCTemplateResult[]): Promise<string | null> {
         return this.runPhase('Generating assessment summary...', 'Generated assessment summary', async (spin) => {
             const summarizer = new ProjectSummarizer(this.context, (msg) => this.spinProgress(spin, msg));
             return summarizer.summarize(templateResults);
@@ -133,10 +122,9 @@ export class AssessCoordinator {
 
     private async generateReports(
         codeScanResult: CodeScanResult,
-        templateResults: TemplateResult[],
+        templateResults: IaCTemplateResult[],
         generateXlsx: boolean,
-        projectSummary: string | null,
-        terraformResults: TerraformTemplateResult[] = []
+        projectSummary: string | null
     ): Promise<AssessmentSummary | null> {
         const spin = ui.spinner('Creating SRT report...').start();
         const reportGenerator = new ReportGenerator(this.context, (msg) => this.spinProgress(spin, msg));
@@ -144,8 +132,7 @@ export class AssessCoordinator {
             codeScanResult,
             templateResults,
             generateXlsx,
-            projectSummary,
-            terraformResults
+            projectSummary
         });
         spin.succeed('Created SRT report');
         return summary;

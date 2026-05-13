@@ -3,6 +3,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { RuleRequirement } from '../../shared/types/requirements.js';
 import type { FixtureRegenerationContext } from '../../shared/types/fixtures.js';
+import { FixtureFormat } from '../../shared/types/rule-catalog.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PREPROCESSING_DOC = readFileSync(resolve(__dirname, '../preprocessing-behavior.md'), 'utf-8');
@@ -51,10 +52,10 @@ When referencing a resource's ARN, use !GetAtt Resource.Arn (the standard CloudF
 
 ${PREPROCESSING_DOC}`;
 
-export function buildUserPrompt(requirement: RuleRequirement, applicableResourceTypes: string[], format: 'cfn' | 'terraform', regenerationContext?: FixtureRegenerationContext): string {
+export function buildUserPrompt(requirement: RuleRequirement, applicableResourceTypes: string[], fixtureFormat: FixtureFormat, regenerationContext?: FixtureRegenerationContext): string {
     const lines: string[] = [];
 
-    lines.push(`Format: ${format === 'cfn' ? 'CloudFormation (YAML)' : 'Terraform (JSON)'}`);
+    lines.push(`Format: ${fixtureFormat === 'cfn' ? 'CloudFormation (YAML)' : 'Terraform (JSON)'}`);
     lines.push(`Rule applies to resource types: ${applicableResourceTypes.join(', ')}`);
     lines.push('');
     lines.push('═══ REQUIREMENT ═══');
