@@ -8,10 +8,13 @@ import { ScanResult } from '../base-scanner.js';
 import { readCfnFile, parseCfnTemplate } from './cfn-utils.js';
 import { Template } from 'cloudform-types';
 import { ScannerUtils } from '../utils/scanner-utils.js';
+import { RegisteredControl, CfnContext, TfContext } from './controls/types.js';
+import { allRegisteredControls } from './rules/controls-registry.js';
 
 export class SecurityMatrixScannerEngine {
   private rules: BaseRule[] = [...allCloudFormationRules];
   private tfRules: BaseTerraformRule[] = [...allTerraformRules];
+  private controls: RegisteredControl[] = [...allRegisteredControls];
 
   public async scanCfn(projectRootFolderPath: string, templateFilePath: string, outputFilePath: string): Promise<boolean> {
     try {
@@ -77,6 +80,18 @@ export class SecurityMatrixScannerEngine {
           SrtLogger.logError(`Error evaluating rule ${rule.id} for resource ${resourceId}`, error as Error);
         }
       }
+
+      for (const { control, cfnAdapter } of this.controls) {
+        if (!cfnAdapter.appliesTo(resource.Type)) continue;
+        try {
+          const context: CfnContext = { stackName, template, resource, logicalId: resourceId };
+          const adapter = cfnAdapter.bind(context);
+          const result = control.run(adapter, context);
+          if (result) results.push(result);
+        } catch (error) {
+          SrtLogger.logError(`Error evaluating control ${control.id} for resource ${resourceId}`, error as Error);
+        }
+      }
     }
 
     return results;
@@ -119,6 +134,18 @@ export class SecurityMatrixScannerEngine {
           }
         } catch (error) {
           SrtLogger.logError(`Error evaluating TF rule ${rule.id} for resource ${resource.address}`, error as Error);
+        }
+      }
+
+      for (const { control, tfAdapter } of this.controls) {
+        if (!tfAdapter.appliesTo(resource.type)) continue;
+        try {
+          const context: TfContext = { projectName, resource, allResources: resources };
+          const adapter = tfAdapter.bind(context);
+          const result = control.run(adapter, context);
+          if (result) results.push(result);
+        } catch (error) {
+          SrtLogger.logError(`Error evaluating control ${control.id} for resource ${resource.address}`, error as Error);
         }
       }
     }
