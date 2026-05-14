@@ -7,7 +7,6 @@ import { SYSTEM_PROMPT, buildUserPrompt } from './prompt.js';
 import { RuleCatalog } from '../../shared/rule-catalog/index.js';
 import { createAwsKnowledgeMcpClient } from '../../shared/aws-knowledge-mcp-client.js';
 import { requirementsPathFor } from '../../shared/fixture-paths.js';
-import type { FixtureFormat } from '../../shared/types/rule-catalog.js';
 import type { RequirementsSpec } from '../../shared/types/requirements.js';
 
 const CUSTOM_INTERPRETATION = -1;
@@ -50,8 +49,8 @@ export interface RequirementsGeneratorOptions {
 }
 
 export class RequirementsGeneratorAgent {
-    public async invoke(ruleId: string, fixtureFormat: FixtureFormat, options: RequirementsGeneratorOptions = {}): Promise<RequirementsSpec> {
-        const filePath = requirementsPathFor(ruleId, fixtureFormat);
+    public async invoke(ruleId: string, description: string, options: RequirementsGeneratorOptions = {}): Promise<RequirementsSpec> {
+        const filePath = requirementsPathFor(ruleId);
 
         if (!options.regenerate && fs.existsSync(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -60,9 +59,9 @@ export class RequirementsGeneratorAgent {
 
         await RuleCatalog.refresh();
 
-        const rule = await RuleCatalog.find(ruleId, fixtureFormat);
-        const format = fixtureFormat === 'terraform' ? 'terraform' : 'cfn';
-        const userPrompt = buildUserPrompt(rule.description);
+        //const rule = await RuleCatalog.find(ruleId, fixtureFormat);
+        //const format = fixtureFormat === 'terraform' ? 'terraform' : 'cfn';
+        const userPrompt = buildUserPrompt(description);
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {
@@ -85,14 +84,13 @@ export class RequirementsGeneratorAgent {
 
             const spec: RequirementsSpec = {
                 ruleId: ruleId,
-                format,
                 generatedAt: new Date().toISOString(),
-                description: rule.description,
+                description: description,
                 requirements: output.requirements,
                 awsDocReferences: output.awsDocReferences,
             };
 
-            this.persist(spec, ruleId, format);
+            this.persist(spec, ruleId);
             
             return spec;
         } finally {
@@ -139,8 +137,8 @@ export class RequirementsGeneratorAgent {
         return `- ${scenario}: user's interpretation: "${description.trim()}". Determine the correct expected behavior based on this description.`;
     }
 
-    private persist(spec: RequirementsSpec, checkId: string, format: string): void {
-        const filePath = requirementsPathFor(checkId, format);
+    private persist(spec: RequirementsSpec, checkId: string): void {
+        const filePath = requirementsPathFor(checkId);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
         fs.writeFileSync(filePath, JSON.stringify(spec, null, 2));
     }

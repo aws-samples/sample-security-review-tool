@@ -5,7 +5,7 @@ import { RuleCatalog } from '../shared/rule-catalog/index.js';
 import { srtRepoRoot } from '../shared/fixture-paths.js';
 import { validateRequirement } from '../agents/requirements-implementer/requirement-validator.js';
 import { RequirementImplementationAgent } from '../agents/requirements-implementer/agent.js';
-import { FixtureGeneratorAgent } from '../agents/test-generator/agent.js';
+import { TestGeneratorAgent } from '../agents/test-generator/agent.js';
 import { buildCloudFormationTemplate } from '../agents/requirements-implementer/template-builder.js';
 import { parseCfnTemplate } from '../../../../src/assess/scanning/security-matrix/cfn-utils.js';
 import type { RuleEntry } from '../shared/types/rule-catalog.js';
@@ -25,7 +25,7 @@ export interface ImplementationResult {
 export async function implementRule(spec: RequirementsSpec, fixtureSets: FixtureSet[]): Promise<ImplementationResult> {
     const { ruleId, format, requirements } = spec;
     const agent = new RequirementImplementationAgent();
-    const fixtureGenerator = new FixtureGeneratorAgent();
+    const fixtureGenerator = new TestGeneratorAgent();
     const fixtures = new Map<string, GeneratedFixture>(fixtureSets.map(fs => [fs.requirement.id, fs.fixture]));
 
     console.log(`  Implementing ${requirements.length} requirements for ${ruleId}...`);
@@ -49,7 +49,7 @@ export async function implementRule(spec: RequirementsSpec, fixtureSets: Fixture
     return { totalRequirements: requirements.length, passed: passCount, failed: failedIds, testFilePath };
 }
 
-async function processRequirement(ruleId: string, format: 'cfn' | 'terraform', requirement: RuleRequirement, allSoFar: RuleRequirement[], fixtures: Map<string, GeneratedFixture>, agent: RequirementImplementationAgent, fixtureGenerator: FixtureGeneratorAgent): Promise<string> {
+async function processRequirement(ruleId: string, format: 'cfn' | 'terraform', requirement: RuleRequirement, allSoFar: RuleRequirement[], fixtures: Map<string, GeneratedFixture>, agent: RequirementImplementationAgent, fixtureGenerator: TestGeneratorAgent): Promise<string> {
     const fixture = fixtures.get(requirement.id)!;
 
     let result = await validateRequirement(ruleId, format, requirement, fixture);
@@ -77,7 +77,7 @@ async function processRequirement(ruleId: string, format: 'cfn' | 'terraform', r
     return await escalate(ruleId, format, requirement, allSoFar, result, fixtures, agent, fixtureGenerator);
 }
 
-async function escalate(ruleId: string, format: 'cfn' | 'terraform', requirement: RuleRequirement, allSoFar: RuleRequirement[], lastResult: ValidationResult, fixtures: Map<string, GeneratedFixture>, agent: RequirementImplementationAgent, fixtureGenerator: FixtureGeneratorAgent): Promise<string> {
+async function escalate(ruleId: string, format: 'cfn' | 'terraform', requirement: RuleRequirement, allSoFar: RuleRequirement[], lastResult: ValidationResult, fixtures: Map<string, GeneratedFixture>, agent: RequirementImplementationAgent, fixtureGenerator: TestGeneratorAgent): Promise<string> {
     console.log(`      Escalating: regenerating fixture for ${requirement.id}`);
 
     const rule = await RuleCatalog.find(ruleId, format);

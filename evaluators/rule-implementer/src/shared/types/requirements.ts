@@ -20,7 +20,6 @@ export interface RuleRequirement {
 
 export interface RequirementsSpec {
     ruleId: string;
-    format: 'cfn' | 'terraform';
     generatedAt: string;
     description: string;
     requirements: RuleRequirement[];

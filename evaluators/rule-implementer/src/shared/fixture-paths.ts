@@ -11,7 +11,7 @@ export function requirementsDir(): string {
     return path.resolve(moduleDir, '..', '..', 'requirements');
 }
 
-export function requirementsPathFor(checkId: string, format: string): string {
-    const safeCheckId = checkId.replace(/[^A-Za-z0-9_.-]/g, '_');
-    return path.join(requirementsDir(), safeCheckId, `${format}.requirements.json`);
+export function requirementsPathFor(checkId: string): string {
+    const safeCheckId = checkId.replace(/[^A-Za-z0-9_.-]/g, '_').toLowerCase();
+    return path.join(requirementsDir(), `${safeCheckId}.requirements.json`);
 }

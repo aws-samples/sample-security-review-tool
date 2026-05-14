@@ -1,27 +1,44 @@
-import { FixtureGeneratorAgent } from '../agents/test-generator/agent.js';
-import type { FixtureFormat } from '../shared/types/rule-catalog.js';
+import { TestGeneratorAgent } from '../agents/test-generator/agent.js';
 import type { RequirementsSpec } from '../shared/types/requirements.js';
-import type { FixtureSet } from '../shared/types/fixtures.js';
 
-const MAX_CONCURRENCY = 3;
+const MAX_CONCURRENCY = 4;
 
-export async function generateTests(ruleId: string, fixtureFormat: FixtureFormat, spec: RequirementsSpec): Promise<FixtureSet[]> {
-    console.log(`  Generating ${spec.requirements.length} fixtures (${MAX_CONCURRENCY} at a time)...`);
+interface TestTask {
+    requirementId: string;
+    format: 'cfn' | 'tf';
+}
 
-    const results: FixtureSet[] = [];
+export async function generateTests(ruleId: string, service: string, spec: RequirementsSpec): Promise<void> {
+    const tasks: TestTask[] = spec.requirements.flatMap(r => [
+        { requirementId: r.id, format: 'cfn' as const },
+        { requirementId: r.id, format: 'tf' as const },
+    ]);
 
-    for (let i = 0; i < spec.requirements.length; i += MAX_CONCURRENCY) {
-        const batch = spec.requirements.slice(i, i + MAX_CONCURRENCY);
+    console.log(`  Generating ${tasks.length} test files (${MAX_CONCURRENCY} at a time)...`);
 
-        const batchResults = await Promise.all(batch.map(async (requirement) => {
-            const agent = new FixtureGeneratorAgent();
-            const fixture = await agent.invoke(requirement, ruleId, fixtureFormat);
-            console.log(`    ✓ ${requirement.id} (${requirement.category})`);
-            return { requirement, fixture };
+    let successes = 0;
+    let failures = 0;
+
+    for (let i = 0; i < tasks.length; i += MAX_CONCURRENCY) {
+        const batch = tasks.slice(i, i + MAX_CONCURRENCY);
+
+        const results = await Promise.allSettled(batch.map(async (task) => {
+            const requirement = spec.requirements.find(r => r.id === task.requirementId)!;
+            const agent = new TestGeneratorAgent();
+            await agent.invoke(requirement, ruleId, service, task.format);
+            console.log(`    ✓ ${task.requirementId} ${task.format}`);
         }));
 
-        results.push(...batchResults);
+        for (const result of results) {
+            if (result.status === 'fulfilled') {
+                successes++;
+            } else {
+                failures++;
+                const task = batch[results.indexOf(result)];
+                console.log(`    ✗ ${task.requirementId} ${task.format}: ${result.reason?.message ?? result.reason}`);
+            }
+        }
     }
 
-    return results;
+    console.log(`  Generated ${tasks.length} test files (${successes} successes, ${failures} failures)`);
 }

@@ -12,144 +12,145 @@ import { RegisteredControl, CfnContext, TfContext } from './controls/types.js';
 import { allRegisteredControls } from './rules/controls-registry.js';
 
 export class SecurityMatrixScannerEngine {
-  private rules: BaseRule[] = [...allCloudFormationRules];
-  private tfRules: BaseTerraformRule[] = [...allTerraformRules];
-  private controls: RegisteredControl[] = [...allRegisteredControls];
+    private rules: BaseRule[] = [...allCloudFormationRules];
+    private tfRules: BaseTerraformRule[] = [...allTerraformRules];
+    private controls: RegisteredControl[] = [...allRegisteredControls];
 
-  public async scanCfn(projectRootFolderPath: string, templateFilePath: string, outputFilePath: string): Promise<boolean> {
-    try {
-      const template = await readCfnFile(templateFilePath);
-      const parsedTemplate = parseCfnTemplate(template);
-
-      if (!parsedTemplate || !parsedTemplate.Resources) {
-        SrtLogger.logError('Invalid CloudFormation template', new Error(templateFilePath));
-        return false;
-      }
-
-      const templateRelativeFilePath = path.relative(projectRootFolderPath, templateFilePath);
-      const results = this.evaluateCfn(parsedTemplate, templateRelativeFilePath);
-
-      await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
-      await ScannerUtils.writeJsonFile(outputFilePath, results);
-
-      return true;
-    } catch (error) {
-      SrtLogger.logError('Error scanning CloudFormation template', error as Error);
-      return false;
-    }
-  }
-
-  private evaluateCfn(template: Template, stackName: string): ScanResult[] {
-    const results: ScanResult[] = [];
-
-    for (const resourceId in template.Resources) {
-      const resource = template.Resources[resourceId];
-
-      const applicableRules = this.rules
-        .filter(rule => rule.appliesTo(resource.Type))
-        .sort((a, b) => a.id.localeCompare(b.id));
-
-      for (const rule of applicableRules) {
+    public async scanCfn(projectRootFolderPath: string, templateFilePath: string, outputFilePath: string): Promise<boolean> {
         try {
-          // evaluateResource is the new implementation method that enables simpler rule evaluation
-          // If it returns undefined, we fall back to the old evaluate method for backward compatibility
-          let result = rule.evaluateResource(stackName, template, resource);
+            const template = await readCfnFile(templateFilePath);
+            const parsedTemplate = parseCfnTemplate(template);
 
-          if (result === undefined) {
-            const cfResources = Object.entries(template.Resources).map(
-              ([logicalId, res]: [string, any]) => ({
-                Type: res.Type,
-                Properties: res.Properties || {},
-                LogicalId: logicalId
-              }));
-            const cfResource: CloudFormationResource = {
-              Type: resource.Type,
-              Properties: resource.Properties || {},
-              LogicalId: resourceId,
-              Metadata: resource.Metadata
-            };
+            if (!parsedTemplate || !parsedTemplate.Resources) {
+                SrtLogger.logError('Invalid CloudFormation template', new Error(templateFilePath));
+                return false;
+            }
 
-            // Fallback to the old evaluate method for backward compatibility
-            result = rule.evaluate(cfResource, stackName, cfResources);
-          }
+            const templateRelativeFilePath = path.relative(projectRootFolderPath, templateFilePath);
+            const results = this.evaluateCfn(parsedTemplate, templateRelativeFilePath);
 
-          if (result) {
-            results.push(result);
-          }
+            await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
+            await ScannerUtils.writeJsonFile(outputFilePath, results);
+
+            return true;
         } catch (error) {
-          SrtLogger.logError(`Error evaluating rule ${rule.id} for resource ${resourceId}`, error as Error);
+            SrtLogger.logError('Error scanning CloudFormation template', error as Error);
+            return false;
         }
-      }
-
-      for (const { control, cfnAdapter } of this.controls) {
-        if (!cfnAdapter.appliesTo(resource.Type)) continue;
-        try {
-          const context: CfnContext = { stackName, template, resource, logicalId: resourceId };
-          const adapter = cfnAdapter.bind(context);
-          const result = control.run(adapter, context);
-          if (result) results.push(result);
-        } catch (error) {
-          SrtLogger.logError(`Error evaluating control ${control.id} for resource ${resourceId}`, error as Error);
-        }
-      }
     }
 
-    return results;
-  }
+    private evaluateCfn(template: Template, stackName: string): ScanResult[] {
+        const results: ScanResult[] = [];
 
-  public async scanTf(projectName: string, planJsonPath: string, outputFilePath: string): Promise<boolean> {
-    try {
-      const resources = await readTerraformPlan(planJsonPath);
+        for (const resourceId in template.Resources) {
+            const resource = template.Resources[resourceId];
 
-      if (!resources || resources.length === 0) {
-        SrtLogger.logError('No resources found in Terraform plan', new Error(planJsonPath));
-        return false;
-      }
+            const applicableRules = this.rules
+                .filter(rule => rule.appliesTo(resource.Type))
+                .sort((a, b) => a.id.localeCompare(b.id));
 
-      const results = this.evaluateTf(resources, projectName);
+            for (const rule of applicableRules) {
+                try {
+                    // evaluateResource is the new implementation method that enables simpler rule evaluation
+                    // If it returns undefined, we fall back to the old evaluate method for backward compatibility
+                    let result = rule.evaluateResource(stackName, template, resource);
 
-      await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
-      await ScannerUtils.writeJsonFile(outputFilePath, results);
+                    if (result === undefined) {
+                        const cfResources = Object.entries(template.Resources).map(
+                            ([logicalId, res]: [string, any]) => ({
+                                Type: res.Type,
+                                Properties: res.Properties || {},
+                                LogicalId: logicalId
+                            }));
+                        const cfResource: CloudFormationResource = {
+                            Type: resource.Type,
+                            Properties: resource.Properties || {},
+                            LogicalId: resourceId,
+                            Metadata: resource.Metadata
+                        };
 
-      return true;
-    } catch (error) {
-      SrtLogger.logError('Error scanning Terraform plan', error as Error);
-      return false;
-    }
-  }
+                        // Fallback to the old evaluate method for backward compatibility
+                        result = rule.evaluate(cfResource, stackName, cfResources);
+                    }
 
-  private evaluateTf(resources: TerraformResource[], projectName: string): ScanResult[] {
-    const results: ScanResult[] = [];
+                    if (result) {
+                        results.push(result);
+                    }
+                } catch (error) {
+                    SrtLogger.logError(`Error evaluating rule ${rule.id} for resource ${resourceId}`, error as Error);
+                }
+            }
 
-    for (const resource of resources) {
-      const applicableRules = this.tfRules
-        .filter(rule => rule.appliesTo(resource.type))
-        .sort((a, b) => a.id.localeCompare(b.id));
+            for (const { control, cfnAdapter } of this.controls) {
+                if (!cfnAdapter.appliesTo(resource.Type)) continue;
 
-      for (const rule of applicableRules) {
-        try {
-          const result = rule.evaluate(resource, projectName, resources);
-          if (result) {
-            results.push(result);
-          }
-        } catch (error) {
-          SrtLogger.logError(`Error evaluating TF rule ${rule.id} for resource ${resource.address}`, error as Error);
+                try {
+                    const context: CfnContext = { stackName, template, resource, logicalId: resourceId };
+                    const adapter = cfnAdapter.bind(context);
+                    const result = control.run(adapter, context);
+                    if (result) results.push(result);
+                } catch (error) {
+                    SrtLogger.logError(`Error evaluating control ${control.id} for resource ${resourceId}`, error as Error);
+                }
+            }
         }
-      }
 
-      for (const { control, tfAdapter } of this.controls) {
-        if (!tfAdapter.appliesTo(resource.type)) continue;
-        try {
-          const context: TfContext = { projectName, resource, allResources: resources };
-          const adapter = tfAdapter.bind(context);
-          const result = control.run(adapter, context);
-          if (result) results.push(result);
-        } catch (error) {
-          SrtLogger.logError(`Error evaluating control ${control.id} for resource ${resource.address}`, error as Error);
-        }
-      }
+        return results;
     }
 
-    return results;
-  }
+    public async scanTf(projectName: string, planJsonPath: string, outputFilePath: string): Promise<boolean> {
+        try {
+            const resources = await readTerraformPlan(planJsonPath);
+
+            if (!resources || resources.length === 0) {
+                SrtLogger.logError('No resources found in Terraform plan', new Error(planJsonPath));
+                return false;
+            }
+
+            const results = this.evaluateTf(resources, projectName);
+
+            await ScannerUtils.ensureDirectoryExists(path.dirname(outputFilePath));
+            await ScannerUtils.writeJsonFile(outputFilePath, results);
+
+            return true;
+        } catch (error) {
+            SrtLogger.logError('Error scanning Terraform plan', error as Error);
+            return false;
+        }
+    }
+
+    private evaluateTf(resources: TerraformResource[], projectName: string): ScanResult[] {
+        const results: ScanResult[] = [];
+
+        for (const resource of resources) {
+            const applicableRules = this.tfRules
+                .filter(rule => rule.appliesTo(resource.type))
+                .sort((a, b) => a.id.localeCompare(b.id));
+
+            for (const rule of applicableRules) {
+                try {
+                    const result = rule.evaluate(resource, projectName, resources);
+                    if (result) {
+                        results.push(result);
+                    }
+                } catch (error) {
+                    SrtLogger.logError(`Error evaluating TF rule ${rule.id} for resource ${resource.address}`, error as Error);
+                }
+            }
+
+            for (const { control, tfAdapter } of this.controls) {
+                if (!tfAdapter.appliesTo(resource.type)) continue;
+                try {
+                    const context: TfContext = { projectName, resource, allResources: resources };
+                    const adapter = tfAdapter.bind(context);
+                    const result = control.run(adapter, context);
+                    if (result) results.push(result);
+                } catch (error) {
+                    SrtLogger.logError(`Error evaluating control ${control.id} for resource ${resource.address}`, error as Error);
+                }
+            }
+        }
+
+        return results;
+    }
 }
