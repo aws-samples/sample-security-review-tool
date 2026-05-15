@@ -6,6 +6,7 @@ import { generateRequirements } from './phases/requirements.js';
 import { scaffold } from './phases/scaffold.js';
 import { generateTests } from './phases/tests.js';
 import { implementRule } from './phases/implementation.js';
+import { RuleContext } from './shared/fixture-paths.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
 fs.mkdirSync(logsFolderPath, { recursive: true });
@@ -14,34 +15,27 @@ SrtLogger.initialize(logsFolderPath);
 BedrockConfig.initialize('default', 'us-east-1');
 
 async function main(): Promise<void> {
-    const { ruleId, service, description, regenerate } = parseArgs(process.argv.slice(2));
+    const context = parseArgs(process.argv.slice(2));
 
-    console.log(`\nImplementing rule ${ruleId} (${description})\n`);
+    console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
 
     console.log('\nPhase 1: Requirements generation');
-    const spec = await generateRequirements(ruleId, description, { regenerate });
-    console.log(`  Generated ${spec.requirements.length} requirements`);
+    const spec = await generateRequirements(context, { regenerate: false });
+    console.log(`Phase 1 complete: Generated ${spec.requirements.length} requirements`);
 
     console.log('\nPhase 2: Scaffold');
-    await scaffold(ruleId, service, description, spec);
+    await scaffold(context, spec);
 
     console.log('\nPhase 3: Test generation');
-    await generateTests(ruleId, service, spec);
+    await generateTests(context.ruleId, context.service, spec);
 
     console.log(`\nPhase 4: Rule implementation`);
-    const implResult = await implementRule(spec);
+    await implementRule(spec, context.service);
 
     console.log(`\n✓ Done.`);
 }
 
-interface ParsedArgs {
-    ruleId: string;
-    service: string;
-    description: string;
-    regenerate: boolean;
-}
-
-function parseArgs(argv: string[]): ParsedArgs {
+function parseArgs(argv: string[]): RuleContext {
     let ruleId: string | undefined;
     let service: string | undefined;
     let description: string | undefined;
@@ -83,7 +77,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     if (!service) throw new Error('--service is required');
     if (!description) throw new Error('--description is required');
 
-    return { ruleId, service, description, regenerate };
+    return new RuleContext(ruleId, service, description);
 }
 
 function printUsage(): void {

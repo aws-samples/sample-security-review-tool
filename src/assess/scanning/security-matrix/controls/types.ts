@@ -37,7 +37,7 @@ export interface ControlFinding {
   readonly issue?: string;
 }
 
-export interface BoundAdapter {
+export interface ControlAdapter {
   readonly resourceId: string;
   readonly resourceType: string;
   getRemediation(scenario: string): IacRemediation | null;
@@ -46,11 +46,11 @@ export interface BoundAdapter {
 export interface AdapterFactory<TContext extends IacContext> {
   readonly applicableResourceTypes: string[];
   appliesTo(resourceType: string): boolean;
-  bind(context: TContext): BoundAdapter;
+  bind(context: TContext): ControlAdapter;
 }
 
 export interface RegisteredControl {
-  readonly control: { readonly id: string; run(adapter: BoundAdapter, context: IacContext): ScanResult | null };
+  readonly control: { readonly id: string; run(adapter: ControlAdapter, context: IacContext): ScanResult | null };
   readonly cfnAdapter: AdapterFactory<CfnContext>;
   readonly tfAdapter: AdapterFactory<TfContext>;
 }

@@ -1,17 +1,66 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as url from 'node:url';
 
-export function srtRepoRoot(): string {
-    const moduleDir = path.dirname(url.fileURLToPath(import.meta.url));
-    return path.resolve(moduleDir, '..', '..', '..', '..');
-}
+export class RuleContext {
+    private static cachedSrtRoot: string | undefined;
+    private safeRuleId: string;
 
-export function requirementsDir(): string {
-    const moduleDir = path.dirname(url.fileURLToPath(import.meta.url));
-    return path.resolve(moduleDir, '..', '..', 'requirements');
-}
+    readonly srtRootFolderPath: string;
+    readonly requirementsFilePath: string;
+    readonly testsFolderPath: string;
+    readonly ruleFolderPath: string;
+    readonly ruleControlFilePath: string;
+    readonly ruleAdaptersFolderPath: string;
 
-export function requirementsPathFor(checkId: string): string {
-    const safeCheckId = checkId.replace(/[^A-Za-z0-9_.-]/g, '_').toLowerCase();
-    return path.join(requirementsDir(), `${safeCheckId}.requirements.json`);
+    constructor(readonly ruleId: string, readonly service: string, readonly description: string) {
+        this.safeRuleId = this.getSafeRuleId();
+        this.srtRootFolderPath = this.getSrtRootFolderPath();
+        this.requirementsFilePath = this.getRequirementsFilePath();
+        this.testsFolderPath = this.getTestsFolderPath();
+        this.ruleFolderPath = this.getRuleFolderPath();
+        this.ruleControlFilePath = this.getRuleControlFilePath();
+        this.ruleAdaptersFolderPath = this.getRuleAdaptersFolderPath();
+    }
+
+    private getSrtRootFolderPath(): string {
+        if (RuleContext.cachedSrtRoot) return RuleContext.cachedSrtRoot;
+
+        let dir = path.dirname(url.fileURLToPath(import.meta.url));
+
+        while (dir !== path.dirname(dir)) {
+            try {
+                const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
+                if (pkg.name === 'security-review-tool') { RuleContext.cachedSrtRoot = dir; return dir; }
+            } catch { }
+
+            dir = path.dirname(dir);
+        }
+
+        throw new Error('Could not find SRT root folder');
+    }
+
+    private getRequirementsFilePath(): string {
+        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/requirements/${this.safeRuleId}.requirements.json`);
+    }
+
+    private getTestsFolderPath(): string {
+        return path.join(this.srtRootFolderPath, `tests/core/scanners/srt/rules/${this.service}/${this.safeRuleId}`);
+    }
+
+    private getSafeRuleId(): string {
+        return this.ruleId.replace(/[^A-Za-z0-9_.-]/g, '_').toLowerCase();
+    }
+
+    private getRuleFolderPath(): string {
+        return path.join(this.srtRootFolderPath, `src/assess/scanning/security-matrix/rules/${this.service}`);
+    }
+
+    private getRuleControlFilePath(): string {
+        return path.join(this.ruleFolderPath, 'controls', `${this.safeRuleId}.control.ts`);
+    }
+
+    private getRuleAdaptersFolderPath(): string {
+        return path.join(this.ruleFolderPath, 'adapters');
+    }
 }

@@ -3,7 +3,6 @@ import { loadSecurityMatrixRules } from './security-matrix-source.js';
 import { loadCheckovRules } from './checkov-source.js';
 import { loadBanditRules } from './bandit-source.js';
 import { loadSemgrepRules } from './semgrep-source.js';
-import { srtRepoRoot as getSRTRoot } from '../fixture-paths.js';
 
 export type { RuleEntry, CatalogFilter, Scanner, FixtureFormat } from '../types/rule-catalog.js';
 
@@ -13,22 +12,22 @@ export class RuleCatalog {
     private static instance: RuleCatalog;
 
     private static async getInstance(): Promise<RuleCatalog> {
-        if (!this.instance) await RuleCatalog.refresh();
+        //if (!this.instance) await RuleCatalog.refresh();
         return RuleCatalog.instance;
     }
 
-    public static async refresh(): Promise<void> {
-        const catalog = new RuleCatalog();
-        const srtRoot = getSRTRoot();
-        const securityMatrix = await loadSecurityMatrixRules(srtRoot);
-        const checkov = loadCheckovRules(srtRoot);
-        const bandit = loadBanditRules(srtRoot);
-        const semgrep = loadSemgrepRules(srtRoot);
+    // public static async refresh(): Promise<void> {
+    //     const catalog = new RuleCatalog();
+    //     const srtRoot = getSRTRoot();
+    //     const securityMatrix = await loadSecurityMatrixRules(srtRoot);
+    //     const checkov = loadCheckovRules(srtRoot);
+    //     const bandit = loadBanditRules(srtRoot);
+    //     const semgrep = loadSemgrepRules(srtRoot);
 
-        catalog.rules = [...securityMatrix, ...checkov, ...bandit, ...semgrep];
+    //     catalog.rules = [...securityMatrix, ...checkov, ...bandit, ...semgrep];
 
-        RuleCatalog.instance = catalog;
-    }
+    //     RuleCatalog.instance = catalog;
+    // }
 
     public static async list(filter: CatalogFilter = {}): Promise<RuleEntry[]> {
         return (await RuleCatalog.getInstance()).rules.filter(rule => this.matches(rule, filter));

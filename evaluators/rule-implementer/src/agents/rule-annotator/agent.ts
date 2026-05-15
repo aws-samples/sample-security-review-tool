@@ -13,7 +13,7 @@ const RuleAnnotationOutputSchema = z.object({
 export class RuleAnnotationAgent {
 
     public async invoke(ruleId: string, fixtureFormat: FixtureFormat): Promise<void> {
-        await RuleCatalog.refresh();
+        //await RuleCatalog.refresh();
         const rule = await RuleCatalog.find(ruleId, fixtureFormat);
         const sourcePath = path.resolve(rule.sourceLocation);
         const currentSource = await fs.readFile(sourcePath, 'utf-8');

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { S3001Control, s3001Control } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/controls/s3-001.control.js';
+import { s3001Control } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/controls/s3-001.control.js';
 import { CfnS3BucketAdapterFactory } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/adapters/cfn-s3-bucket-adapter.js';
 import { TfS3BucketAdapterFactory } from '../../../../../../src/assess/scanning/security-matrix/rules/s3/adapters/tf-s3-bucket-adapter.js';
 import { CfnContext, TfContext } from '../../../../../../src/assess/scanning/security-matrix/controls/types.js';

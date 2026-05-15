@@ -22,6 +22,8 @@ export interface RequirementsSpec {
     ruleId: string;
     generatedAt: string;
     description: string;
+    cfnResources: string[];
+    tfResources: string[];
     requirements: RuleRequirement[];
     awsDocReferences: string[];
 }

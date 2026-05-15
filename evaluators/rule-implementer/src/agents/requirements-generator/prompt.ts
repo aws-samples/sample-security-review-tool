@@ -10,7 +10,7 @@ When a rule checks other resources in the template, it checks whether they provi
 
 IMPORTANT: Fn::GetAtt and Fn:Sub are always resolved to the logical ID of the referenced resource, never to ARNs or other values.
 
-Given a rule's description and AWS documentation, produce a complete checklist of specific, testable scenarios that the rule must satisfy. Each scenario describes a configuration state and whether the rule should produce a finding ('flag') or return null ('pass').
+Given a rule's description and AWS documentation, identify the CloudFormation and Terraform resource types that trigger the rule, then produce a complete checklist of specific, testable scenarios that the rule must satisfy. Each scenario describes a configuration state and whether the rule should produce a finding ('flag') or return null ('pass').
 
 Each requirement must include:
 1. A clear description of the scenario being tested

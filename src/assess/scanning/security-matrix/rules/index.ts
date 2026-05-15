@@ -13,7 +13,6 @@ import { apiGatewayRules } from './api-gateway/index.js';
 import { cloudfrontRules } from './cloudfront/index.js';
 import { vpcConfigurationRules } from './vpc/index.js';
 import { securityGroupRules } from './security-group/index.js';
-import { dynamodbRules } from './dynamodb/index.js';
 import { stepFunctionsRules } from './step-functions/index.js';
 import { transitGatewayRules } from './transit-gateway/index.js';
 import { networkManagerRules } from './network-manager/index.js';
@@ -68,7 +67,6 @@ export const allCloudFormationRules = [
   ...cloudfrontRules,
   ...vpcConfigurationRules,
   ...securityGroupRules,
-  ...dynamodbRules,
   ...cognitoRules,
   ...stepFunctionsRules,
   ...transitGatewayRules,
@@ -118,7 +116,6 @@ import { tfApiGatewayRules } from './api-gateway/index.js';
 import { tfCloudfrontRules } from './cloudfront/index.js';
 import { tfVpcRules } from './vpc/index.js';
 import { tfSecurityGroupRules } from './security-group/index.js';
-import { tfDynamodbRules } from './dynamodb/index.js';
 import { tfStepFunctionsRules } from './step-functions/index.js';
 import { tfTransitGatewayRules } from './transit-gateway/index.js';
 import { tfNetworkManagerRules } from './network-manager/index.js';
@@ -178,7 +175,6 @@ export const allTerraformRules: BaseTerraformRule[] = [
   ...tfCloudfrontRules,
   ...tfVpcRules,
   ...tfSecurityGroupRules,
-  ...tfDynamodbRules,
   ...tfCognitoRules,
   ...tfStepFunctionsRules,
   ...tfTransitGatewayRules,

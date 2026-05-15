@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { srtRepoRoot } from '../../shared/fixture-paths.js';
 import type { RuleRequirement } from '../../shared/types/requirements.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CANONICAL_TEST = readFileSync(resolve(srtRepoRoot(), 'tests', 'core', 'scanners', 'srt', 'rules', 's3', '001-access-logging.test.ts'), 'utf-8');
+//const CANONICAL_TEST = readFileSync(resolve(srtRepoRoot(), 'tests', 'core', 'scanners', 'srt', 'rules', 's3', '001-access-logging.test.ts'), 'utf-8');
 
 export const SYSTEM_PROMPT = `You write a single Vitest test file for one security-rule requirement. Use the fileEditor tool with command 'create' to write the file at the path I give you. Follow the canonical pattern shown below. Do not add commentary — output only the tool call to create the file.`;
 
@@ -30,17 +29,17 @@ export function buildUserPrompt(testPath: string, controlPath: string, factoryPa
     lines.push('═══ CANONICAL REFERENCE ═══');
     lines.push('Follow this pattern for imports, describe structure, helper functions, and assertions:');
     lines.push('```typescript');
-    lines.push(CANONICAL_TEST);
+    //lines.push(CANONICAL_TEST);
     lines.push('```');
     lines.push('');
     lines.push('═══ CONSTRAINTS ═══');
     lines.push('- One top-level describe block named after the control class (e.g. Ddb002Control).');
     lines.push('- Build Template (for CFN) or TerraformResource[] (for TF) inline within the test.');
+    lines.push('- For CFN tests: call parseCfnTemplate(template) before creating the context. The scanner engine preprocesses templates to resolve intrinsics (Ref, Fn::GetAtt, Fn::Sub, etc.) before adapters see them. Import parseCfnTemplate from the cfn-utils module.');
     lines.push('- Bind context via the adapter factory; call control.run(adapter, context).');
     lines.push(`- expectedBehavior === 'flag' → expect(result).not.toBeNull() plus expect(result!.check_id).toBe('${ruleId}').`);
     lines.push(`- expectedBehavior === 'pass' → expect(result).toBeNull().`);
     lines.push('- Use only relative imports computed from the test file path to the source paths above.');
-    lines.push('- End by calling fileEditor with command: create, path: <target>, file_text: <full file contents>. Nothing else.');
 
     return lines.join('\n');
 }

@@ -1,4 +1,4 @@
-import { BoundAdapter, CfnContext, ControlFinding, IacContext, IacRemediation, Priority, RemediationScenario, Resource, ScanResult, TfContext } from './types.js';
+import { ControlAdapter, CfnContext, ControlFinding, IacContext, IacRemediation, Priority, RemediationScenario, Resource, ScanResult, TfContext } from './types.js';
 import { SrtLogger } from '../../../../shared/logging/srt-logger.js';
 
 export interface SecurityControlMetadata {
@@ -8,7 +8,7 @@ export interface SecurityControlMetadata {
     readonly remediationScenarios: RemediationScenario[];
 }
 
-export abstract class SecurityControl<TAdapter extends BoundAdapter = BoundAdapter> {
+export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlAdapter> {
     public readonly id: string;
     public readonly priority: Priority;
     public readonly description: string;

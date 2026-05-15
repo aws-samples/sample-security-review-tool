@@ -4,9 +4,8 @@ import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { select, input } from '@inquirer/prompts';
 import z from 'zod';
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompt.js';
-import { RuleCatalog } from '../../shared/rule-catalog/index.js';
 import { createAwsKnowledgeMcpClient } from '../../shared/aws-knowledge-mcp-client.js';
-import { requirementsPathFor } from '../../shared/fixture-paths.js';
+import { RuleContext } from '../../shared/fixture-paths.js';
 import type { RequirementsSpec } from '../../shared/types/requirements.js';
 
 const CUSTOM_INTERPRETATION = -1;
@@ -40,6 +39,8 @@ const AmbiguitySchema = z.object({
 
 const RequirementsOutputSchema = z.object({
     requirements: z.array(RuleRequirementSchema).min(1).describe('Complete requirements specification'),
+    cfnResources: z.array(z.string()).describe('List of CloudFormation resource types that trigger the rule'),
+    tfResources: z.array(z.string()).describe('List of Terraform resource types that trigger the rule'),
     ambiguities: z.array(AmbiguitySchema).describe('Scenarios where the expected behavior is genuinely ambiguous and requires human decision'),
     awsDocReferences: z.array(z.string()).describe('AWS documentation URLs consulted'),
 });
@@ -49,19 +50,13 @@ export interface RequirementsGeneratorOptions {
 }
 
 export class RequirementsGeneratorAgent {
-    public async invoke(ruleId: string, description: string, options: RequirementsGeneratorOptions = {}): Promise<RequirementsSpec> {
-        const filePath = requirementsPathFor(ruleId);
-
-        if (!options.regenerate && fs.existsSync(filePath)) {
-            const fileContent = fs.readFileSync(filePath, 'utf8');
+    public async invoke(context: RuleContext, options: RequirementsGeneratorOptions = {}): Promise<RequirementsSpec> {
+        if (!options.regenerate && fs.existsSync(context.requirementsFilePath)) {
+            const fileContent = fs.readFileSync(context.requirementsFilePath, 'utf8');
             return JSON.parse(fileContent);
         }
 
-        await RuleCatalog.refresh();
-
-        //const rule = await RuleCatalog.find(ruleId, fixtureFormat);
-        //const format = fixtureFormat === 'terraform' ? 'terraform' : 'cfn';
-        const userPrompt = buildUserPrompt(description);
+        const userPrompt = buildUserPrompt(context.description);
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {
@@ -83,14 +78,16 @@ export class RequirementsGeneratorAgent {
             }
 
             const spec: RequirementsSpec = {
-                ruleId: ruleId,
+                ruleId: context.ruleId,
                 generatedAt: new Date().toISOString(),
-                description: description,
+                description: context.description,
+                cfnResources: output.cfnResources,
+                tfResources: output.tfResources,
                 requirements: output.requirements,
                 awsDocReferences: output.awsDocReferences,
             };
 
-            this.persist(spec, ruleId);
+            this.persist(spec, context);
             
             return spec;
         } finally {
@@ -137,9 +134,8 @@ export class RequirementsGeneratorAgent {
         return `- ${scenario}: user's interpretation: "${description.trim()}". Determine the correct expected behavior based on this description.`;
     }
 
-    private persist(spec: RequirementsSpec, checkId: string): void {
-        const filePath = requirementsPathFor(checkId);
-        fs.mkdirSync(path.dirname(filePath), { recursive: true });
-        fs.writeFileSync(filePath, JSON.stringify(spec, null, 2));
+    private persist(spec: RequirementsSpec, context: RuleContext): void {
+        fs.mkdirSync(path.dirname(context.requirementsFilePath), { recursive: true });
+        fs.writeFileSync(context.requirementsFilePath, JSON.stringify(spec, null, 2));
     }
 }

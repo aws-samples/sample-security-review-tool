@@ -2,22 +2,20 @@ import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { RuleRequirement } from '../../shared/types/requirements.js';
-import type { GeneratedFixture } from '../../shared/types/fixtures.js';
-import type { ValidationResult } from '../../shared/types/validation.js';
+import type { RegressionInfo } from '../../shared/types/implementation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PREPROCESSING_DOC = readFileSync(resolve(__dirname, '../preprocessing-behavior.md'), 'utf-8');
 const BASE_RULE_DOC = readFileSync(resolve(__dirname, 'base-rule-api.md'), 'utf-8');
 const SCANNER_DOC = readFileSync(resolve(__dirname, 'scanner-engine.md'), 'utf-8');
 
-export const SYSTEM_PROMPT = `You implement security scanning rules. You receive requirements (with test fixtures) and must write rule logic that satisfies all of them.
+export const SYSTEM_PROMPT = `You implement security scanning rules. You receive a failing test and must write rule logic that makes it pass.
 
 ## Guidelines
 
-- Make minimal changes — add or modify only the logic needed for the requirements.
+- Make minimal changes — add or modify only the logic needed for the requirement.
 - Preserve all imports, class structure, exports, and unrelated logic.
 - Do not refactor, rename, or restructure the file.
-- Always read the current file before writing.
 - Verify property names against AWS documentation if uncertain.
 
 If the expected behavior is 'flag', ensure the rule DOES produce a finding for the described case.
@@ -97,7 +95,7 @@ ${PREPROCESSING_DOC}
 
 If regression feedback is provided, it means a previously-passing requirement now fails after your last edit. You must fix the regression while still satisfying the current requirement. Study both the failing test case and the current requirement to find an implementation that satisfies both.`;
 
-export function buildUserPrompt(ruleBody: string, sourceLocation: string, requirement: RuleRequirement, fixture: GeneratedFixture, regressions: ValidationResult[], allRequirementsSoFar: RuleRequirement[], fixturesForRegressions: Map<string, GeneratedFixture>, resolvedTemplate?: string): string {
+export function buildUserPrompt(ruleBody: string, sourceLocation: string, requirement: RuleRequirement, testFile: { path: string; content: string }, failureOutput: string, regressions: RegressionInfo[]): string {
     const lines: string[] = [];
 
     lines.push(`Rule source file: ${sourceLocation}`);
@@ -114,52 +112,39 @@ export function buildUserPrompt(ruleBody: string, sourceLocation: string, requir
     lines.push(`Expected behavior: ${requirement.expectedBehavior}`);
     lines.push(`Rationale: ${requirement.rationale}`);
     lines.push('');
-    lines.push('Raw fixture (the template before preprocessing):');
-    lines.push('```yaml');
-    lines.push(fixture.templateSnippet);
+    lines.push('═══ TEST FILE (the oracle — make this pass) ═══');
+    lines.push(`Path: ${testFile.path}`);
+    lines.push('```typescript');
+    lines.push(testFile.content);
     lines.push('```');
-
-    if (resolvedTemplate) {
-        lines.push('');
-        lines.push('Resolved fixture (what the rule will actually see after parseCfnTemplate runs):');
-        lines.push('```json');
-        lines.push(resolvedTemplate);
-        lines.push('```');
-    }
+    lines.push('');
+    lines.push('═══ TEST FAILURE OUTPUT ═══');
+    lines.push('```');
+    lines.push(failureOutput);
+    lines.push('```');
 
     if (regressions.length > 0) {
         lines.push('');
         lines.push('═══ REGRESSIONS TO FIX ═══');
         lines.push('');
-        lines.push('The following previously-passing requirements now FAIL. You must fix these while also satisfying the above requirement:');
+        lines.push('The following previously-passing tests now FAIL. You must fix these while also satisfying the above requirement:');
         lines.push('');
         for (const regression of regressions) {
-            const req = allRequirementsSoFar.find(r => r.id === regression.requirementId);
-            if (!req) continue;
-
-            lines.push(`- ${req.id}: ${req.description}`);
-            lines.push(`  Expected: ${regression.expected}, Got: ${regression.actual}`);
-
-            const regFixture = fixturesForRegressions.get(req.id);
-            if (regFixture) {
-                lines.push(`  Fixture:`);
-                lines.push('  ```');
-                lines.push(regFixture.templateSnippet.split('\n').map(l => '  ' + l).join('\n'));
-                lines.push('  ```');
-            }
-
-            if (regression.diagnostics.resolvedTemplate) {
-                lines.push(`  Resolved fixture:`);
-                lines.push('  ```json');
-                lines.push(regression.diagnostics.resolvedTemplate.split('\n').map(l => '  ' + l).join('\n'));
-                lines.push('  ```');
-            }
+            lines.push(`--- ${regression.requirementId} (${regression.testPath}) ---`);
+            lines.push('Test content:');
+            lines.push('```typescript');
+            lines.push(regression.testContent);
+            lines.push('```');
+            lines.push('Failure output:');
+            lines.push('```');
+            lines.push(regression.failureOutput);
+            lines.push('```');
+            lines.push('');
         }
     }
 
     lines.push('');
-    lines.push('Modify the rule source to satisfy the requirement (and fix any regressions). Write the complete updated file using write_file.');
+    lines.push('Modify the rule source to satisfy the requirement (and fix any regressions).');
 
     return lines.join('\n');
 }
-

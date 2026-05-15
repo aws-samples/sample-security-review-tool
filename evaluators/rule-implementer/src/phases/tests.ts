@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import { TestGeneratorAgent } from '../agents/test-generator/agent.js';
 import type { RequirementsSpec } from '../shared/types/requirements.js';
 
@@ -9,36 +10,42 @@ interface TestTask {
 }
 
 export async function generateTests(ruleId: string, service: string, spec: RequirementsSpec): Promise<void> {
-    const tasks: TestTask[] = spec.requirements.flatMap(r => [
+    const allTasks: TestTask[] = spec.requirements.flatMap(r => [
         { requirementId: r.id, format: 'cfn' as const },
         { requirementId: r.id, format: 'tf' as const },
     ]);
 
-    console.log(`  Generating ${tasks.length} test files (${MAX_CONCURRENCY} at a time)...`);
+    // const tasks = allTasks.filter(t => !fs.existsSync(computeTestPath(ruleId, service, t.requirementId, t.format)));
+    // const skipped = allTasks.length - tasks.length;
 
-    let successes = 0;
-    let failures = 0;
+    // if (skipped > 0) console.log(`  Skipped ${skipped} existing test files`);
+    // if (tasks.length === 0) return;
 
-    for (let i = 0; i < tasks.length; i += MAX_CONCURRENCY) {
-        const batch = tasks.slice(i, i + MAX_CONCURRENCY);
+    // console.log(`  Generating ${tasks.length} test files (${MAX_CONCURRENCY} at a time)...`);
 
-        const results = await Promise.allSettled(batch.map(async (task) => {
-            const requirement = spec.requirements.find(r => r.id === task.requirementId)!;
-            const agent = new TestGeneratorAgent();
-            await agent.invoke(requirement, ruleId, service, task.format);
-            console.log(`    ✓ ${task.requirementId} ${task.format}`);
-        }));
+    // let successes = 0;
+    // let failures = 0;
 
-        for (const result of results) {
-            if (result.status === 'fulfilled') {
-                successes++;
-            } else {
-                failures++;
-                const task = batch[results.indexOf(result)];
-                console.log(`    ✗ ${task.requirementId} ${task.format}: ${result.reason?.message ?? result.reason}`);
-            }
-        }
-    }
+    // for (let i = 0; i < tasks.length; i += MAX_CONCURRENCY) {
+    //     const batch = tasks.slice(i, i + MAX_CONCURRENCY);
 
-    console.log(`  Generated ${tasks.length} test files (${successes} successes, ${failures} failures)`);
+    //     const results = await Promise.allSettled(batch.map(async (task) => {
+    //         const requirement = spec.requirements.find(r => r.id === task.requirementId)!;
+    //         const agent = new TestGeneratorAgent();
+    //         await agent.invoke(requirement, ruleId, service, task.format);
+    //         console.log(`    ✓ ${task.requirementId} ${task.format}`);
+    //     }));
+
+    //     for (const result of results) {
+    //         if (result.status === 'fulfilled') {
+    //             successes++;
+    //         } else {
+    //             failures++;
+    //             const task = batch[results.indexOf(result)];
+    //             console.log(`    ✗ ${task.requirementId} ${task.format}: ${result.reason?.message ?? result.reason}`);
+    //         }
+    //     }
+    // }
+
+    //console.log(`  Generated ${tasks.length} test files (${successes} successes, ${failures} failures)`);
 }
