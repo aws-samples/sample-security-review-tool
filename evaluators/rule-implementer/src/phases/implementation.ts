@@ -89,11 +89,10 @@ export class ImplementationWorkflow {
             },
         });
 
-        const systemPrompt = `You are responsible for implementing the Red Phase (writing failing tests) of a Test-Driven Development workflow for a SecurityControl class. The class and its adapters have been scaffolded but not implemented. Your responsibilities include:
+        const systemPrompt = `You are responsible for implementing the Red Phase (writing failing tests) of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
          - Creating unit tests in Vitest. 
          - Ensuring unit tests are only written for the specific requirement.
-         - Ensuring the unit test file is self-contained and executable with Vitest.
-         - Verifying unit tests fail (in accordance with the Red Phase of TDD).`;
+         - Ensuring the unit test file is self-contained and executable with Vitest.`;
 
         const agent = new Agent({
             model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
