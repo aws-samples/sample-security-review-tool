@@ -138,7 +138,7 @@ export class ImplementationWorkflow {
     private async implementRequirement(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
         console.log(`Implementing ${spec.ruleId} ${requirement.id} (${format})...`);
 
-        const testFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.${format}.test.ts`);
+        const testFilePath = path.join(this.context.testsFolderPath, `${this.context.safeRuleId}.${format}.test.ts`);
 
         const writeFileTool = tool({
             name: 'write_file',
