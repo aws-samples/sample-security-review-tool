@@ -49,26 +49,28 @@ export class ImplementationWorkflow {
     }
 
     private async createUnitTests(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
-        const testFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.${format}.test.ts`);
+        const cfnTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.cfn.test.ts`);
+        const tfTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.tf.test.ts`);
 
-        if (fs.existsSync(testFilePath)) return;
+        if (fs.existsSync(cfnTestFilePath)) return;
 
-        console.log(`Creating unit tests for ${spec.ruleId} ${requirement.id} (${format})...`);
+        console.log(`\n==== Creating unit tests for ${spec.ruleId} ${requirement.id} ====\n`);
 
-        const relativeToControl = path.relative(path.dirname(testFilePath), this.context.ruleControlFilePath).replace(/\.ts$/, '.js');
-        const relativeToAdapter = path.relative(path.dirname(testFilePath), this.context.ruleAdapterBaseFilePath).replace(/\.ts$/, '.js');
+        const relativeToControl = path.relative(path.dirname(cfnTestFilePath), this.context.ruleControlFilePath).replace(/\.ts$/, '.js');
+        const relativeToAdapter = path.relative(path.dirname(cfnTestFilePath), this.context.ruleAdapterBaseFilePath).replace(/\.ts$/, '.js');
         const typesFilePath = path.join(this.context.srtRootFolderPath, 'src/assess/scanning/security-matrix/controls/types.ts');
-        const relativeToTypes = path.relative(path.dirname(testFilePath), typesFilePath).replace(/\.ts$/, '.js');
+        const relativeToTypes = path.relative(path.dirname(cfnTestFilePath), typesFilePath).replace(/\.ts$/, '.js');
 
         const writeFileTool = tool({
             name: 'write_file',
             description: 'Write the complete file content.',
             inputSchema: z.object({
+                filePath: z.string().describe('The absolute path of the file to write'),
                 content: z.string().describe('The complete file content'),
             }),
-            callback: async ({ content }) => {
-                fs.mkdirSync(this.context.testsFolderPath, { recursive: true });
-                fs.writeFileSync(testFilePath, content);
+            callback: async ({ filePath, content }) => {                
+                fs.mkdirSync(path.dirname(filePath), { recursive: true });
+                fs.writeFileSync(filePath, content);
                 return 'Written successfully.';
             },
         });
@@ -76,10 +78,12 @@ export class ImplementationWorkflow {
         const vitestTool = tool({
             name: 'run_vitest',
             description: 'Run Vitest against the test file to check if tests pass or fail. Returns the test output including pass/fail status and error messages.',
-            inputSchema: z.object({}),
-            callback: async () => {
-                const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', testFilePath], { cwd: this.context.srtRootFolderPath, encoding: 'utf8', timeout: 60_000 });
-                const output = ((result.stdout ?? '') + (result.stderr ?? '')).slice(0, 4000);
+            inputSchema: z.object({
+                filePath: z.string().describe('The absolute path of the test file to run with Vitest'),
+            }),
+            callback: async ({ filePath }) => {
+                const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', filePath], { cwd: this.context.srtRootFolderPath, encoding: 'utf8', timeout: 60_000 });
+                const output = ((result.stdout ?? '') + (result.stderr ?? ''));
                 return { passed: result.status === 0, output };
             },
         });
@@ -87,6 +91,7 @@ export class ImplementationWorkflow {
         const systemPrompt = `You are responsible for implementing the Red Phase (writing failing tests) of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
          - Creating unit tests in Vitest. 
          - Ensuring unit tests are only written for the specific requirement.
+         - Ensuring unit tests are created for both CloudFormation and Terraform.
          - Ensuring the unit test file is self-contained and executable with Vitest.`;
 
         const agent = new Agent({
@@ -98,8 +103,8 @@ export class ImplementationWorkflow {
         const userPrompt = `Create unit tests for the following rule requirement:
             Rule ID: ${spec.ruleId}
             Rule Description: ${spec.description}
-            Rule Resource Type: ${format === 'cfn' ? 'CloudFormation' : 'Terraform'}
-            Rule Resources: ${format === 'cfn' ? spec.cfnResources.join(', ') : spec.tfResources.join(', ')}
+            Rule's CloudFormation Resources: ${spec.cfnResources.join(', ')}
+            Rule's Terraform Resources: ${spec.tfResources.join(', ')}
             Scenario: ${requirement.description}
             Expected Behavior: ${requirement.expectedBehavior}
             Rationale: ${requirement.rationale}
@@ -107,6 +112,9 @@ export class ImplementationWorkflow {
             Import the control from: ${relativeToControl}
             Import the adapter from: ${relativeToAdapter}
             Import types from: ${relativeToTypes}
+
+            Save the CloudFormation unit test file to: ${cfnTestFilePath}
+            Save the Terraform unit test file to: ${tfTestFilePath}
 
             <source-files>
                 <source-file path="${this.context.ruleControlFilePath}">
@@ -136,7 +144,7 @@ export class ImplementationWorkflow {
     }
 
     private async implementRequirement(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {
-        console.log(`Implementing ${spec.ruleId} ${requirement.id}...`);
+        console.log(`\n==== Implementing ${spec.ruleId} ${requirement.id} ====\n`);
 
         const cfnTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.cfn.test.ts`);
         const tfTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.tf.test.ts`);
@@ -159,7 +167,7 @@ export class ImplementationWorkflow {
             description: 'Run unit tests. Returns the test output including pass/fail status and error messages.',
             callback: async () => {
                 const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', this.context.testsFolderPath], { cwd: this.context.srtRootFolderPath, encoding: 'utf8', timeout: 60_000 });
-                const output = ((result.stdout ?? '') + (result.stderr ?? '')).slice(0, 4000);
+                const output = ((result.stdout ?? '') + (result.stderr ?? ''));
                 return { passed: result.status === 0, output };
             }
         });
@@ -177,7 +185,7 @@ export class ImplementationWorkflow {
             Rule ID: ${spec.ruleId}
             Rule Description: ${spec.description}
             Rule's CloudFormation Resources: ${spec.cfnResources.join(', ')}
-            Rule's Terraform Resources: ${ spec.tfResources.join(', ')}
+            Rule's Terraform Resources: ${spec.tfResources.join(', ')}
             Requirement Description: ${requirement.description}
             Expected Behavior: ${requirement.expectedBehavior}
             Rationale: ${requirement.rationale}
@@ -214,127 +222,4 @@ export class ImplementationWorkflow {
 
         await agent.invoke(userPrompt);
     }
-}
-
-///////////////////////
-
-export async function implementRule(spec: RequirementsSpec, service: string): Promise<ImplementationResult> {
-    const { ruleId, requirements } = spec;
-
-    console.log(`  Implementing ${requirements.length} requirements for ${ruleId}...`);
-
-    const cfnResult = await implementRequirements(ruleId, service, requirements, 'cfn');
-    const tfResult = await implementRequirements(ruleId, service, requirements, 'tf');
-
-    const totalPassed = cfnResult.passed + tfResult.passed;
-    const totalReqs = cfnResult.totalRequirements + tfResult.totalRequirements;
-    const allFailed = [...cfnResult.failed, ...tfResult.failed];
-
-    console.log(`  Final: ${totalPassed}/${totalReqs} passing`);
-    return { totalRequirements: totalReqs, passed: totalPassed, failed: allFailed };
-}
-
-async function implementRequirements(ruleId: string, service: string, requirements: RuleRequirement[], format: 'cfn' | 'tf'): Promise<ImplementationResult> {
-    const sorted = [...requirements].sort((a, b) => {
-        if (a.expectedBehavior === 'flag' && b.expectedBehavior === 'pass') return -1;
-        if (a.expectedBehavior === 'pass' && b.expectedBehavior === 'flag') return 1;
-        return 0;
-    });
-
-    const regressionPaths: string[] = [];
-    const passed: string[] = [];
-    const failed: string[] = [];
-
-    console.log(`\n    [${format.toUpperCase()}] ${sorted.length} requirements`);
-
-    for (const requirement of sorted) {
-        const outcome = await implementRequirement(ruleId, service, requirement, format, regressionPaths);
-
-        if (outcome === 'passed') {
-            passed.push(requirement.id);
-            const testPath = getTestPath(ruleId, service, requirement.id, format);
-            if (testPath) regressionPaths.push(testPath);
-            console.log(`      ✓ ${requirement.id}`);
-        } else {
-            failed.push(`${requirement.id}-${format}`);
-            console.log(`      ✗ ${requirement.id}`);
-        }
-    }
-
-    return { totalRequirements: sorted.length, passed: passed.length, failed };
-}
-
-async function implementRequirement(ruleId: string, service: string, requirement: RuleRequirement, format: 'cfn' | 'tf', regressionPaths: string[]): Promise<'passed' | 'failed'> {
-    const testPath = getTestPath(ruleId, service, requirement.id, format);
-    if (!testPath) return 'failed';
-
-    const initial = runVitest([testPath]);
-    if (initial.allPassed) return 'passed';
-
-    let latestFailure = initial.output;
-
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-        const regressions = checkRegressions(regressionPaths);
-        const testFile = { path: testPath, content: fs.readFileSync(testPath, 'utf8') };
-        const agent = new RequirementImplementationAgent();
-
-        await agent.invoke(ruleId, service, requirement, testFile, latestFailure, regressions);
-
-        const result = runVitest([testPath]);
-        if (!result.allPassed) {
-            latestFailure = result.output;
-            console.log(`        attempt ${attempt}: still failing`);
-            continue;
-        }
-
-        const postRegressions = checkRegressions(regressionPaths);
-        if (postRegressions.length === 0) return 'passed';
-
-        console.log(`        attempt ${attempt}: passed but caused ${postRegressions.length} regression(s)`);
-    }
-
-    return 'failed';
-}
-
-function getTestPath(ruleId: string, service: string, requirementId: string, format: 'cfn' | 'tf'): string | null {
-    // const p = computeTestPath(ruleId, service, requirementId, format);
-    // return fs.existsSync(p) ? p : null;
-    return null;
-}
-
-function checkRegressions(regressionPaths: string[]): RegressionInfo[] {
-    if (regressionPaths.length === 0) return [];
-
-    const batchResult = runVitest(regressionPaths);
-    if (batchResult.allPassed) return [];
-
-    const regressions: RegressionInfo[] = [];
-    for (const p of regressionPaths) {
-        const individual = runVitest([p]);
-        if (individual.allPassed) continue;
-        regressions.push({ requirementId: extractRequirementId(p), testPath: p, testContent: fs.readFileSync(p, 'utf8'), failureOutput: individual.output });
-    }
-    return regressions;
-}
-
-function runVitest(testPaths: string[]): VitestResult {
-    if (testPaths.length === 0) return { allPassed: true, output: '' };
-
-    // const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', ...testPaths], { cwd: srtRepoRoot(), encoding: 'utf8', timeout: 60_000 });
-    // const output = (result.stdout ?? '') + (result.stderr ?? '');
-
-    // return { allPassed: result.status === 0, output: truncate(output, 4000) };
-
-    return { allPassed: true, output: "" };
-
-}
-
-function extractRequirementId(testPath: string): string {
-    const match = testPath.match(/req-(\d+)/);
-    return match ? `REQ-${match[1]}` : 'unknown';
-}
-
-function truncate(text: string, maxLength: number): string {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '\n... (truncated)';
 }

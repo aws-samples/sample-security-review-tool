@@ -4,8 +4,7 @@ import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
 import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
 import { generateRequirements } from './phases/requirements.js';
 import { scaffold } from './phases/scaffold.js';
-import { generateTests } from './phases/tests.js';
-import { ImplementationWorkflow, implementRule } from './phases/implementation.js';
+import { ImplementationWorkflow } from './phases/implementation.js';
 import { RuleContext } from './shared/fixture-paths.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
