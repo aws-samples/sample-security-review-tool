@@ -5,8 +5,6 @@ import { RuleContext } from '../../shared/fixture-paths.js';
 import type { RequirementsSpec } from '../../shared/types/requirements.js';
 
 const TEMPLATE_DIR = path.dirname(url.fileURLToPath(import.meta.url));
-const CONTROLS_DIR = path.join(TEMPLATE_DIR, 'controls');
-const ADAPTERS_DIR = path.join(TEMPLATE_DIR, 'adapters');
 const CONTROLS_IMPORT_PLACEHOLDER = '../../../../../../src/assess/scanning/security-matrix/controls/';
 const CONTROLS_IMPORT_OUTPUT = '../../../controls/';
 
@@ -26,13 +24,13 @@ export class RuleScaffolder {
     private writeAdapterFiles(context: RuleContext, substitutions: Substitutions): void {
         const svc = substitutions.service;
 
-        new TemplateRenderer('__svc__.adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterBaseFilePath, substitutions);
-        new TemplateRenderer('__svc__.adapter.cfn.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterCfnFilePath, substitutions);
-        new TemplateRenderer('__svc__.adapter.tf.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterTfFilePath, substitutions);
+        new TemplateRenderer('__svc__.adapter.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterBaseFilePath, substitutions);
+        new TemplateRenderer('__svc__.adapter.cfn.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterCfnFilePath, substitutions);
+        new TemplateRenderer('__svc__.adapter.tf.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterTfFilePath, substitutions);
     }
 
     private writeControlFile(context: RuleContext, substitutions: Substitutions): void {
-        new TemplateRenderer('__rule__.control.ts').writeTo(CONTROLS_DIR, context.ruleControlFilePath, substitutions);
+        new TemplateRenderer('__rule__.control.ts').writeTo(TEMPLATE_DIR, context.ruleControlFilePath, substitutions);
     }
 }
 

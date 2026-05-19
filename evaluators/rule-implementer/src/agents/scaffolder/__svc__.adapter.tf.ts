@@ -1,4 +1,4 @@
-import { AdapterFactory, TfContext, IacRemediation } from '../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { AdapterFactory, TfContext, IacRemediation } from '../../../../../src/assess/scanning/security-matrix/controls/types.js';
 import { __Svc__Adapter } from './__svc__.adapter.js';
 
 export class Tf__Svc__AdapterFactory implements AdapterFactory<TfContext> {
