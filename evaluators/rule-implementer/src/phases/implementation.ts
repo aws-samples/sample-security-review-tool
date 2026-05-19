@@ -51,9 +51,12 @@ export class ImplementationWorkflow {
     }
 
     private async createUnitTests(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
+        const testFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.${format}.test.ts`);
+
+        if (fs.existsSync(testFilePath)) return;
+
         console.log(`Creating unit tests for ${spec.ruleId} ${requirement.id} (${format})...`);
 
-        const testFilePath = path.join(this.context.testsFolderPath, `${this.context.safeRuleId}.${format}.test.ts`);
         const relativeToControl = path.relative(path.dirname(testFilePath), this.context.ruleControlFilePath).replace(/\.ts$/, '.js');
         const adapterFileName = `${format}-${this.context.service}-adapter.ts`;
         const adapterFilePath = path.join(this.context.ruleAdaptersFolderPath, adapterFileName);
@@ -86,8 +89,8 @@ export class ImplementationWorkflow {
             },
         });
 
-        const systemPrompt = `You are responsible for implementing the Red Phase of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
-         - Appending Vitest-compatible unit tests to the test file.
+        const systemPrompt = `You are responsible for implementing the Red Phase (writing failing tests) of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
+         - Creating unit tests in Vitest. 
          - Ensuring unit tests are only written for the specific requirement.
          - Ensuring the unit test file is self-contained and executable with Vitest.`;
 
@@ -123,12 +126,8 @@ export class ImplementationWorkflow {
                 </source-file>
                 <source-file path="${this.context.securityControlTypesFilePath}">
                 ${fs.readFileSync(this.context.securityControlTypesFilePath, 'utf8')}
-                </source-file>                
+                </source-file>
             </source-files>
-
-            <unit-tests path="${testFilePath}">
-                ${fs.existsSync(testFilePath) ? fs.readFileSync(testFilePath, 'utf8') : ''}
-             </unit-tests>
         `;
 
         await agent.invoke(userPrompt);
@@ -139,7 +138,7 @@ export class ImplementationWorkflow {
     private async implementRequirement(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
         console.log(`Implementing ${spec.ruleId} ${requirement.id} (${format})...`);
 
-        const testFilePath = path.join(this.context.testsFolderPath, `${this.context.safeRuleId}.${format}.test.ts`);
+        const testFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.${format}.test.ts`);
 
         const writeFileTool = tool({
             name: 'write_file',
@@ -165,7 +164,7 @@ export class ImplementationWorkflow {
         });
 
         const systemPrompt = `You are responsible for implementing the Green Phase (writing minimum passing implementation) of a Test-Driven Development workflow for a SecurityControl class. 
-        You must follow the principles in Robert C. Martin's 'Clean Code'.`;
+        You must follow the principles in Robert C. Martin's 'Clean Code'. Once you have implemented the code, run the tests and confirm they pass.`;
 
         const agent = new Agent({
             model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
@@ -173,7 +172,7 @@ export class ImplementationWorkflow {
             tools: [writeFileTool, vitestTool]
         });
 
-        const userPrompt = `Create a minimum implementation for the following rule requirement:
+        const userPrompt = `Create a minimum implementation for the following rule requirement, ensuring that the unit tests pass:
             Rule ID: ${spec.ruleId}
             Rule Description: ${spec.description}
             Rule Resource Type: ${format === 'cfn' ? 'CloudFormation' : 'Terraform'}
@@ -195,12 +194,11 @@ export class ImplementationWorkflow {
                 </source-file>
                 <source-file path="${this.context.securityControlTypesFilePath}">
                 ${fs.readFileSync(this.context.securityControlTypesFilePath, 'utf8')}
-                </source-file>                
-            </source-files>
-
-            <unit-tests path="${testFilePath}">
+                </source-file>
+                <source-file path="${testFilePath}">
                 ${fs.readFileSync(testFilePath, 'utf8')}
-            </unit-tests>
+                </source-file>
+            </source-files>
             `;
 
         await agent.invoke(userPrompt);
