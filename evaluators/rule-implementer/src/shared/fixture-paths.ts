@@ -22,9 +22,9 @@ export class RuleContext {
     constructor(readonly ruleId: string, readonly service: string, readonly description: string) {
         this.safeRuleId = this.getSafeRuleId();
         this.srtRootFolderPath = this.getSrtRootFolderPath();
+        this.ruleFolderPath = this.getRuleFolderPath();
         this.requirementsFilePath = this.getRequirementsFilePath();
         this.testsFolderPath = this.getTestsFolderPath();
-        this.ruleFolderPath = this.getRuleFolderPath();
         this.ruleControlFilePath = this.getRuleControlFilePath();
         this.ruleAdapterBaseFilePath = this.getRuleAdapterBaseFilePath();
         this.ruleAdapterCfnFilePath = this.getRuleAdapterCfnFilePath();
@@ -53,7 +53,7 @@ export class RuleContext {
     }
 
     private getRequirementsFilePath(): string {
-        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/requirements/${this.safeRuleId}.requirements.json`);
+        return path.join(this.ruleFolderPath, `${this.safeRuleId}.requirements.json`);
     }
 
     private getTestsFolderPath(): string {

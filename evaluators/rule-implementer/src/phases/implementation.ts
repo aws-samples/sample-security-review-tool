@@ -89,10 +89,11 @@ export class ImplementationWorkflow {
         });
 
         const systemPrompt = `You are responsible for implementing the Red Phase (writing failing tests) of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
-         - Creating unit tests in Vitest. 
+         - Creating unit tests in Vitest.
          - Ensuring unit tests are only written for the specific requirement.
          - Ensuring unit tests are created for both CloudFormation and Terraform.
-         - Ensuring the unit test file is self-contained and executable with Vitest.`;
+         - Ensuring the unit test file is self-contained and executable with Vitest.
+         - If the scenario has no meaningful representation in a given format (e.g., a condition that only one format's data model can express), write a single skipped test with a comment explaining why, rather than inventing a fixture that doesn't represent the scenario.`;
 
         const agent = new Agent({
             model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),

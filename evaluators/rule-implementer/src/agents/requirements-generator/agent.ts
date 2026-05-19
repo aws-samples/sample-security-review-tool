@@ -18,7 +18,7 @@ const RequirementCategorySchema = z.enum([
 
 const RuleRequirementSchema = z.object({
     id: z.string().describe('Requirement identifier (e.g., REQ-01)'),
-    description: z.string().describe('What this requirement verifies — the specific scenario being tested'),
+    description: z.string().describe('Format-agnostic scenario description — no IaC property names, resource types, or intrinsic functions'),
     category: RequirementCategorySchema.describe('Scenario category from the mandatory list'),
     expectedBehavior: z.enum(['flag', 'pass']).describe('Whether the rule should fire (flag) or not (pass)'),
     rationale: z.string().describe('Why this expected behavior is correct, referencing AWS docs or rule semantics'),
