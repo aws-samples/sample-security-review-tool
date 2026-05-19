@@ -61,17 +61,17 @@ export class RegistrationWriter {
     }
 
     private appendToServiceIndex(filePath: string, content: string): void {
-        const importLines = [
+        const imports = [
             `import { ${this.controlInstanceName} } from '${this.controlImportPath}.control.js';`,
             `import { ${this.cfnAdapterClassName} } from '${this.controlImportPath}.adapter.cfn.js';`,
             `import { ${this.tfAdapterClassName} } from '${this.controlImportPath}.adapter.tf.js';`,
         ].join('\n');
 
-        const arrayEntry = `  { control: ${this.controlInstanceName}, cfnAdapter: new ${this.cfnAdapterClassName}(), tfAdapter: new ${this.tfAdapterClassName}() },`;
+        const entry = `  { control: ${this.controlInstanceName}, cfnAdapter: new ${this.cfnAdapterClassName}(), tfAdapter: new ${this.tfAdapterClassName}() },`;
 
         const updatedContent = content
-            .replace(/(import .+\n)(\n)/, `$1${importLines}\n$2`)
-            .replace(/];(\n?)$/, `${arrayEntry}\n];$1`);
+            .replace(/(import .+\n)(\n)/, `$1${imports}\n$2`)
+            .replace(/];(\n?)$/, `${entry}\n];$1`);
 
         fs.writeFileSync(filePath, updatedContent);
     }
