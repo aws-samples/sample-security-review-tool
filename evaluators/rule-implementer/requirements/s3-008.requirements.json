@@ -1,0 +1,183 @@
+{
+  "ruleId": "S3-008",
+  "generatedAt": "2026-05-19T16:06:44.086Z",
+  "description": "S3 buckets must implement a lifecycle policy",
+  "cfnResources": [
+    "AWS::S3::Bucket"
+  ],
+  "tfResources": [
+    "aws_s3_bucket",
+    "aws_s3_bucket_lifecycle_configuration"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "S3 bucket has no LifecycleConfiguration property at all",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires a lifecycle policy. An S3 bucket without LifecycleConfiguration has no lifecycle rules and is non-compliant.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-02",
+      "description": "S3 bucket has LifecycleConfiguration with at least one rule whose Status is Enabled and contains a valid action (e.g., ExpirationInDays)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A bucket with an active lifecycle rule satisfies the requirement to implement a lifecycle policy.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-03",
+      "description": "S3 bucket has LifecycleConfiguration with Rules set to an empty array",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty Rules array means no lifecycle policy is actually applied; the configuration provides no lifecycle behavior.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-04",
+      "description": "S3 bucket has LifecycleConfiguration with rules but every rule has Status set to Disabled",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Per S3 lifecycle rule semantics, a rule with Status=Disabled is not applied. If all rules are disabled, no lifecycle policy is in effect.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-05",
+      "description": "S3 bucket has LifecycleConfiguration with multiple rules where some are Disabled but at least one has Status=Enabled with a valid action",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "At least one enabled rule satisfies the requirement that the bucket implements a lifecycle policy.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-06",
+      "description": "S3 bucket's LifecycleConfiguration property is set via an unresolvable intrinsic function (e.g., Fn::If with one branch as AWS::NoValue, Fn::ImportValue)",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the lifecycle configuration cannot be deterministically resolved at scan time, the rule cannot assert non-compliance.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-07",
+      "description": "S3 bucket has LifecycleConfiguration with a rule whose Status value is an unresolvable intrinsic function",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule cannot determine whether the rule is enabled or disabled when the Status is unresolvable, so it should not flag.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-08",
+      "description": "Terraform aws_s3_bucket resource without any associated aws_s3_bucket_lifecycle_configuration resource and without inline lifecycle_rule block",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "No lifecycle policy is implemented for the bucket, violating the rule.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-09",
+      "description": "Terraform aws_s3_bucket_lifecycle_configuration resource exists in the template but its bucket attribute targets a different bucket (not the assessed bucket)",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "A lifecycle configuration that points to another bucket does not provide coverage for the assessed bucket.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-10",
+      "description": "Terraform aws_s3_bucket_lifecycle_configuration with bucket attribute referencing the assessed bucket and at least one rule with status = \"Enabled\" and a valid action",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A separate lifecycle configuration resource that explicitly targets the assessed bucket and is enabled satisfies the rule.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-11",
+      "description": "Terraform aws_s3_bucket_lifecycle_configuration targeting the assessed bucket but with all rules status = \"Disabled\"",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "All rules are disabled, so no lifecycle policy is actively applied to the bucket.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-12",
+      "description": "Terraform aws_s3_bucket_lifecycle_configuration targeting the assessed bucket with no rule blocks",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "Without any rules, the lifecycle configuration provides no actual lifecycle policy.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-13",
+      "description": "S3 bucket lifecycle rule uses a broad Filter (empty prefix '' or no filter, matching all objects) with Status=Enabled and a valid action",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "A lifecycle rule that applies to all objects in the bucket fully satisfies the requirement to implement a lifecycle policy.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-14",
+      "description": "Terraform aws_s3_bucket_lifecycle_configuration with bucket attribute set via an unresolvable expression (e.g., variable or remote state) so target bucket cannot be determined",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "If the bucket reference cannot be resolved, the rule cannot definitively assert that the assessed bucket lacks coverage.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-15",
+      "description": "S3 bucket lifecycle rule has Status=Enabled and a valid action but is scoped via a Filter (e.g., Prefix='logs/' or specific tag) so it only applies to a subset of objects",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved ambiguity: any enabled rule with any filter satisfies 'must implement a lifecycle policy'; the rule does not require coverage of all objects.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-16",
+      "description": "S3 bucket has LifecycleConfiguration with a rule whose Status=Enabled but no action property (no ExpirationInDays, ExpirationDate, Transitions, NoncurrentVersionExpiration, NoncurrentVersionTransitions, AbortIncompleteMultipartUpload, etc.)",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved ambiguity: a rule must have at least one action property to count as implementing a lifecycle policy. A rule without any action provides no lifecycle behavior.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-17",
+      "description": "S3 bucket has LifecycleConfiguration with an enabled rule whose only action is AbortIncompleteMultipartUpload (no expiration or transition actions)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved ambiguity: AbortIncompleteMultipartUpload counts as a valid lifecycle policy action and satisfies the rule.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-18",
+      "description": "S3 bucket has LifecycleConfiguration set to AWS::NoValue via an Fn::If condition (the resource explicitly omits the lifecycle configuration when condition is false at scan-time evaluation)",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "When LifecycleConfiguration resolves to AWS::NoValue (deterministically absent), the bucket has no lifecycle policy and should be flagged like the ABSENT case.",
+      "implemented": false,
+      "tested": false
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-lifecycleconfiguration.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-rule.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-s3-bucket.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html",
+    "https://aws.amazon.com/blogs/storage/optimize-storage-costs-with-new-amazon-s3-lifecycle-filters-and-actions/"
+  ]
+}

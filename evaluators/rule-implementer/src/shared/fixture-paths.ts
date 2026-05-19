@@ -73,11 +73,11 @@ export class RuleContext {
     }
 
     private getRuleAdapterCfnFilePath(): string {
-        return path.join(this.ruleFolderPath, `${this.safeRuleId}.cfn.adapter.ts`);
+        return path.join(this.ruleFolderPath, `${this.safeRuleId}.adapter.cfn.ts`);
     }
     
     private getRuleAdapterTfFilePath(): string {
-        return path.join(this.ruleFolderPath, `${this.safeRuleId}.tf.adapter.ts`);
+        return path.join(this.ruleFolderPath, `${this.safeRuleId}.adapter.tf.ts`);
     }
 
     private getSecurityControlBaseFilePath(): string {
