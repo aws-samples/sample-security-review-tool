@@ -11,6 +11,9 @@ export class RuleContext {
     readonly testsFolderPath: string;
     readonly ruleFolderPath: string;
     readonly ruleControlFilePath: string;
+    readonly ruleAdapterBaseFilePath: string;
+    readonly ruleAdapterCfnFilePath: string;
+    readonly ruleAdapterTfFilePath: string;
     readonly ruleAdaptersFolderPath: string;
     readonly securityControlBaseFilePath: string;
     readonly securityControlTypesFilePath: string;
@@ -22,6 +25,9 @@ export class RuleContext {
         this.testsFolderPath = this.getTestsFolderPath();
         this.ruleFolderPath = this.getRuleFolderPath();
         this.ruleControlFilePath = this.getRuleControlFilePath();
+        this.ruleAdapterBaseFilePath = this.getRuleAdapterBaseFilePath();
+        this.ruleAdapterCfnFilePath = this.getRuleAdapterCfnFilePath();
+        this.ruleAdapterTfFilePath = this.getRuleAdapterTfFilePath();
         this.ruleAdaptersFolderPath = this.getRuleAdaptersFolderPath();
         this.securityControlBaseFilePath = this.getSecurityControlBaseFilePath();
         this.securityControlTypesFilePath = this.getSecurityControlTypesFilePath();
@@ -57,11 +63,23 @@ export class RuleContext {
     }
 
     private getRuleFolderPath(): string {
-        return path.join(this.srtRootFolderPath, `src/assess/scanning/security-matrix/rules/${this.service}`);
+        return path.join(this.srtRootFolderPath, `src/assess/scanning/security-matrix/rules/${this.service}/${this.safeRuleId}`);
     }
 
     private getRuleControlFilePath(): string {
         return path.join(this.ruleFolderPath, 'controls', `${this.safeRuleId}.control.ts`);
+    }
+
+    private getRuleAdapterBaseFilePath(): string {
+        return path.join(this.ruleFolderPath, 'adapters', `${this.safeRuleId}.adapter.ts`);
+    }
+
+    private getRuleAdapterCfnFilePath(): string {
+        return path.join(this.ruleFolderPath, 'adapters', `${this.safeRuleId}.cfn.adapter.ts`);
+    }
+    
+    private getRuleAdapterTfFilePath(): string {
+        return path.join(this.ruleFolderPath, 'adapters', `${this.safeRuleId}.tf.adapter.ts`);
     }
 
     private getRuleAdaptersFolderPath(): string {

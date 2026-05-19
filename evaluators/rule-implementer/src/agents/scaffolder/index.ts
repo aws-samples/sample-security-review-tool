@@ -14,36 +14,30 @@ export class RuleScaffolder {
     public scaffold(context: RuleContext, spec: RequirementsSpec): void {
         const substitutions = new Substitutions(context, spec);
 
-        if (!this.adapterFilesExist(context.ruleAdaptersFolderPath)) {
-            this.writeAdapterFiles(context, substitutions);
-        }
+        this.createRuleFolder(context);
+        this.writeAdapterFiles(context, substitutions);
         this.writeControlFile(context, substitutions);
     }
 
-    private adapterFilesExist(adaptersFolderPath: string): boolean {
-        if (!fs.existsSync(adaptersFolderPath)) return false;
-        return fs.readdirSync(adaptersFolderPath).some(f => f.endsWith('-adapter.ts'));
+    private createRuleFolder(context: RuleContext): void {
+        fs.mkdirSync(context.ruleFolderPath, { recursive: true });
     }
 
     private writeAdapterFiles(context: RuleContext, substitutions: Substitutions): void {
-        fs.mkdirSync(context.ruleAdaptersFolderPath, { recursive: true });
-
-        const folder = context.ruleAdaptersFolderPath;
         const svc = substitutions.service;
 
-        new TemplateRenderer('__svc__-adapter.ts').writeTo(ADAPTERS_DIR, path.join(folder, `${svc}-adapter.ts`), substitutions);
-        new TemplateRenderer('cfn-__svc__-adapter.ts').writeTo(ADAPTERS_DIR, path.join(folder, `cfn-${svc}-adapter.ts`), substitutions);
-        new TemplateRenderer('tf-__svc__-adapter.ts').writeTo(ADAPTERS_DIR, path.join(folder, `tf-${svc}-adapter.ts`), substitutions);
+        new TemplateRenderer('__svc__-adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterBaseFilePath, substitutions);
+        new TemplateRenderer('cfn-__svc__-adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterCfnFilePath, substitutions);
+        new TemplateRenderer('tf-__svc__-adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterTfFilePath, substitutions);
     }
 
     private writeControlFile(context: RuleContext, substitutions: Substitutions): void {
-        fs.mkdirSync(path.dirname(context.ruleControlFilePath), { recursive: true });
-        new TemplateRenderer('__rule__.control.ts').writeTo(CONTROLS_DIR,context.ruleControlFilePath, substitutions);
+        new TemplateRenderer('__rule__.control.ts').writeTo(CONTROLS_DIR, context.ruleControlFilePath, substitutions);
     }
 }
 
 class TemplateRenderer {
-    constructor(private readonly templateName: string) {}
+    constructor(private readonly templateName: string) { }
 
     public writeTo(templateFolderPath: string, outputPath: string, substitutions: Substitutions): void {
         fs.writeFileSync(outputPath, this.render(templateFolderPath, substitutions));

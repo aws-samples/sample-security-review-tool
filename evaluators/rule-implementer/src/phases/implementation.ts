@@ -5,8 +5,7 @@ import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirem
 import type { RegressionInfo } from '../shared/types/implementation.js';
 import { RuleContext } from '../shared/fixture-paths.js';
 import { Agent, BedrockModel, tool } from '@strands-agents/sdk';
-import { fileEditor } from '@strands-agents/sdk/vended-tools/file-editor';
-import z, { file } from 'zod';
+import z from 'zod';
 import path from 'node:path';
 
 const MAX_RETRIES = 3;
@@ -117,10 +116,15 @@ export class ImplementationWorkflow {
                 <source-file path="${this.context.ruleControlFilePath}">
                 ${fs.readFileSync(this.context.ruleControlFilePath, 'utf8')}
                 </source-file>
-                ${fs.existsSync(this.context.ruleAdaptersFolderPath) ? fs.readdirSync(this.context.ruleAdaptersFolderPath).map(f => {
-            const p = path.join(this.context.ruleAdaptersFolderPath, f);
-            return `<source-file path="${p}">\n${fs.readFileSync(p, 'utf8')}\n</source-file>`;
-        }).join('\n') : ''}
+                <source-file path="${this.context.ruleAdapterBaseFilePath}">
+                ${fs.readFileSync(this.context.ruleAdapterBaseFilePath, 'utf8')}
+                </source-file>
+                <source-file path="${this.context.ruleAdapterCfnFilePath}">
+                ${fs.readFileSync(this.context.ruleAdapterCfnFilePath, 'utf8')}
+                </source-file>
+                <source-file path="${this.context.ruleAdapterTfFilePath}">
+                ${fs.readFileSync(this.context.ruleAdapterTfFilePath, 'utf8')}
+                </source-file>               
                 <source-file path="${this.context.securityControlBaseFilePath}">
                 ${fs.readFileSync(this.context.securityControlBaseFilePath, 'utf8')}
                 </source-file>
@@ -185,18 +189,20 @@ export class ImplementationWorkflow {
                 <source-file path="${this.context.ruleControlFilePath}">
                 ${fs.readFileSync(this.context.ruleControlFilePath, 'utf8')}
                 </source-file>
-                ${fs.existsSync(this.context.ruleAdaptersFolderPath) ? fs.readdirSync(this.context.ruleAdaptersFolderPath).map(f => {
-            const p = path.join(this.context.ruleAdaptersFolderPath, f);
-            return `<source-file path="${p}">\n${fs.readFileSync(p, 'utf8')}\n</source-file>`;
-        }).join('\n') : ''}
+                <source-file path="${this.context.ruleAdapterBaseFilePath}">
+                ${fs.readFileSync(this.context.ruleAdapterBaseFilePath, 'utf8')}
+                </source-file>
+                <source-file path="${this.context.ruleAdapterCfnFilePath}">
+                ${fs.readFileSync(this.context.ruleAdapterCfnFilePath, 'utf8')}
+                </source-file>
+                <source-file path="${this.context.ruleAdapterTfFilePath}">
+                ${fs.readFileSync(this.context.ruleAdapterTfFilePath, 'utf8')}
+                </source-file>               
                 <source-file path="${this.context.securityControlBaseFilePath}">
                 ${fs.readFileSync(this.context.securityControlBaseFilePath, 'utf8')}
                 </source-file>
                 <source-file path="${this.context.securityControlTypesFilePath}">
                 ${fs.readFileSync(this.context.securityControlTypesFilePath, 'utf8')}
-                </source-file>
-                <source-file path="${testFilePath}">
-                ${fs.readFileSync(testFilePath, 'utf8')}
                 </source-file>
             </source-files>
             `;
