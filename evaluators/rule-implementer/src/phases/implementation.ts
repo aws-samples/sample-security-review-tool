@@ -87,7 +87,7 @@ export class ImplementationWorkflow {
         });
 
         const systemPrompt = `You are responsible for implementing the Red Phase of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
-         - Creating unit tests in Vitest.
+         - Appending Vitest-compatible unit tests to the test file.
          - Ensuring unit tests are only written for the specific requirement.
          - Ensuring the unit test file is self-contained and executable with Vitest.`;
 
