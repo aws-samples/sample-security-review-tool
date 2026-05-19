@@ -155,9 +155,9 @@ export class ImplementationWorkflow {
 
         const vitestTool = tool({
             name: 'run_vitest',
-            description: 'Run Vitest against the test file to check if tests pass or fail. Returns the test output including pass/fail status and error messages.',
+            description: 'Run unit tests. Returns the test output including pass/fail status and error messages.',
             callback: async () => {
-                const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', testFilePath], { cwd: this.context.srtRootFolderPath, encoding: 'utf8', timeout: 60_000 });
+                const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', this.context.testsFolderPath], { cwd: this.context.srtRootFolderPath, encoding: 'utf8', timeout: 60_000 });
                 const output = ((result.stdout ?? '') + (result.stderr ?? '')).slice(0, 4000);
                 return { passed: result.status === 0, output };
             }
