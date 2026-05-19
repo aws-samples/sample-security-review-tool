@@ -87,7 +87,7 @@ export class ImplementationWorkflow {
         });
 
         const systemPrompt = `You are responsible for implementing the Red Phase of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
-         - Creating unit tests in Vitest. 
+         - Creating unit tests in Vitest.
          - Ensuring unit tests are only written for the specific requirement.
          - Ensuring the unit test file is self-contained and executable with Vitest.`;
 
@@ -123,8 +123,12 @@ export class ImplementationWorkflow {
                 </source-file>
                 <source-file path="${this.context.securityControlTypesFilePath}">
                 ${fs.readFileSync(this.context.securityControlTypesFilePath, 'utf8')}
-                </source-file>
+                </source-file>                
             </source-files>
+
+            <unit-tests path="${testFilePath}">
+                ${fs.existsSync(testFilePath) ? fs.readFileSync(testFilePath, 'utf8') : ''}
+             </unit-tests>
         `;
 
         await agent.invoke(userPrompt);
