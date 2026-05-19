@@ -1,0 +1,185 @@
+{
+  "ruleId": "LAMBDA-002",
+  "generatedAt": "2026-05-19T17:35:08.691Z",
+  "description": "Lambda functions must not include sensitive data in environment variables",
+  "cfnResources": [
+    "AWS::Lambda::Function"
+  ],
+  "tfResources": [
+    "aws_lambda_function"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Lambda function has no Environment property at all (no environment variables defined).",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "If there are no environment variables, there cannot be any sensitive data exposure via environment variables. The rule has nothing to evaluate.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-02",
+      "description": "Lambda function has Environment.Variables set to an empty object/map.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "An empty Variables map contains no keys or values, so no sensitive data can be present.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-03",
+      "description": "Lambda function has environment variables containing only benign, non-sensitive keys (e.g., LOG_LEVEL=INFO, REGION=us-east-1, STAGE=prod, TABLE_NAME=my-table).",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "Lambda environment variables are intended to hold non-sensitive configuration. AWS docs explicitly endorse this use (https://aws.amazon.com/blogs/compute/simplify-serverless-applications-with-environment-variables-in-aws-lambda/). None of these keys match a sensitive-key pattern.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-04",
+      "description": "Lambda function has an environment variable with a key matching a sensitive pattern (e.g., PASSWORD, DB_PASSWORD, SECRET, API_KEY, ACCESS_KEY, TOKEN, PRIVATE_KEY, CREDENTIALS) and a literal hard-coded string value.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "AWS docs state: 'For sensitive information like database credentials or API keys, AWS recommends using AWS Secrets Manager instead of environment variables' (https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html). A sensitive-named key with a literal string value indicates a plaintext secret in the environment. Mirrors ECS_NO_ENVIRONMENT_SECRETS Config rule semantics.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-05",
+      "description": "Lambda function has an environment variable with a benign key name (e.g., CONFIG_VALUE, RANDOM_ID) whose VALUE is a high-entropy string that resembles a secret.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, the rule uses key-name pattern matching only (mirroring AWS Config's ecs-no-environment-secrets behavior with its secretKeys parameter). Pure value-content/entropy analysis is not performed because it produces too many false positives (random IDs, hashes, etc.).",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-06",
+      "description": "Lambda function has multiple environment variables; at least one has a sensitive-named key with a literal string value while others are benign.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "A single sensitive variable is sufficient to violate the rule. Mirrors ECS_NO_ENVIRONMENT_SECRETS: NON_COMPLIANT if 1 or more keys match. The presence of benign variables does not offset the exposure of any single secret.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-07",
+      "description": "Lambda function has an environment variable whose key is sensitive-sounding (e.g., API_KEY, DB_PASSWORD) but whose value is a CloudFormation Ref or Fn::GetAtt to another resource (e.g., a Secrets Manager Secret, an SSM Parameter, or any other resource in the template).",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, Ref/GetAtt indicates the value is computed at deploy time from another managed resource rather than being a hard-coded secret in the template. Treating these as compliant aligns with the AWS-recommended pattern of injecting references rather than literal secrets.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-08",
+      "description": "Lambda function's environment variable value is a CloudFormation dynamic reference such as '{{resolve:secretsmanager:MySecret:SecretString:password}}' or '{{resolve:ssm-secure:MyParam}}'.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, dynamic references are an AWS-documented pattern (https://aws.amazon.com/blogs/compute/creating-aws-lambda-environmental-variables-from-aws-secrets-manager/). The template itself contains no secret material; the resolution happens at deploy time using IAM-controlled access.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-09",
+      "description": "Lambda function's environment variable value is an unresolvable intrinsic function (e.g., Fn::ImportValue from another stack, Fn::If with unknown condition branches, Fn::Sub with unresolvable parameters).",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the value is an unresolvable intrinsic, the rule cannot statically assert the value contains a literal secret. Avoiding false positives on unknowable values is a core principle of static analysis.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-10",
+      "description": "Lambda function's entire Environment property is wrapped in an Fn::If whose branches are not statically resolvable.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "If the rule cannot determine which environment configuration will be deployed, it cannot assert non-compliance.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-11",
+      "description": "Lambda function has an environment variable named with a sensitive-sounding key but the value is an empty string ''.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty string is still a literal value (not a Ref/GetAtt or dynamic reference). The key-name match indicates intent to place a credential in the environment, and the literal value confirms the variable is being assigned in the template. Mirrors ECS_NO_ENVIRONMENT_SECRETS' key-name-driven semantics.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-12",
+      "description": "Resource is not a Lambda function (e.g., AWS::ECS::TaskDefinition, AWS::Batch::JobDefinition) even though it also has environment variables containing sensitive-sounding keys.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "This rule is scoped to Lambda functions only. Other resource types with environment variables are evaluated by separate rules (e.g., ecs-no-environment-secrets).",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-13",
+      "description": "Lambda function has KmsKeyArn configured for environment variable encryption, but still contains a sensitive-named environment variable with a literal hard-coded string value.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "KMS encryption at rest does not change that the value is hard-coded in the template/state and visible to anyone with lambda:GetFunctionConfiguration permission. AWS guidance is unambiguous: do not store secrets in environment variables (https://aws.amazon.com/blogs/compute/securely-retrieving-secrets-with-aws-lambda/).",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-14",
+      "description": "Lambda function (Terraform aws_lambda_function) has an environment block with variables = {} (explicit empty map).",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "Equivalent to no environment variables — no sensitive data can be present.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-15",
+      "description": "Lambda function has an environment variable whose key name contains a sensitive token as a substring (e.g., MY_APP_SECRET_VALUE, USER_PASSWORD_HASH, AUTH_TOKEN_HEADER) with a literal string value.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "Substring matches against well-known sensitive tokens (password, secret, token, key, credential, passphrase) should be flagged. This mirrors common implementations of AWS Config's secretKeys parameter and standard DLP key-name matching.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-16",
+      "description": "Lambda function declares Environment.Variables with sensitive-named keys whose values are explicitly null (e.g., Variables: { PASSWORD: null }).",
+      "category": "DISABLED",
+      "expectedBehavior": "pass",
+      "rationale": "Null values do not constitute sensitive data exposure — there is no literal secret material in the template. The variable is effectively unset.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-17",
+      "description": "Lambda function has an environment variable with a sensitive-sounding key but with a comment-style placeholder value such as 'CHANGEME', 'REPLACE_ME', or 'TODO'.",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "Placeholder strings are still literal values present in the template, and the sensitive key name signals intent to store a credential. The rule should not whitelist placeholder values; rather, the proper fix is to use Secrets Manager or SSM (Ref/GetAtt or dynamic reference).",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-18",
+      "description": "Lambda function has an environment variable with key 'AWS_ACCESS_KEY_ID' or 'AWS_SECRET_ACCESS_KEY' set to a literal string value.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "These are explicitly sensitive credential keys. Additionally, AWS Lambda reserves these names and embedding literals here is both insecure and may conflict with the function's execution role credentials. Strong key-name match.",
+      "implemented": false,
+      "tested": false
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html",
+    "https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars-encryption.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-lambda-function-environment.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-lambda-function.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/ecs-no-environment-secrets.html",
+    "https://aws.amazon.com/blogs/compute/securely-retrieving-secrets-with-aws-lambda/",
+    "https://aws.amazon.com/blogs/compute/creating-aws-lambda-environmental-variables-from-aws-secrets-manager/",
+    "https://aws.amazon.com/blogs/compute/simplify-serverless-applications-with-environment-variables-in-aws-lambda/"
+  ]
+}

@@ -31,8 +31,7 @@ export class ImplementationWorkflow {
             await this.createUnitTests(spec, requirement, 'cfn');
             //await this.createUnitTests(spec, requirement, 'tf');
 
-            await this.implementRequirement(spec, requirement, 'cfn');
-            //await this.implementRequirement(spec, requirement, 'tf');
+            await this.implementRequirement(spec, requirement);
 
             // Update the requirement status in the spec file after implementation attempt
             // const requirementsFile = this.context.requirementsFilePath;
@@ -57,12 +56,9 @@ export class ImplementationWorkflow {
         console.log(`Creating unit tests for ${spec.ruleId} ${requirement.id} (${format})...`);
 
         const relativeToControl = path.relative(path.dirname(testFilePath), this.context.ruleControlFilePath).replace(/\.ts$/, '.js');
-        //const adapterFileName = `${format}-${this.context.service}-adapter.ts`;
-        //const adapterFilePath = path.join(this.context.ruleAdaptersFolderPath, adapterFileName);
         const relativeToAdapter = path.relative(path.dirname(testFilePath), this.context.ruleAdapterBaseFilePath).replace(/\.ts$/, '.js');
         const typesFilePath = path.join(this.context.srtRootFolderPath, 'src/assess/scanning/security-matrix/controls/types.ts');
         const relativeToTypes = path.relative(path.dirname(testFilePath), typesFilePath).replace(/\.ts$/, '.js');
-
 
         const writeFileTool = tool({
             name: 'write_file',
@@ -139,10 +135,11 @@ export class ImplementationWorkflow {
         //fs.writeFileSync(`messages-${Date.now()}.json`, JSON.stringify(agent.messages, null, 2));
     }
 
-    private async implementRequirement(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
-        console.log(`Implementing ${spec.ruleId} ${requirement.id} (${format})...`);
+    private async implementRequirement(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {
+        console.log(`Implementing ${spec.ruleId} ${requirement.id}...`);
 
-        const testFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.${format}.test.ts`);
+        const cfnTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.cfn.test.ts`);
+        const tfTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.tf.test.ts`);
 
         const writeFileTool = tool({
             name: 'write_file',
@@ -179,8 +176,8 @@ export class ImplementationWorkflow {
         const userPrompt = `Create a minimum implementation for the following rule requirement, ensuring that the unit tests pass:
             Rule ID: ${spec.ruleId}
             Rule Description: ${spec.description}
-            Rule Resource Type: ${format === 'cfn' ? 'CloudFormation' : 'Terraform'}
-            Rule Resources: ${format === 'cfn' ? spec.cfnResources.join(', ') : spec.tfResources.join(', ')}
+            Rule's CloudFormation Resources: ${spec.cfnResources.join(', ')}
+            Rule's Terraform Resources: ${ spec.tfResources.join(', ')}
             Requirement Description: ${requirement.description}
             Expected Behavior: ${requirement.expectedBehavior}
             Rationale: ${requirement.rationale}
@@ -206,10 +203,14 @@ export class ImplementationWorkflow {
                 </source-file>
             </source-files>
 
-            <unit-tests path="${testFilePath}">
-            ${fs.readFileSync(testFilePath, 'utf8')}
-            </unit-tests>
-            `;
+            <unit-tests>
+                <cfn-unit-tests path="${cfnTestFilePath}">
+                ${fs.readFileSync(cfnTestFilePath, 'utf8')}
+                </unit-tests>
+                <tf-unit-tests path="${tfTestFilePath}">
+                ${fs.readFileSync(tfTestFilePath, 'utf8')}
+                </unit-tests>
+            </unit-tests>`;
 
         await agent.invoke(userPrompt);
     }
