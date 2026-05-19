@@ -5,7 +5,7 @@ import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
 import { generateRequirements } from './phases/requirements.js';
 import { scaffold } from './phases/scaffold.js';
 import { generateTests } from './phases/tests.js';
-import { implementRule } from './phases/implementation.js';
+import { ImplementationWorkflow, implementRule } from './phases/implementation.js';
 import { RuleContext } from './shared/fixture-paths.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
@@ -20,17 +20,20 @@ async function main(): Promise<void> {
     console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
 
     console.log('\nPhase 1: Requirements generation');
-    const spec = await generateRequirements(context, { regenerate: false });
-    console.log(`Phase 1 complete: Generated ${spec.requirements.length} requirements`);
+    const requirements = await generateRequirements(context, { regenerate: false });
+    console.log(`Phase 1 complete: Generated ${requirements.requirements.length} requirements`);
 
-    console.log('\nPhase 2: Scaffold');
-    await scaffold(context, spec);
+    console.log('\nPhase 2: Scaffolding rule files');
+    await scaffold(context, requirements);
+    console.log(`Phase 2 complete: Scaffolded rule files for ${context.ruleId}`);
 
-    console.log('\nPhase 3: Test generation');
-    await generateTests(context.ruleId, context.service, spec);
+    // console.log('\nPhase 3: Test generation');
+    // await generateTests(context.ruleId, context.service, spec);
 
-    console.log(`\nPhase 4: Rule implementation`);
-    await implementRule(spec, context.service);
+    console.log(`\nPhase 3: Rule implementation`);
+    const workflow = new ImplementationWorkflow(context);
+    await workflow.implement(requirements);
+    //await implementRule(spec, context.service);
 
     console.log(`\n✓ Done.`);
 }

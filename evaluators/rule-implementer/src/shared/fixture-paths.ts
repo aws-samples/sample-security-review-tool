@@ -12,6 +12,8 @@ export class RuleContext {
     readonly ruleFolderPath: string;
     readonly ruleControlFilePath: string;
     readonly ruleAdaptersFolderPath: string;
+    readonly securityControlBaseFilePath: string;
+    readonly securityControlTypesFilePath: string;
 
     constructor(readonly ruleId: string, readonly service: string, readonly description: string) {
         this.safeRuleId = this.getSafeRuleId();
@@ -21,6 +23,8 @@ export class RuleContext {
         this.ruleFolderPath = this.getRuleFolderPath();
         this.ruleControlFilePath = this.getRuleControlFilePath();
         this.ruleAdaptersFolderPath = this.getRuleAdaptersFolderPath();
+        this.securityControlBaseFilePath = this.getSecurityControlBaseFilePath();
+        this.securityControlTypesFilePath = this.getSecurityControlTypesFilePath();
     }
 
     private getSrtRootFolderPath(): string {
@@ -62,5 +66,13 @@ export class RuleContext {
 
     private getRuleAdaptersFolderPath(): string {
         return path.join(this.ruleFolderPath, 'adapters');
+    }
+
+    private getSecurityControlBaseFilePath(): string {
+        return path.join(this.srtRootFolderPath, 'src/assess/scanning/security-matrix/controls/security-control.ts');
+    }
+
+    private getSecurityControlTypesFilePath(): string {
+        return path.join(this.srtRootFolderPath, 'src/assess/scanning/security-matrix/controls/types.ts');
     }
 }
