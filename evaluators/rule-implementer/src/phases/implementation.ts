@@ -51,12 +51,9 @@ export class ImplementationWorkflow {
     }
 
     private async createUnitTests(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
-        const testFilePath = path.join(this.context.testsFolderPath, `${this.context.safeRuleId}.${format}.test.ts`);
-
-        if (fs.existsSync(testFilePath)) return;
-
         console.log(`Creating unit tests for ${spec.ruleId} ${requirement.id} (${format})...`);
 
+        const testFilePath = path.join(this.context.testsFolderPath, `${this.context.safeRuleId}.${format}.test.ts`);
         const relativeToControl = path.relative(path.dirname(testFilePath), this.context.ruleControlFilePath).replace(/\.ts$/, '.js');
         const adapterFileName = `${format}-${this.context.service}-adapter.ts`;
         const adapterFilePath = path.join(this.context.ruleAdaptersFolderPath, adapterFileName);
