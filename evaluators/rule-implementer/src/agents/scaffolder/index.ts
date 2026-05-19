@@ -26,9 +26,9 @@ export class RuleScaffolder {
     private writeAdapterFiles(context: RuleContext, substitutions: Substitutions): void {
         const svc = substitutions.service;
 
-        new TemplateRenderer('__svc__-adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterBaseFilePath, substitutions);
-        new TemplateRenderer('cfn-__svc__-adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterCfnFilePath, substitutions);
-        new TemplateRenderer('tf-__svc__-adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterTfFilePath, substitutions);
+        new TemplateRenderer('__svc__.adapter.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterBaseFilePath, substitutions);
+        new TemplateRenderer('__svc__.adapter.cfn.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterCfnFilePath, substitutions);
+        new TemplateRenderer('__svc__.adapter.tf.ts').writeTo(ADAPTERS_DIR, context.ruleAdapterTfFilePath, substitutions);
     }
 
     private writeControlFile(context: RuleContext, substitutions: Substitutions): void {

@@ -1,6 +1,6 @@
 import { SecurityControl } from '../../../../../../src/assess/scanning/security-matrix/controls/security-control.js';
 import { ControlFinding } from '../../../../../../src/assess/scanning/security-matrix/controls/types.js';
-import { __Svc__Adapter } from '../adapters/__svc__-adapter.js';
+import { __Svc__Adapter } from '../adapters/__svc__.adapter.js';
 
 export class __Rule__Control extends SecurityControl<__Svc__Adapter> {
   constructor() {
