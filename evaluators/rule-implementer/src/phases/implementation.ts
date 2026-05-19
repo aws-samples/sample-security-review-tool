@@ -51,7 +51,7 @@ export class ImplementationWorkflow {
     }
 
     private async createUnitTests(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
-        const testFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.${format}.test.ts`);
+        const testFilePath = path.join(this.context.testsFolderPath, `${this.context.safeRuleId}.${format}.test.ts`);
 
         if (fs.existsSync(testFilePath)) return;
 
@@ -132,7 +132,7 @@ export class ImplementationWorkflow {
 
         await agent.invoke(userPrompt);
 
-        fs.writeFileSync(`messages-${Date.now()}.json`, JSON.stringify(agent.messages, null, 2));
+        //fs.writeFileSync(`messages-${Date.now()}.json`, JSON.stringify(agent.messages, null, 2));
     }
 
     private async implementRequirement(spec: RequirementsSpec, requirement: RuleRequirement, format: 'cfn' | 'tf'): Promise<void> {
@@ -164,7 +164,7 @@ export class ImplementationWorkflow {
         });
 
         const systemPrompt = `You are responsible for implementing the Green Phase (writing minimum passing implementation) of a Test-Driven Development workflow for a SecurityControl class. 
-        Once you have implemented the code, run the tests and confirm they pass.`;
+        You must follow Robert C. Martin's principle of Clean Code. Once you have implemented the code, run the tests and confirm they pass.`;
 
         const agent = new Agent({
             model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
