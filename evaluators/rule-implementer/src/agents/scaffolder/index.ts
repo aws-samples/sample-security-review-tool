@@ -5,7 +5,7 @@ import { RuleContext } from '../../shared/fixture-paths.js';
 import type { RequirementsSpec } from '../../shared/types/requirements.js';
 
 const TEMPLATE_DIR = path.dirname(url.fileURLToPath(import.meta.url));
-const CONTROLS_IMPORT_PLACEHOLDER = '../../../../../../src/assess/scanning/security-matrix/controls/';
+const CONTROLS_IMPORT_PLACEHOLDER = '../../../../../src/assess/scanning/security-matrix/controls/';
 const CONTROLS_IMPORT_OUTPUT = '../../../controls/';
 
 export class RuleScaffolder {
@@ -22,9 +22,7 @@ export class RuleScaffolder {
     }
 
     private writeAdapterFiles(context: RuleContext, substitutions: Substitutions): void {
-        const svc = substitutions.service;
-
-        new TemplateRenderer('__svc__.adapter.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterBaseFilePath, substitutions);
+        new TemplateRenderer('__safe-rule-id__.adapter.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterBaseFilePath, substitutions);
         new TemplateRenderer('__svc__.adapter.cfn.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterCfnFilePath, substitutions);
         new TemplateRenderer('__svc__.adapter.tf.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterTfFilePath, substitutions);
     }
@@ -49,6 +47,7 @@ class TemplateRenderer {
 
 class Substitutions {
     public readonly ruleId: string;
+    public readonly safeRuleId: string;
     public readonly service: string;
     public readonly description: string;
     private readonly cfnResourceTypes: string[];
@@ -56,6 +55,7 @@ class Substitutions {
 
     constructor(context: RuleContext, spec: RequirementsSpec) {
         this.ruleId = context.ruleId;
+        this.safeRuleId = context.safeRuleId;
         this.service = context.service;
         this.description = context.description;
         this.cfnResourceTypes = spec.cfnResources;
@@ -65,6 +65,7 @@ class Substitutions {
     public apply(template: string): string {
         return template
             .replaceAll(CONTROLS_IMPORT_PLACEHOLDER, CONTROLS_IMPORT_OUTPUT)
+            .replaceAll('__safe-rule-id__', this.safeRuleId)
             .replaceAll('__Svc__', this.serviceClassName())
             .replaceAll('__svc__', this.service)
             .replaceAll('__Rule__', this.ruleClassName())

@@ -1,5 +1,5 @@
 import { AdapterFactory, CfnContext, IacRemediation } from '../../../../../src/assess/scanning/security-matrix/controls/types.js';
-import { __Svc__Adapter } from './__svc__.adapter.js';
+import { __Svc__Adapter } from './__safe-rule-id__.adapter.js';
 
 export class Cfn__Svc__AdapterFactory implements AdapterFactory<CfnContext> {
   readonly applicableResourceTypes = ['__CFN_TYPES__'];
