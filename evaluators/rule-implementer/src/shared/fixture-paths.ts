@@ -4,8 +4,8 @@ import * as url from 'node:url';
 
 export class RuleContext {
     private static cachedSrtRoot: string | undefined;
-    private safeRuleId: string;
-
+    
+    readonly safeRuleId: string;
     readonly srtRootFolderPath: string;
     readonly requirementsFilePath: string;
     readonly testsFolderPath: string;
