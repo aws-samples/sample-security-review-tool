@@ -1,8 +1,8 @@
 import { SecurityControl } from '../../../../../src/assess/scanning/security-matrix/controls/security-control.js';
 import { ControlFinding } from '../../../../../src/assess/scanning/security-matrix/controls/types.js';
-import { __Svc__Adapter } from './__safe-rule-id__.adapter.js';
+import { __Rule__Adapter } from './__safe-rule-id__.adapter.js';
 
-export class __Rule__Control extends SecurityControl<__Svc__Adapter> {
+export class __Rule__Control extends SecurityControl<__Rule__Adapter> {
   constructor() {
     super({
       id: '__RULE_ID__',
@@ -12,7 +12,7 @@ export class __Rule__Control extends SecurityControl<__Svc__Adapter> {
     });
   }
 
-  protected evaluate(adapter: __Svc__Adapter): ControlFinding | null {
+  protected evaluate(adapter: __Rule__Adapter): ControlFinding | null {
     return null;
   }
 }

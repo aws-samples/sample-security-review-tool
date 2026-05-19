@@ -23,8 +23,8 @@ export class RuleScaffolder {
 
     private writeAdapterFiles(context: RuleContext, substitutions: Substitutions): void {
         new TemplateRenderer('__safe-rule-id__.adapter.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterBaseFilePath, substitutions);
-        new TemplateRenderer('__svc__.adapter.cfn.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterCfnFilePath, substitutions);
-        new TemplateRenderer('__svc__.adapter.tf.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterTfFilePath, substitutions);
+        new TemplateRenderer('__rule__.adapter.cfn.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterCfnFilePath, substitutions);
+        new TemplateRenderer('__rule__.adapter.tf.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterTfFilePath, substitutions);
     }
 
     private writeControlFile(context: RuleContext, substitutions: Substitutions): void {
@@ -66,7 +66,6 @@ class Substitutions {
         return template
             .replaceAll(CONTROLS_IMPORT_PLACEHOLDER, CONTROLS_IMPORT_OUTPUT)
             .replaceAll('__safe-rule-id__', this.safeRuleId)
-            .replaceAll('__Svc__', this.serviceClassName())
             .replaceAll('__svc__', this.service)
             .replaceAll('__Rule__', this.ruleClassName())
             .replaceAll('__rule__', this.ruleInstanceName())
@@ -74,10 +73,6 @@ class Substitutions {
             .replaceAll('__DESCRIPTION__', this.escapeForSingleQuoted(this.description))
             .replaceAll(`'__CFN_TYPES__'`, this.joinAsStringLiterals(this.cfnResourceTypes))
             .replaceAll(`'__TF_TYPES__'`, this.joinAsStringLiterals(this.tfResourceTypes));
-    }
-
-    private serviceClassName(): string {
-        return this.toPascalCase(this.service);
     }
 
     private ruleClassName(): string {

@@ -1,19 +1,19 @@
 import { AdapterFactory, TfContext, IacRemediation } from '../../../../../src/assess/scanning/security-matrix/controls/types.js';
-import { __Svc__Adapter } from './__safe-rule-id__.adapter.js';
+import { __Rule__Adapter } from './__safe-rule-id__.adapter.js';
 
-export class Tf__Svc__AdapterFactory implements AdapterFactory<TfContext> {
+export class __Rule__TfAdapterFactory implements AdapterFactory<TfContext> {
   readonly applicableResourceTypes = ['__TF_TYPES__'];
 
   appliesTo(resourceType: string): boolean {
     return this.applicableResourceTypes.includes(resourceType);
   }
 
-  bind(context: TfContext): Tf__Svc__Adapter {
-    return new Tf__Svc__Adapter(context);
+  bind(context: TfContext): __Rule__TfAdapter {
+    return new __Rule__TfAdapter(context);
   }
 }
 
-class Tf__Svc__Adapter implements __Svc__Adapter {
+class __Rule__TfAdapter implements __Rule__Adapter {
   readonly resourceId: string;
   readonly resourceType: string;
 
