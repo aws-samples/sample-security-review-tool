@@ -10,3 +10,9 @@ export function toInstanceName(ruleId: string): string {
     const parts = ruleId.toLowerCase().split('-');
     return parts[0] + parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('');
 }
+
+export function toServiceControlsName(service: string): string {
+    const parts = service.split('-');
+    const camel = parts[0] + parts.slice(1).map(toPascalCase).join('');
+    return camel + 'Controls';
+}

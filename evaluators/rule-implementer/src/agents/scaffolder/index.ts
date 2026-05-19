@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as url from 'node:url';
 import { RuleContext } from '../../shared/fixture-paths.js';
 import type { RequirementsSpec } from '../../shared/types/requirements.js';
+import { RegistrationWriter } from './registration-writer.js';
 
 const TEMPLATE_DIR = path.dirname(url.fileURLToPath(import.meta.url));
 const CONTROLS_IMPORT_PLACEHOLDER = '../../../../../src/assess/scanning/security-matrix/controls/';
@@ -15,6 +16,7 @@ export class RuleScaffolder {
         this.createRuleFolder(context);
         this.writeAdapterFiles(context, substitutions);
         this.writeControlFile(context, substitutions);
+        new RegistrationWriter(context).register();
     }
 
     private createRuleFolder(context: RuleContext): void {
