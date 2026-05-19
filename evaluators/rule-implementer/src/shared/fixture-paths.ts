@@ -14,7 +14,6 @@ export class RuleContext {
     readonly ruleAdapterBaseFilePath: string;
     readonly ruleAdapterCfnFilePath: string;
     readonly ruleAdapterTfFilePath: string;
-    readonly ruleAdaptersFolderPath: string;
     readonly securityControlBaseFilePath: string;
     readonly securityControlTypesFilePath: string;
 
@@ -28,7 +27,6 @@ export class RuleContext {
         this.ruleAdapterBaseFilePath = this.getRuleAdapterBaseFilePath();
         this.ruleAdapterCfnFilePath = this.getRuleAdapterCfnFilePath();
         this.ruleAdapterTfFilePath = this.getRuleAdapterTfFilePath();
-        this.ruleAdaptersFolderPath = this.getRuleAdaptersFolderPath();
         this.securityControlBaseFilePath = this.getSecurityControlBaseFilePath();
         this.securityControlTypesFilePath = this.getSecurityControlTypesFilePath();
     }
@@ -67,23 +65,19 @@ export class RuleContext {
     }
 
     private getRuleControlFilePath(): string {
-        return path.join(this.ruleFolderPath, 'controls', `${this.safeRuleId}.control.ts`);
+        return path.join(this.ruleFolderPath, `${this.safeRuleId}.control.ts`);
     }
 
     private getRuleAdapterBaseFilePath(): string {
-        return path.join(this.ruleFolderPath, 'adapters', `${this.safeRuleId}.adapter.ts`);
+        return path.join(this.ruleFolderPath, `${this.safeRuleId}.adapter.ts`);
     }
 
     private getRuleAdapterCfnFilePath(): string {
-        return path.join(this.ruleFolderPath, 'adapters', `${this.safeRuleId}.cfn.adapter.ts`);
+        return path.join(this.ruleFolderPath, `${this.safeRuleId}.cfn.adapter.ts`);
     }
     
     private getRuleAdapterTfFilePath(): string {
-        return path.join(this.ruleFolderPath, 'adapters', `${this.safeRuleId}.tf.adapter.ts`);
-    }
-
-    private getRuleAdaptersFolderPath(): string {
-        return path.join(this.ruleFolderPath, 'adapters');
+        return path.join(this.ruleFolderPath, `${this.safeRuleId}.tf.adapter.ts`);
     }
 
     private getSecurityControlBaseFilePath(): string {
