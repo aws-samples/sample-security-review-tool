@@ -57,9 +57,9 @@ export class ImplementationWorkflow {
         console.log(`Creating unit tests for ${spec.ruleId} ${requirement.id} (${format})...`);
 
         const relativeToControl = path.relative(path.dirname(testFilePath), this.context.ruleControlFilePath).replace(/\.ts$/, '.js');
-        const adapterFileName = `${format}-${this.context.service}-adapter.ts`;
-        const adapterFilePath = path.join(this.context.ruleAdaptersFolderPath, adapterFileName);
-        const relativeToAdapter = path.relative(path.dirname(testFilePath), adapterFilePath).replace(/\.ts$/, '.js');
+        //const adapterFileName = `${format}-${this.context.service}-adapter.ts`;
+        //const adapterFilePath = path.join(this.context.ruleAdaptersFolderPath, adapterFileName);
+        const relativeToAdapter = path.relative(path.dirname(testFilePath), this.context.ruleAdapterBaseFilePath).replace(/\.ts$/, '.js');
         const typesFilePath = path.join(this.context.srtRootFolderPath, 'src/assess/scanning/security-matrix/controls/types.ts');
         const relativeToTypes = path.relative(path.dirname(testFilePath), typesFilePath).replace(/\.ts$/, '.js');
 
