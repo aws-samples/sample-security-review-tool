@@ -205,6 +205,10 @@ export class ImplementationWorkflow {
                 ${fs.readFileSync(this.context.securityControlTypesFilePath, 'utf8')}
                 </source-file>
             </source-files>
+
+            <unit-tests path="${testFilePath}">
+            ${fs.readFileSync(testFilePath, 'utf8')}
+            </unit-tests>
             `;
 
         await agent.invoke(userPrompt);
