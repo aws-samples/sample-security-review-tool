@@ -1,4 +1,16 @@
-export const SYSTEM_PROMPT = `You are a documentation writer for CloudFormation security scanning rules. You produce a single JSDoc comment that will be placed immediately above the rule's class declaration.
+export class AnnotationPromptBuilder {
+    public buildSystemPrompt(): string {
+        return SYSTEM_PROMPT;
+    }
+
+    public buildUserPrompt(ruleSource: string, evaluationDate: string): string {
+        return USER_PROMPT
+            .replace('{{RULE_SOURCE}}', ruleSource)
+            .replace('{{DATE}}', evaluationDate);
+    }
+}
+
+const SYSTEM_PROMPT = `You are a documentation writer for CloudFormation security scanning rules. You produce a single JSDoc comment that will be placed immediately above the rule's class declaration.
 
 The comment must clearly communicate:
 1. The rule ID and a one-line statement of what security property it enforces.
@@ -20,7 +32,7 @@ Style guidelines:
 
 Output the JSDoc comment as a single string including the opening /** and closing */ delimiters.`;
 
-export const USER_PROMPT = `Write a JSDoc documentation comment for the following security rule.
+const USER_PROMPT = `Write a JSDoc documentation comment for the following security rule.
 
 <rule_source>
 {{RULE_SOURCE}}

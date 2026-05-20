@@ -1,4 +1,14 @@
-export const SYSTEM_PROMPT = `You generate a requirements specification for a security scanning rule. Your output drives automated test generation and implementation across multiple IaC formats (CloudFormation, Terraform).
+export class RequirementsPromptBuilder {
+    public buildSystemPrompt(): string {
+        return SYSTEM_PROMPT;
+    }
+
+    public buildUserPrompt(description: string): string {
+        return `Generate a requirements specification for the following security rule:\n\n${description}`;
+    }
+}
+
+const SYSTEM_PROMPT = `You generate a requirements specification for a security scanning rule. Your output drives automated test generation and implementation across multiple IaC formats (CloudFormation, Terraform).
 
 ## What a Requirement Is
 
@@ -68,7 +78,3 @@ Common ambiguities:
 - Partial coverage: is some coverage acceptable or must it be exhaustive?
 - Feature disabled vs. not configured: should these be treated differently?
 `;
-
-export function buildUserPrompt(description: string): string {
-    return `Generate a requirements specification for the following security rule:\n\n${description}`;
-}

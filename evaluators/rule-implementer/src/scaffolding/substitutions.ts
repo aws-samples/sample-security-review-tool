@@ -1,53 +1,10 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-import * as url from 'node:url';
-import { RuleContext } from '../../shared/rule-context.js';
-import type { RequirementsSpec } from '../../shared/types/requirements.js';
-import { RegistrationWriter } from './registration-writer.js';
+import { RuleContext } from '../shared/rule-context.js';
+import type { RequirementsSpec } from '../shared/types/requirements.js';
 
-const TEMPLATE_DIR = path.dirname(url.fileURLToPath(import.meta.url));
 const CONTROLS_IMPORT_PLACEHOLDER = '../../../../../src/assess/scanning/security-matrix/controls/';
 const CONTROLS_IMPORT_OUTPUT = '../../../controls/';
 
-export class RuleScaffolder {
-    public scaffold(context: RuleContext, spec: RequirementsSpec): void {
-        const substitutions = new Substitutions(context, spec);
-
-        this.createRuleFolder(context);
-        this.writeAdapterFiles(context, substitutions);
-        this.writeControlFile(context, substitutions);
-        new RegistrationWriter(context).register();
-    }
-
-    private createRuleFolder(context: RuleContext): void {
-        fs.mkdirSync(context.ruleFolderPath, { recursive: true });
-    }
-
-    private writeAdapterFiles(context: RuleContext, substitutions: Substitutions): void {
-        new TemplateRenderer('__safe-rule-id__.adapter.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterBaseFilePath, substitutions);
-        new TemplateRenderer('__rule__.adapter.cfn.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterCfnFilePath, substitutions);
-        new TemplateRenderer('__rule__.adapter.tf.ts').writeTo(TEMPLATE_DIR, context.ruleAdapterTfFilePath, substitutions);
-    }
-
-    private writeControlFile(context: RuleContext, substitutions: Substitutions): void {
-        new TemplateRenderer('__rule__.control.ts').writeTo(TEMPLATE_DIR, context.ruleControlFilePath, substitutions);
-    }
-}
-
-class TemplateRenderer {
-    constructor(private readonly templateName: string) { }
-
-    public writeTo(templateFolderPath: string, outputPath: string, substitutions: Substitutions): void {
-        fs.writeFileSync(outputPath, this.render(templateFolderPath, substitutions));
-    }
-
-    private render(templateFolderPath: string, substitutions: Substitutions): string {
-        const raw = fs.readFileSync(path.join(templateFolderPath, this.templateName), 'utf8');
-        return substitutions.apply(raw);
-    }
-}
-
-class Substitutions {
+export class Substitutions {
     public readonly ruleId: string;
     public readonly safeRuleId: string;
     public readonly service: string;

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { RuleContext } from '../../shared/rule-context.js';
+import { RuleContext } from '../shared/rule-context.js';
 import { toClassName, toInstanceName, toServiceControlsName } from './naming.js';
 
 export class RegistrationWriter {

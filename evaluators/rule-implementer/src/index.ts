@@ -2,9 +2,9 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
 import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
-import { generateRequirements } from './phases/requirements.js';
-import { scaffold } from './phases/scaffold.js';
-import { ImplementationWorkflow } from './phases/implementation.js';
+import { RequirementsWorkflow } from './requirements/requirements-workflow.js';
+import { ScaffoldingWorkflow } from './scaffolding/scaffolding-workflow.js';
+import { ImplementationWorkflow } from './implementation/implementation-workflow.js';
 import { RuleContext } from './shared/rule-context.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
@@ -19,16 +19,15 @@ async function main(): Promise<void> {
     console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
 
     console.log('\nPhase 1: Requirements generation');
-    const requirements = await generateRequirements(context, { regenerate: false });
+    const requirements = await new RequirementsWorkflow(context).generate({ regenerate: false });
     console.log(`Phase 1 complete: Generated ${requirements.requirements.length} requirements`);
 
     console.log('\nPhase 2: Scaffolding rule files');
-    await scaffold(context, requirements);
+    new ScaffoldingWorkflow(context).scaffold(requirements);
     console.log(`Phase 2 complete: Scaffolded rule files for ${context.ruleId}`);
 
     console.log(`\nPhase 3: Rule implementation`);
-    const workflow = new ImplementationWorkflow(context);
-    await workflow.implement(requirements);
+    await new ImplementationWorkflow(context).implement(requirements);
 
     console.log(`\n✓ Done.`);
 }
