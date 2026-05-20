@@ -8,7 +8,17 @@ export class RuleImplementationPromptBuilder {
 
     public buildSystemPrompt(): string {
         return `You are responsible for implementing the Green Phase (writing minimum passing implementation) of a Test-Driven Development workflow for a SecurityControl class.
-        You must follow the principles in Robert C. Martin's 'Clean Code'. Once you have implemented the code, run the tests and confirm they pass.`;
+You must follow the principles in Robert C. Martin's 'Clean Code'. Once you have implemented the code, run the tests and confirm they pass.
+
+## ControlFinding.issue field rules
+
+- \`issue\` is an optional override of the control's \`description\`. Only set it when additional context makes the finding clearer for the specific scenario.
+- It MUST be a problem statement (what is wrong), NEVER remediation guidance (how to fix it).
+- It MUST be IaC-format-agnostic: no CloudFormation property names, Terraform argument names, resource type ARNs, or format-specific terminology.
+- Remediation belongs exclusively in \`remediationScenarios[].intent\` (format-agnostic intent) and the adapter's \`getRemediation()\` (format-specific guidance). Never put fix instructions in \`issue\`.
+
+Good: 'DynamoDB table data plane events are not captured by any CloudTrail trail in the template'
+Bad: 'Configure a CloudTrail trail with a data event selector for AWS::DynamoDB::Table'`;
     }
 
     public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement): string {
