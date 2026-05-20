@@ -26,13 +26,9 @@ async function main(): Promise<void> {
     await scaffold(context, requirements);
     console.log(`Phase 2 complete: Scaffolded rule files for ${context.ruleId}`);
 
-    // console.log('\nPhase 3: Test generation');
-    // await generateTests(context.ruleId, context.service, spec);
-
     console.log(`\nPhase 3: Rule implementation`);
     const workflow = new ImplementationWorkflow(context);
     await workflow.implement(requirements);
-    //await implementRule(spec, context.service);
 
     console.log(`\n✓ Done.`);
 }
