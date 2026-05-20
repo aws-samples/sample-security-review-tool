@@ -5,7 +5,7 @@ import { select, input } from '@inquirer/prompts';
 import z from 'zod';
 import { SYSTEM_PROMPT, buildUserPrompt } from './prompt.js';
 import { createAwsKnowledgeMcpClient } from '../../shared/aws-knowledge-mcp-client.js';
-import { RuleContext } from '../../shared/fixture-paths.js';
+import { RuleContext } from '../../shared/rule-context.js';
 import type { RequirementsSpec } from '../../shared/types/requirements.js';
 
 const CUSTOM_INTERPRETATION = -1;

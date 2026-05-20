@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { RequirementImplementationAgent } from '../agents/requirements-implementer/agent.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
 import type { RegressionInfo } from '../shared/types/implementation.js';
-import { RuleContext } from '../shared/fixture-paths.js';
+import { RuleContext } from '../shared/rule-context.js';
 import { Agent, BedrockModel, tool } from '@strands-agents/sdk';
 import z from 'zod';
 import path from 'node:path';

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as url from 'node:url';
-import { RuleContext } from '../../shared/fixture-paths.js';
+import { RuleContext } from '../../shared/rule-context.js';
 import type { RequirementsSpec } from '../../shared/types/requirements.js';
 import { RegistrationWriter } from './registration-writer.js';
 

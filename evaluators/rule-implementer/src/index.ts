@@ -5,7 +5,7 @@ import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
 import { generateRequirements } from './phases/requirements.js';
 import { scaffold } from './phases/scaffold.js';
 import { ImplementationWorkflow } from './phases/implementation.js';
-import { RuleContext } from './shared/fixture-paths.js';
+import { RuleContext } from './shared/rule-context.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
 fs.mkdirSync(logsFolderPath, { recursive: true });
