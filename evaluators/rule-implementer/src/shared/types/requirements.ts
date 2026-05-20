@@ -16,8 +16,6 @@ export interface RuleRequirement {
     category: RequirementCategory;
     expectedBehavior: 'flag' | 'pass';
     rationale: string;
-    implemented: boolean;
-    tested: boolean;
 }
 
 export interface RequirementsSpec {

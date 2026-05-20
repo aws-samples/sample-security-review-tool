@@ -11,9 +11,7 @@ export const RuleRequirementSchema = z.object({
     description: z.string().describe('Format-agnostic scenario description — no IaC property names, resource types, or intrinsic functions'),
     category: RequirementCategorySchema.describe('Scenario category from the mandatory list'),
     expectedBehavior: z.enum(['flag', 'pass']).describe('Whether the rule should fire (flag) or not (pass)'),
-    rationale: z.string().describe('Why this expected behavior is correct, referencing AWS docs or rule semantics'),
-    implemented: z.boolean().describe('Whether this requirement has been implemented'),
-    tested: z.boolean().describe('Whether this requirement has been tested'),
+    rationale: z.string().describe('Why this expected behavior is correct, referencing AWS docs or rule semantics')
 });
 
 const AmbiguityOptionSchema = z.object({

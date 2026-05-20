@@ -13,9 +13,7 @@ export class ImplementationWorkflow {
     }
 
     public async implement(spec: RequirementsSpec): Promise<void> {
-        for (const requirement of spec.requirements.filter(r => !r.implemented || !r.tested)) {
-            if (requirement.implemented && requirement.tested) continue;
-
+        for (const requirement of spec.requirements) {
             await this.testCreationAgent.create(spec, requirement);
             await this.ruleImplementationAgent.implement(spec, requirement);
         }
