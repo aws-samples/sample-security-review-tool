@@ -1,25 +1,10 @@
 import * as fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { RequirementImplementationAgent } from '../agents/requirements-implementer/agent.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
-import type { RegressionInfo } from '../shared/types/implementation.js';
 import { RuleContext } from '../shared/rule-context.js';
 import { Agent, BedrockModel, tool } from '@strands-agents/sdk';
 import z from 'zod';
 import path from 'node:path';
-
-const MAX_RETRIES = 3;
-
-export interface ImplementationResult {
-    totalRequirements: number;
-    passed: number;
-    failed: string[];
-}
-
-interface VitestResult {
-    allPassed: boolean;
-    output: string;
-}
 
 export class ImplementationWorkflow {
     constructor(private readonly context: RuleContext) { }
@@ -29,22 +14,7 @@ export class ImplementationWorkflow {
             if (requirement.implemented && requirement.tested) continue;
 
             await this.createUnitTests(spec, requirement, 'cfn');
-            //await this.createUnitTests(spec, requirement, 'tf');
-
             await this.implementRequirement(spec, requirement);
-
-            // Update the requirement status in the spec file after implementation attempt
-            // const requirementsFile = this.context.requirementsFilePath;
-            // if (fs.existsSync(requirementsFile)) {
-            //     const fileContent = fs.readFileSync(requirementsFile, 'utf8');
-            //     const specData = JSON.parse(fileContent) as RequirementsSpec;
-            //     const reqToUpdate = specData.requirements.find(r => r.id === requirement.id);
-            //     if (reqToUpdate) {
-            //         reqToUpdate.implemented = true;
-            //         reqToUpdate.tested = true;
-            //         fs.writeFileSync(requirementsFile, JSON.stringify(specData, null, 2));
-            //     }
-            // }
         }
     }
 
