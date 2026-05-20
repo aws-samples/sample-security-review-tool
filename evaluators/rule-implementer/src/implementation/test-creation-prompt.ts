@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
+import { PREPROCESSING_BEHAVIOR } from './preprocessing-behavior.js';
 
 export class TestCreationPromptBuilder {
     constructor(private readonly context: RuleContext) { }
@@ -12,7 +13,11 @@ export class TestCreationPromptBuilder {
          - Ensuring unit tests are only written for the specific requirement.
          - Ensuring unit tests are created for both CloudFormation and Terraform.
          - Ensuring the unit test file is self-contained and executable with Vitest.
-         - If the scenario has no meaningful representation in a given format (e.g., a condition that only one format's data model can express), write a single skipped test with a comment explaining why, rather than inventing a fixture that doesn't represent the scenario.`;
+         - If the scenario has no meaningful representation in a given format (e.g., a condition that only one format's data model can express), write a single skipped test with a comment explaining why, rather than inventing a fixture that doesn't represent the scenario.
+
+## CloudFormation Template Preprocessing
+
+${PREPROCESSING_BEHAVIOR}`;
     }
 
     public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement): string {

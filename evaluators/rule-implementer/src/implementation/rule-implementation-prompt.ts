@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
+import { PREPROCESSING_BEHAVIOR } from './preprocessing-behavior.js';
 
 export class RuleImplementationPromptBuilder {
     constructor(private readonly context: RuleContext) { }
@@ -18,7 +19,11 @@ You must follow the principles in Robert C. Martin's 'Clean Code'. Once you have
 - Remediation belongs exclusively in \`remediationScenarios[].intent\` (format-agnostic intent) and the adapter's \`getRemediation()\` (format-specific guidance). Never put fix instructions in \`issue\`.
 
 Good: 'DynamoDB table data plane events are not captured by any CloudTrail trail in the template'
-Bad: 'Configure a CloudTrail trail with a data event selector for AWS::DynamoDB::Table'`;
+Bad: 'Configure a CloudTrail trail with a data event selector for AWS::DynamoDB::Table'
+
+## CloudFormation Template Preprocessing
+
+${PREPROCESSING_BEHAVIOR}`;
     }
 
     public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement): string {
