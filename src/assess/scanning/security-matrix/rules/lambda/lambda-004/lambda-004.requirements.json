@@ -1,0 +1,91 @@
+{
+  "ruleId": "LAMBDA-004",
+  "generatedAt": "2026-05-19T21:43:00.722Z",
+  "description": "Lambda functions must have X-Ray tracing enabled",
+  "cfnResources": [
+    "AWS::Lambda::Function",
+    "AWS::Serverless::Function"
+  ],
+  "tfResources": [
+    "aws_lambda_function"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Lambda function has no tracing configuration specified",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per the AWS Lambda Developer Guide, when no tracing configuration is set, Lambda defaults to PassThrough behavior, which does not record trace segments for the function. The rule requires X-Ray active tracing to be explicitly enabled.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-02",
+      "description": "Lambda function has tracing configuration with mode set to Active",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Active mode causes Lambda to automatically create trace segments for function invocations and send them to X-Ray, satisfying the requirement that X-Ray tracing be enabled.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-03",
+      "description": "Lambda function has tracing configuration with mode set to PassThrough",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "PassThrough mode only propagates tracing context to downstream services and does not cause Lambda itself to record trace segments. This does not satisfy the requirement that X-Ray tracing be enabled for the function.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-04",
+      "description": "Lambda function has tracing configuration present but the mode value is missing or empty",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "Without a mode value of Active explicitly set, the function does not have active X-Ray tracing enabled. An empty or missing mode falls back to default behavior (PassThrough), which is non-compliant.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-05",
+      "description": "Lambda function has tracing mode set to an unrecognized value",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Only Active mode satisfies the rule. Any value other than Active (including invalid or unrecognized values) means the function does not have X-Ray active tracing enabled.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-06",
+      "description": "Lambda function tracing mode value depends on an unresolvable condition",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the tracing mode value cannot be determined at analysis time, the rule cannot assert non-compliance. To avoid false positives, the rule should not flag in this case.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-07",
+      "description": "Lambda function's tracing configuration block is conditionally included via an unresolvable condition",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When it cannot be determined at analysis time whether the tracing configuration is present, the rule cannot assert non-compliance. To avoid false positives, the rule should not flag.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-08",
+      "description": "Lambda function has no tracing configuration regardless of the event source type or runtime/package format used",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision, the rule applies uniformly to all Lambda functions regardless of whether their event sources support X-Ray tracing (e.g., MSK, self-managed Kafka, Amazon MQ, DocumentDB) or their packaging format. The rule does not exclude functions based on event source compatibility.",
+      "implemented": false,
+      "tested": false
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/lambda/latest/dg/services-xray.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-lambda-function-tracingconfig.html",
+    "https://aws.amazon.com/blogs/compute/streamlining-trace-sampling-behavior-for-aws-lambda-functions-with-aws-x-ray/"
+  ]
+}

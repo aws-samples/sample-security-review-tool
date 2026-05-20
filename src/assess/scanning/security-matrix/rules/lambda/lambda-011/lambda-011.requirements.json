@@ -1,0 +1,154 @@
+{
+  "ruleId": "LAMBDA-011",
+  "generatedAt": "2026-05-20T12:49:23.915Z",
+  "description": "Lambda functions must have CloudWatch alarms for monitoring",
+  "cfnResources": [
+    "AWS::Lambda::Function"
+  ],
+  "tfResources": [
+    "aws_lambda_function"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "A Lambda function exists in the template with no monitoring alarm resources defined anywhere in the template",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "AWS recommends configuring CloudWatch alarms on Lambda functions to monitor key operational metrics (Errors, Throttles, Duration, ConcurrentExecutions). When no alarm exists in the template, the function has no monitoring coverage and the rule must flag the missing configuration. See AWS CloudWatch best-practice recommended alarms for Lambda.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-02",
+      "description": "A Lambda function has at least one CloudWatch alarm defined in the template that monitors a Lambda metric and identifies the function by name in its dimensions",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "When a CloudWatch alarm in the same template explicitly targets the assessed Lambda function (via the AWS/Lambda namespace and the function name as a dimension), the function has monitoring coverage and the rule should pass.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-03",
+      "description": "An alarm resource exists in the template but uses a metric namespace unrelated to Lambda",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "An alarm that does not use the Lambda metrics namespace cannot be monitoring a Lambda function regardless of dimensions. The assessed function still lacks proper monitoring coverage.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-04",
+      "description": "An alarm in the template uses the Lambda metrics namespace but its function-name dimension references a different Lambda function than the one being assessed",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "An alarm targeting a different Lambda function does not provide monitoring coverage for the assessed function. Each function requires its own alarm coverage because the function-name dimension scopes the metric to a specific function.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-05",
+      "description": "An alarm in the template targets the assessed Lambda function but is explicitly disabled from taking actions when in alarm state",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "An alarm that has actions disabled cannot trigger notifications or remediation when thresholds are breached. The monitoring intent is defeated, so the function is effectively unmonitored.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-06",
+      "description": "Multiple Lambda functions exist in the template but only some of them have associated CloudWatch alarms; the assessed function is one without coverage",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The rule evaluates each Lambda function independently. If the specific assessed function has no alarm coverage, it must be flagged regardless of whether other functions in the template are covered.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-07",
+      "description": "An alarm exists with the Lambda metrics namespace but has no dimensions specified, meaning it does not scope to any specific function",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "An alarm on a Lambda metric with no function-name dimension aggregates across all Lambda functions in the account/region. This provides account-wide monitoring coverage that includes the assessed function.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-08",
+      "description": "An alarm targets the assessed Lambda function but its dimensions collection is empty",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "An alarm with an empty dimensions collection on a Lambda metric monitors aggregated metrics across all functions, which includes the assessed function and provides coverage.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-09",
+      "description": "An alarm's reference to the target Lambda function name depends on a value that cannot be resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the alarm's function-name dimension is computed from an unresolvable value, the rule cannot conclusively determine that coverage is absent. To avoid false positives, the rule should not flag the function when an alarm in the template might cover it.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-10",
+      "description": "Multiple alarms are present in the template; at least one correctly targets the assessed Lambda function while others target unrelated resources or different functions",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "The presence of at least one alarm covering the assessed function satisfies the monitoring requirement. Unrelated or non-matching alarms in the same template do not invalidate that coverage.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-11",
+      "description": "An alarm targets the assessed Lambda function by name but specifies a function-version or alias qualifier that scopes monitoring to a specific published version rather than the function as a whole",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "When the alarm dimensions include a Resource qualifier identifying a specific version or alias, monitoring is limited to that subset of invocations. Invocations against the unqualified function or other versions/aliases are not monitored, leaving the function without complete coverage.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-12",
+      "description": "An alarm targets the assessed Lambda function on a Lambda metric that is not among the commonly recommended reliability metrics (e.g., monitors invocation count rather than errors, throttles, duration, or concurrency)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule's intent is to ensure monitoring coverage exists for the function. Any alarm on a Lambda namespace metric that targets the function provides observability and satisfies the requirement; the rule does not enforce a specific metric selection.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-13",
+      "description": "An alarm targets the assessed Lambda function on a Lambda metric but has no alarm actions configured (no notification target attached for any alarm state transition)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule validates the structural existence of monitoring coverage rather than the operational completeness of notification routing. An alarm without actions still records state and history, satisfying the monitoring requirement at the IaC scanning level.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-14",
+      "description": "An alarm targets the assessed Lambda function on a Lambda metric with a threshold, statistic, or comparison operator that would be very unlikely to trigger in practice",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule checks for the structural existence of an alarm covering the function rather than evaluating the practical effectiveness of threshold tuning. Threshold appropriateness is a workload-specific tuning concern outside the scope of this rule.",
+      "implemented": false,
+      "tested": false
+    },
+    {
+      "id": "REQ-15",
+      "description": "A composite alarm in the template combines underlying metric alarms whose set of monitored alarms includes coverage of the assessed Lambda function, even if no standalone metric alarm directly targets the function in isolation",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Composite alarms aggregate the state of underlying metric alarms; when those underlying alarms cover the assessed function, the composite alarm provides effective monitoring. Coverage via composite-alarm membership is therefore acceptable.",
+      "implemented": false,
+      "tested": false
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Best_Practice_Recommended_Alarms_AWS_Services.html",
+    "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/component-configuration-examples-lambda.html",
+    "https://aws.amazon.com/blogs/mt/monitoring-aws-lambda-errors-using-amazon-cloudwatch/"
+  ]
+}
