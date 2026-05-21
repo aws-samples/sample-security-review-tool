@@ -1,4 +1,4 @@
-import { AdapterFactory, TfContext, IacRemediation, TerraformResource } from '../../../controls/types.js';
+import { AdapterFactory, TfContext, TerraformResource } from '../../../controls/types.js';
 import { Lambda011Adapter } from './lambda-011.adapter.js';
 
 const CLOUDWATCH_ALARM_RESOURCE_TYPE = 'aws_cloudwatch_metric_alarm';
@@ -110,9 +110,5 @@ class Lambda011TfAdapter implements Lambda011Adapter {
   private getAssessedFunctionName(): string | undefined {
     const functionName = this.ctx.resource.values?.function_name;
     return typeof functionName === 'string' ? functionName : undefined;
-  }
-
-  getRemediation(_scenario: string): IacRemediation | null {
-    return null;
   }
 }

@@ -1,4 +1,4 @@
-import { AdapterFactory, TfContext, IacRemediation } from '../../../controls/types.js';
+import { AdapterFactory, TfContext } from '../../../controls/types.js';
 import { Lambda004Adapter } from './lambda-004.adapter.js';
 
 const ACTIVE_TRACING_MODE = 'Active';
@@ -62,9 +62,5 @@ class Lambda004TfAdapter implements Lambda004Adapter {
   private isUnresolvedPlanValue(value: unknown): boolean {
     if (typeof value !== 'object' || value === null) return false;
     return UNKNOWN_PLAN_VALUE_KEY in (value as Record<string, unknown>);
-  }
-
-  getRemediation(_scenario: string): IacRemediation | null {
-    return null;
   }
 }

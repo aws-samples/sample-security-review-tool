@@ -1,4 +1,4 @@
-import { AdapterFactory, CfnContext, IacRemediation, Resource, Template } from '../../../controls/types.js';
+import { AdapterFactory, CfnContext, Resource, Template } from '../../../controls/types.js';
 import { Lambda011Adapter } from './lambda-011.adapter.js';
 
 const CLOUDWATCH_ALARM_RESOURCE_TYPE = 'AWS::CloudWatch::Alarm';
@@ -153,9 +153,5 @@ class Lambda011CfnAdapter implements Lambda011Adapter {
   private getAssessedFunctionName(): string | undefined {
     const functionName = this.ctx.resource.Properties?.FunctionName;
     return typeof functionName === 'string' ? functionName : undefined;
-  }
-
-  getRemediation(_scenario: string): IacRemediation | null {
-    return null;
   }
 }

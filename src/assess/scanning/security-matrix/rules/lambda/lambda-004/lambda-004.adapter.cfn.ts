@@ -1,4 +1,4 @@
-import { AdapterFactory, CfnContext, IacRemediation } from '../../../controls/types.js';
+import { AdapterFactory, CfnContext } from '../../../controls/types.js';
 import { Lambda004Adapter } from './lambda-004.adapter.js';
 
 const ACTIVE_TRACING_MODE = 'Active';
@@ -55,9 +55,5 @@ class Lambda004CfnAdapter implements Lambda004Adapter {
    */
   private isUnresolvedIntrinsic(value: unknown): boolean {
     return typeof value === 'object' && value !== null;
-  }
-
-  getRemediation(_scenario: string): IacRemediation | null {
-    return null;
   }
 }
