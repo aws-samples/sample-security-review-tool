@@ -1,4 +1,4 @@
-import { ControlAdapter, CfnContext, ControlFinding, IacContext, IacRemediation, Priority, RemediationScenario, Resource, ScanResult, TfContext } from './types.js';
+import { ControlAdapter, CfnContext, ControlFinding, IacContext, Priority, RemediationScenario, Resource, ScanResult, TfContext } from './types.js';
 import { SrtLogger } from '../../../../shared/logging/srt-logger.js';
 
 export interface SecurityControlMetadata {
@@ -32,8 +32,6 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
 
     private buildRemediation(adapter: TAdapter, scenario: string): string {
         const def = this.remediationScenarios.find(s => s.scenario === scenario);
-        const iac: IacRemediation | null = adapter.getRemediation(scenario);
-        if (def && iac) return `${def.intent}\n\n${iac.guidance}`;
         return def?.intent ?? '';
     }
 

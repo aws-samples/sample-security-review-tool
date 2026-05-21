@@ -9,6 +9,7 @@ export class RuleContext {
     readonly srtRootFolderPath: string;
     readonly requirementsFilePath: string;
     readonly testsFolderPath: string;
+    readonly rootFixtureFolderPath: string;
     readonly cdkFixtureFolderPath: string;
     readonly terraformFixtureFolderPath: string;
     readonly cloudFormationFixtureFolderPath: string;
@@ -28,6 +29,7 @@ export class RuleContext {
         this.ruleFolderPath = this.getRuleFolderPath();
         this.requirementsFilePath = this.getRequirementsFilePath();
         this.testsFolderPath = this.getTestsFolderPath();
+        this.rootFixtureFolderPath = this.getRootFixtureFolderPath();
         this.cdkFixtureFolderPath = this.getCdkFixtureFolderPath();
         this.terraformFixtureFolderPath = this.getTerraformFixtureFolderPath();
         this.cloudFormationFixtureFolderPath = this.getCloudFormationFixtureFolderPath();
@@ -66,16 +68,20 @@ export class RuleContext {
         return path.join(this.srtRootFolderPath, `tests/core/scanners/srt/rules/${this.service}/${this.safeRuleId}`);
     }
 
+    private getRootFixtureFolderPath(): string {
+        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}`);
+    }
+
     private getCdkFixtureFolderPath(): string {
-        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}/cdk`);
+        return path.join(this.getRootFixtureFolderPath(), `cdk`);
     }
 
     private getTerraformFixtureFolderPath(): string {
-        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}/terraform`);
+        return path.join(this.getRootFixtureFolderPath(), `terraform`);
     }
 
     private getCloudFormationFixtureFolderPath(): string {
-        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}/cfn`);
+        return path.join(this.getRootFixtureFolderPath(), `cfn`);
     }
 
     private getSafeRuleId(): string {

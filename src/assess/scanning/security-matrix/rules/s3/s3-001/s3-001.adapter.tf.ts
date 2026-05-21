@@ -1,4 +1,4 @@
-import { AdapterFactory, TfContext, IacRemediation, TerraformResource } from '../../../controls/types.js';
+import { AdapterFactory, TfContext, TerraformResource } from '../../../controls/types.js';
 import { S3001Adapter } from './s3-001.adapter.js';
 
 export class S3001TfAdapterFactory implements AdapterFactory<TfContext> {
@@ -31,14 +31,6 @@ class S3001TfAdapter implements S3001Adapter {
     const bucketName = this.getBucketName();
     if (!bucketName) return false;
     return this.ctx.allResources.some(resource => this.referencesAsLogTarget(resource, bucketName));
-  }
-
-  getRemediation(scenario: string): IacRemediation | null {
-    if (scenario !== 'enable-server-access-logging') return null;
-    return {
-      scenario,
-      guidance: 'Add an aws_s3_bucket_logging resource targeting this bucket and pointing to a log destination bucket.',
-    };
   }
 
   private hasInlineLogging(): boolean {

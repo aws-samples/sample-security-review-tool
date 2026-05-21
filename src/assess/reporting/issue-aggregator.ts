@@ -30,7 +30,6 @@ export class IssueAggregator {
         await this.processSemgrepIssues(options, issues, matchedIndices);
         await this.processBanditIssues(options, issues, matchedIndices);
         await this.processTemplateIssues(options, issues, matchedIndices);
-        await this.processTerraformIssues(options, issues, matchedIndices);
 
         this.markUnmatchedIssuesAsResolved(issues, existingIssueCount, matchedIndices);
 
@@ -110,14 +109,6 @@ export class IssueAggregator {
         }
     }
 
-    private async processTerraformIssues(options: ReportingOptions, issues: ScanResult[], matchedIndices: Set<number>): Promise<void> {
-        if (!options.terraformResults) return;
-
-        for (const tfResult of options.terraformResults) {
-            await this.processCheckovIssues(tfResult.checkovSummaryPath, issues, matchedIndices);
-            await this.processSecurityMatrixIssues(tfResult.terraformMatrixPath, issues, matchedIndices);
-        }
-    }
 
     private async processCheckovIssues(checkovSummaryPath: string | null, issues: ScanResult[], matchedIndices: Set<number>): Promise<void> {
         if (!checkovSummaryPath) return;

@@ -41,7 +41,7 @@ export class AssessCoordinator {
             await this.checkLicenseCompliance(license, updateLicenses);
             const codeScanResult = await this.runCodeScanners();
             const templateResults = await this.processIaC(generateDiagrams, generateThreatModels);
-            const projectSummary = await this.generateProjectSummary(templateResults);
+            const projectSummary = await this.generateProjectSummary();
 
             const assessmentSummary = await this.generateReports(
                 codeScanResult,
@@ -113,10 +113,10 @@ export class AssessCoordinator {
         });
     }
 
-    private async generateProjectSummary(templateResults: IaCTemplateResult[]): Promise<string | null> {
+    private async generateProjectSummary(): Promise<string | null> {
         return this.runPhase('Generating assessment summary...', 'Generated assessment summary', async (spin) => {
             const summarizer = new ProjectSummarizer(this.context, (msg) => this.spinProgress(spin, msg));
-            return summarizer.summarize(templateResults);
+            return summarizer.summarize();
         });
     }
 

@@ -27,11 +27,6 @@ export interface RemediationScenario {
   readonly intent: string;
 }
 
-export interface IacRemediation {
-  readonly scenario: string;
-  readonly guidance: string;
-}
-
 export interface ControlFinding {
   readonly scenario: string;
   readonly issue?: string;
@@ -40,7 +35,6 @@ export interface ControlFinding {
 export interface ControlAdapter {
   readonly resourceId: string;
   readonly resourceType: string;
-  getRemediation(scenario: string): IacRemediation | null;
 }
 
 export interface AdapterFactory<TContext extends IacContext> {

@@ -58,6 +58,8 @@ export class RemediationWorkflow {
     }
 
     private async prepareFixtures(): Promise<void> {
+        if (this.isFirstAttempt()) await fs.promises.rm(this.context.rootFixtureFolderPath, { recursive: true, force: true });                
+
         await fs.promises.mkdir(this.context.cdkFixtureFolderPath, { recursive: true });
         await fs.promises.mkdir(this.context.terraformFixtureFolderPath, { recursive: true });
         await fs.promises.mkdir(this.context.cloudFormationFixtureFolderPath, { recursive: true });
@@ -69,6 +71,10 @@ export class RemediationWorkflow {
         fs.cpSync(cdkTemplatePath, this.context.cdkFixtureFolderPath, { recursive: true });
         fs.cpSync(terraformTemplatePath, this.context.terraformFixtureFolderPath, { recursive: true });
         fs.cpSync(cfnTemplatePath, this.context.cloudFormationFixtureFolderPath, { recursive: true });
+    }
+
+    private isFirstAttempt(): boolean {
+        return this.attempt === 1;
     }
 
     private async testRule() {

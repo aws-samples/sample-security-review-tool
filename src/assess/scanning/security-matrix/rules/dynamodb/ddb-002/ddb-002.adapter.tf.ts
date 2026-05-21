@@ -1,4 +1,4 @@
-import { AdapterFactory, TfContext, IacRemediation, TerraformResource } from '../../../controls/types.js';
+import { AdapterFactory, TfContext, TerraformResource } from '../../../controls/types.js';
 import { Ddb002Adapter } from './ddb-002.adapter.js';
 
 const CLOUDTRAIL_TYPE = 'aws_cloudtrail';
@@ -129,9 +129,5 @@ class Ddb002TfAdapter implements Ddb002Adapter {
   private assessedTableName(): string | null {
     const values = (this.ctx.resource.values ?? {}) as Record<string, unknown>;
     return typeof values.name === 'string' ? values.name : null;
-  }
-
-  getRemediation(_scenario: string): IacRemediation | null {
-    return null;
   }
 }

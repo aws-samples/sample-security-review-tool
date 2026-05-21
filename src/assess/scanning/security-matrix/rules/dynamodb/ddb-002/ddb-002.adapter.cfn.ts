@@ -1,4 +1,4 @@
-import { AdapterFactory, CfnContext, IacRemediation, Resource } from '../../../controls/types.js';
+import { AdapterFactory, CfnContext, Resource } from '../../../controls/types.js';
 import { Ddb002Adapter } from './ddb-002.adapter.js';
 
 const CLOUDTRAIL_TYPE = 'AWS::CloudTrail::Trail';
@@ -115,9 +115,5 @@ class Ddb002CfnAdapter implements Ddb002Adapter {
   private identifierMatchesAssessedTable(value: string): boolean {
     if (value === this.resourceId) return true;
     return value.includes(`:table/${this.resourceId}`);
-  }
-
-  getRemediation(scenario: string): IacRemediation | null {
-    return null;
   }
 }

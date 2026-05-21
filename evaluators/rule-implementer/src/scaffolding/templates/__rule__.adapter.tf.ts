@@ -1,4 +1,4 @@
-import { AdapterFactory, TfContext, IacRemediation } from '../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { AdapterFactory, TfContext } from '../../../../../src/assess/scanning/security-matrix/controls/types.js';
 import { __Rule__Adapter } from './__safe-rule-id__.adapter.js';
 
 export class __Rule__TfAdapterFactory implements AdapterFactory<TfContext> {
@@ -20,9 +20,5 @@ class __Rule__TfAdapter implements __Rule__Adapter {
   constructor(private readonly ctx: TfContext) {
     this.resourceId = ctx.resource.address;
     this.resourceType = ctx.resource.type;
-  }
-
-  getRemediation(_scenario: string): IacRemediation | null {
-    return null;
   }
 }

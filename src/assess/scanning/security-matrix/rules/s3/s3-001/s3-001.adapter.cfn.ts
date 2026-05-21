@@ -1,4 +1,4 @@
-import { AdapterFactory, CfnContext, IacRemediation, Resource, Template } from '../../../controls/types.js';
+import { AdapterFactory, CfnContext, Resource, Template } from '../../../controls/types.js';
 import { S3001Adapter } from './s3-001.adapter.js';
 
 const UNRESOLVED_INTRINSIC_KEYS = ['Fn::If', 'Fn::ImportValue'];
@@ -34,14 +34,6 @@ class S3001CfnAdapter implements S3001Adapter {
   isLogDestination(): boolean {
     const buckets = this.collectOtherBuckets();
     return buckets.some(bucket => this.bucketMayLogTo(bucket, this.resourceId));
-  }
-
-  getRemediation(scenario: string): IacRemediation | null {
-    if (scenario !== 'enable-server-access-logging') return null;
-    return {
-      scenario,
-      guidance: 'Set the LoggingConfiguration property on the AWS::S3::Bucket resource with a DestinationBucketName referencing a log destination bucket.',
-    };
   }
 
   private collectOtherBuckets(): Resource[] {

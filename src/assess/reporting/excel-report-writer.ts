@@ -3,12 +3,12 @@ import ExcelJS from 'exceljs';
 import { getFriendlyDate } from '../../shared/utils/date-utils.js';
 import { readJsonFile } from '../../shared/file-system/file-utils.js';
 import { Threat } from '../template-processing/threat-model-report-generator.js';
-import { CodeScanResult, TemplateResult } from '../types.js';
+import { CodeScanResult, IaCTemplateResult } from '../types.js';
 
 export interface ExcelReportOptions {
     srtOutputFolderPath: string;
     codeScanResult: CodeScanResult;
-    templateResults: TemplateResult[];
+    templateResults: IaCTemplateResult[];
 }
 
 interface SyftSummaryItem {
@@ -130,7 +130,7 @@ export class ExcelReportWriter {
         return { Type: type, Name: pkg.name, Version: pkg.version, License: pkg.license, Path: pkg.path };
     }
 
-    private async addTemplateSheets(templateResults: TemplateResult[]): Promise<void> {
+    private async addTemplateSheets(templateResults: IaCTemplateResult[]): Promise<void> {
         if (templateResults.length === 0) return;
 
         const checkovData = await this.collectTemplateData<Record<string, unknown>>(templateResults, 'checkovSummaryPath');
@@ -150,7 +150,7 @@ export class ExcelReportWriter {
         }
     }
 
-    private async collectTemplateData<T>(templateResults: TemplateResult[], pathProperty: keyof TemplateResult): Promise<T[]> {
+    private async collectTemplateData<T>(templateResults: IaCTemplateResult[], pathProperty: keyof IaCTemplateResult): Promise<T[]> {
         const combined: T[] = [];
 
         for (const result of templateResults) {

@@ -16,7 +16,8 @@ You must follow the principles in Robert C. Martin's 'Clean Code'. Once you have
 - \`issue\` is an optional override of the control's \`description\`. Only set it when additional context makes the finding clearer for the specific scenario.
 - It MUST be a problem statement (what is wrong), NEVER remediation guidance (how to fix it).
 - It MUST be IaC-format-agnostic: no CloudFormation property names, Terraform argument names, resource type ARNs, or format-specific terminology.
-- Remediation belongs exclusively in \`remediationScenarios[].intent\` (format-agnostic intent) and the adapter's \`getRemediation()\` (format-specific guidance). Never put fix instructions in \`issue\`.
+- Remediation belongs exclusively in \`remediationScenarios[].intent\` (format-agnostic intent). Never put fix instructions in \`issue\`.
+- A corresponding \`remediationScenario\` with a clear, format-agnostic \`intent\` MUST be provided for every unique \`issue\` value to guide users towards resolution.
 
 Good: 'DynamoDB table data plane events are not captured by any CloudTrail trail in the template'
 Bad: 'Configure a CloudTrail trail with a data event selector for AWS::DynamoDB::Table'

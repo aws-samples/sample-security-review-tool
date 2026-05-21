@@ -1,13 +1,13 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { readTextFile } from '../../shared/file-system/file-utils.js';
-import { TemplateResult } from '../types.js';
+import { CloudFormationTemplateConfig } from '../../shared/project/project-context.js';
 
 export class ContextCollector {
     private static readonly MAX_README_LENGTH = 3000;
     private static readonly EXCLUDED_DIRS = ['node_modules', '.git', '.srt', '.dsr', '.venv', '.srt-venv', 'cdk.out', 'dist', 'build', '__pycache__'];
 
-    public async collect(projectPath: string, templateResults: TemplateResult[]): Promise<string> {
+    public async collect(projectPath: string, cfnTemplates: CloudFormationTemplateConfig[]): Promise<string> {
         const sections: string[] = [];
 
         const readme = await this.collectReadme(projectPath);
@@ -15,7 +15,7 @@ export class ContextCollector {
             sections.push(`## README\n${readme}`);
         }
 
-        const cfnResources = await this.collectCfnResources(templateResults);
+        const cfnResources = await this.collectCfnResources(cfnTemplates);
         if (cfnResources) {
             sections.push(`## CloudFormation Resources\n${cfnResources}`);
         }
@@ -54,19 +54,19 @@ export class ContextCollector {
         return null;
     }
 
-    private async collectCfnResources(templateResults: TemplateResult[]): Promise<string | null> {
-        if (templateResults.length === 0) {
+    private async collectCfnResources(cfnTemplates: CloudFormationTemplateConfig[]): Promise<string | null> {
+        if (cfnTemplates.length === 0) {
             return null;
         }
 
         const resourceTypes = new Set<string>();
 
-        for (const result of templateResults) {
+        for (const template of cfnTemplates) {
             try {
-                const content = await readTextFile(result.cfnTemplateFilePath);
+                const content = await readTextFile(template.filePath);
                 if (!content) continue;
 
-                const types = this.extractResourceTypes(content, result.cfnTemplateFilePath);
+                const types = this.extractResourceTypes(content, template.filePath);
                 types.forEach(t => resourceTypes.add(t));
             } catch (error) {
             }

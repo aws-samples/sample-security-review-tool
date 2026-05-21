@@ -4,7 +4,6 @@ import { writeTextFile, ensureDirectoryExists } from '../../shared/file-system/f
 import * as bedrockUtils from '../../shared/ai/bedrock-client.js';
 import { ContextCollector } from './context-collector.js';
 import { PROJECT_SUMMARY_PROMPT } from './project-summary-prompt.js';
-import { TemplateResult } from '../types.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
 
 export class ProjectSummarizer {
@@ -12,10 +11,11 @@ export class ProjectSummarizer {
 
     constructor(private readonly context: ProjectContext, private readonly onProgress: (progress: string) => void = () => { }) {  }
 
-    public async summarize(templateResults: TemplateResult[]): Promise<string | null> {
+    public async summarize(): Promise<string | null> {
         try {
             this.onProgress('  › Collecting project context...');
-            const context = await this.contextCollector.collect(this.context.getProjectRootFolderPath(), templateResults);
+            const cfnTemplates = await this.context.getCloudFormationTemplates();
+            const context = await this.contextCollector.collect(this.context.getProjectRootFolderPath(), cfnTemplates);
             this.onProgress('  ✔ Collected project context');
 
             if (!context.trim())  return null;
