@@ -115,3 +115,6 @@ bun.lock
 # MCP configuration (contains user-specific paths)
 .mcp.json
 .playwright-cli/
+
+# Rule implementer fixtures
+evaluators/rule-implementer/src/remediation/fixtures/
