@@ -1,0 +1,83 @@
+{
+  "ruleId": "S3-008",
+  "generatedAt": "2026-05-21T20:57:15.778Z",
+  "description": "S3 buckets must have a lifecycle policy",
+  "cfnResources": [
+    "AWS::S3::Bucket"
+  ],
+  "tfResources": [
+    "aws_s3_bucket",
+    "aws_s3_bucket_lifecycle_configuration"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "S3 bucket has no lifecycle configuration defined at all",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires every S3 bucket to have a lifecycle policy. A bucket with no lifecycle configuration violates this requirement outright."
+    },
+    {
+      "id": "REQ-02",
+      "description": "S3 bucket has a lifecycle configuration containing at least one rule whose status is enabled",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "An S3 lifecycle rule is only actively applied when its status is set to Enabled. A bucket with any enabled rule satisfies the requirement to have an active lifecycle policy."
+    },
+    {
+      "id": "REQ-03",
+      "description": "S3 bucket has a lifecycle configuration but every defined rule is explicitly disabled",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision: a lifecycle policy whose rules are all disabled is not actively applied to objects in the bucket and therefore does not satisfy the requirement that the bucket have an effective lifecycle policy."
+    },
+    {
+      "id": "REQ-04",
+      "description": "S3 bucket has a lifecycle configuration with both enabled and disabled rules",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "At least one enabled rule means the bucket has an actively applied lifecycle policy, which is sufficient to satisfy the requirement regardless of other disabled rules."
+    },
+    {
+      "id": "REQ-05",
+      "description": "S3 bucket has a lifecycle configuration but the rules collection is empty",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "A lifecycle configuration with no rules has no transitions, expirations, or other actions and therefore provides no lifecycle management — equivalent in effect to having no lifecycle policy."
+    },
+    {
+      "id": "REQ-06",
+      "description": "S3 bucket has a lifecycle configuration with at least one enabled rule whose scope is narrowed by a prefix, tag, or object-size filter to a subset of objects",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: any enabled rule is sufficient regardless of scope. The rule does not require lifecycle actions to apply to the entire bucket — narrowly scoped enabled rules still satisfy the requirement."
+    },
+    {
+      "id": "REQ-07",
+      "description": "S3 bucket's lifecycle configuration presence depends on a condition that cannot be resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: when the value cannot be determined at analysis time, the rule cannot conclusively assert non-compliance and must pass to avoid false positives."
+    },
+    {
+      "id": "REQ-08",
+      "description": "S3 bucket's lifecycle rule status value cannot be resolved at analysis time (the only rule's enabled/disabled state is unknown)",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Consistent with the resolved decision on unresolvable values: the rule cannot conclusively determine that no enabled rule exists, so it must not flag."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Lifecycle configuration is defined on a different bucket resource and does not apply to the assessed bucket",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "The rule evaluates each bucket individually. A lifecycle configuration attached to another bucket provides no coverage for the assessed bucket, which therefore lacks a lifecycle policy."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-lifecycleconfiguration.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-rule.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html"
+  ]
+}
