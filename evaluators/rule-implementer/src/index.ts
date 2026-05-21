@@ -5,6 +5,7 @@ import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
 import { RequirementsWorkflow } from './requirements/requirements-workflow.js';
 import { ScaffoldingWorkflow } from './scaffolding/scaffolding-workflow.js';
 import { ImplementationWorkflow } from './implementation/implementation-workflow.js';
+import { RemediationWorkflow } from './remediation/remediation-workflow.js';
 import { RuleContext } from './shared/rule-context.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
@@ -19,15 +20,18 @@ async function main(): Promise<void> {
     console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
 
     console.log('\nPhase 1: Requirements generation');
-    const requirements = await new RequirementsWorkflow(context).generate({ regenerate: false });
+    const requirements = await new RequirementsWorkflow(context).run({ regenerate: false });
     console.log(`Phase 1 complete: Generated ${requirements.requirements.length} requirements`);
 
     console.log('\nPhase 2: Scaffolding rule files');
-    new ScaffoldingWorkflow(context).scaffold(requirements);
+    new ScaffoldingWorkflow(context).run(requirements);
     console.log(`Phase 2 complete: Scaffolded rule files for ${context.ruleId}`);
 
     console.log(`\nPhase 3: Rule implementation`);
-    await new ImplementationWorkflow(context).implement(requirements);
+    await new ImplementationWorkflow(context).run(requirements);
+
+    console.log(`\nPhase 4: Remediation validation`);
+    await new RemediationWorkflow(context).run();
 
     console.log(`\n✓ Done.`);
 }

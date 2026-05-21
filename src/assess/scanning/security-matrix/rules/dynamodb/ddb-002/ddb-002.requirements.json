@@ -1,0 +1,113 @@
+{
+  "ruleId": "DDB-002",
+  "generatedAt": "2026-05-20T15:33:23.757Z",
+  "description": "DynamoDB data plan events must be captured by CloudTrail logging",
+  "cfnResources": [
+    "AWS::DynamoDB::Table",
+    "AWS::DynamoDB::GlobalTable"
+  ],
+  "tfResources": [
+    "aws_dynamodb_table"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "A DynamoDB table is defined and no CloudTrail trail in the template configures data event logging for any DynamoDB resource.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "If no trail captures DynamoDB data plane events, the assessed table's item-level activity is unaudited. AWS docs note trails do not log data events by default; explicit configuration is required."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A CloudTrail trail exists but is configured to log data events only for non-DynamoDB resource types (for example object storage or function invocations).",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Data event logging is resource-type specific. A trail logging only S3 object or Lambda function events does not capture DynamoDB data plane operations on the assessed table."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A CloudTrail trail captures DynamoDB data events covering the assessed table, but the trail's logging state is explicitly disabled.",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "A trail that is not actively logging will not deliver any events, including DynamoDB data events, regardless of its event selector configuration."
+    },
+    {
+      "id": "REQ-04",
+      "description": "A CloudTrail trail enumerates DynamoDB tables for data event logging by specific identifier, and the assessed table's identifier is not among them while other tables are.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Coverage is per-resource. When tables are listed individually, only the listed tables have their data events logged; the assessed table is unaudited."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A CloudTrail trail is configured to log data events for all DynamoDB tables but explicitly excludes the assessed table by selector condition.",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "An advanced selector that filters out the assessed table's identifier removes it from coverage even though other DynamoDB tables remain covered."
+    },
+    {
+      "id": "REQ-06",
+      "description": "A CloudTrail trail is present but whether its data event configuration includes DynamoDB tables (or which tables are referenced) depends on a value that cannot be resolved at analysis time.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When coverage cannot be conclusively determined, the rule cannot assert non-compliance. Per the resolved decision on lenient pattern matching, undeterminable matches are assumed to provide coverage."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Two CloudTrail trails are defined: one logs DynamoDB data events covering the assessed table, while another logs only management events or unrelated data event types.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Coverage by any single trail is sufficient. The presence of additional trails that do not cover DynamoDB does not invalidate the covering trail."
+    },
+    {
+      "id": "REQ-08",
+      "description": "A CloudTrail trail declares an event selector for DynamoDB data events but the list of covered table identifiers is empty.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty resource list provides no coverage for any specific table, including the assessed one."
+    },
+    {
+      "id": "REQ-09",
+      "description": "A CloudTrail trail logs data events for all DynamoDB tables using a wildcard or all-tables selector that matches every table in the account.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "An all-DynamoDB-tables selector (for example, an ARN prefix matching all tables) captures data events for the assessed table. AWS docs describe this as the all-resources logging mode."
+    },
+    {
+      "id": "REQ-10",
+      "description": "A CloudTrail trail enumerates DynamoDB tables for data event logging by specific identifier and the assessed table's identifier appears in the list.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Direct enumeration of the assessed table's identifier in the trail's data resource list provides explicit coverage of its data plane events."
+    },
+    {
+      "id": "REQ-11",
+      "description": "A CloudTrail trail covers the assessed DynamoDB table for data events but is scoped to read-only events only or write-only events only.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: any data event coverage (read-only or write-only) is considered sufficient to satisfy the rule."
+    },
+    {
+      "id": "REQ-12",
+      "description": "A CloudTrail trail with matching DynamoDB data event coverage is single-region and the assessed table's region differs or is not determinable from the template.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: region matching is out of scope. Any trail with matching data event selectors satisfies the rule regardless of region."
+    },
+    {
+      "id": "REQ-13",
+      "description": "A CloudTrail trail's data event configuration references DynamoDB tables via an ARN pattern or wildcard whose match against the assessed table cannot be conclusively determined.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: when a pattern-based match is inconclusive, the rule assumes the pattern covers the table (lenient interpretation)."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",
+    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/logging-using-cloudtrail.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudtrail-trail-eventselector.md",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudtrail-trail-dataresource.md",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_AdvancedEventSelector.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudtrail-trail.md"
+  ]
+}

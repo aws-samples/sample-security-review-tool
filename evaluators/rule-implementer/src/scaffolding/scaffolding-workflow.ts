@@ -8,7 +8,7 @@ import { RegistrationWriter } from './registration-writer.js';
 export class ScaffoldingWorkflow {
     constructor(private readonly context: RuleContext) { }
 
-    public scaffold(spec: RequirementsSpec): void {
+    public run(spec: RequirementsSpec): void {
         if (fs.existsSync(this.context.ruleControlFilePath)) return;
 
         const substitutions = new Substitutions(this.context, spec);

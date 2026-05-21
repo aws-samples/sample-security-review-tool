@@ -23,6 +23,7 @@ export class FixGenerator {
     private async generateFixWithAgent(issue: ScanResult): Promise<Fix | null> {
         const agent = new StrandsFixAgent(this.context);
         const result = await agent.run(issue);
+
         if (result.stopReason !== 'finished') {
             SrtLogger.logError(
                 `StrandsFixAgent did not complete cleanly (stopReason: ${result.stopReason})`,
@@ -30,6 +31,7 @@ export class FixGenerator {
                 { checkId: issue.check_id, path: issue.path },
             );
         }
+        
         return agent.toFix(result);
     }
 }

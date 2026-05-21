@@ -1,5 +1,3 @@
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
@@ -13,11 +11,7 @@ export class TestCreationAgent {
         this.promptBuilder = new TestCreationPromptBuilder(context);
     }
 
-    public async create(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {
-        const cfnTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.cfn.test.ts`);
-        
-        if (fs.existsSync(cfnTestFilePath)) return;
-
+    public async create(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {       
         console.log(`\n==== Creating unit tests for ${spec.ruleId} ${requirement.id} ====\n`);
 
         const agent = new Agent({

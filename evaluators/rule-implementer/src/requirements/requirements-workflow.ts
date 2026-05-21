@@ -16,7 +16,7 @@ export interface RequirementsWorkflowOptions {
 export class RequirementsWorkflow {
     constructor(private readonly context: RuleContext) { }
 
-    public async generate(options: RequirementsWorkflowOptions = {}): Promise<RequirementsSpec> {
+    public async run(options: RequirementsWorkflowOptions = {}): Promise<RequirementsSpec> {
         if (!options.regenerate && fs.existsSync(this.context.requirementsFilePath)) {
             return JSON.parse(fs.readFileSync(this.context.requirementsFilePath, 'utf8'));
         }

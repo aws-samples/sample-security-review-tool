@@ -1,0 +1,89 @@
+{
+  "ruleId": "S3-001",
+  "generatedAt": "2026-05-21T17:08:45.794Z",
+  "description": "S3 buckets must enable server access logging unless serving as a log destination",
+  "cfnResources": [
+    "AWS::S3::Bucket"
+  ],
+  "tfResources": [
+    "aws_s3_bucket",
+    "aws_s3_bucket_logging"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "An S3 bucket has no server access logging configuration and is not referenced as a log destination by any other bucket in the template.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "AWS recommends enabling server access logging for security auditing and visibility. A bucket without logging configured and not serving as a log destination violates the rule."
+    },
+    {
+      "id": "REQ-02",
+      "description": "An S3 bucket has server access logging configured to deliver logs to a separate destination bucket.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "This is the recommended configuration: logging is enabled and logs are delivered to a distinct destination bucket per AWS best practices."
+    },
+    {
+      "id": "REQ-03",
+      "description": "An S3 bucket has server access logging configured to deliver logs to itself (self-logging).",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: logging is technically enabled, satisfying the literal rule wording. AWS discourages self-logging due to infinite loop concerns, but the rule's scope is whether logging is enabled, not its quality."
+    },
+    {
+      "id": "REQ-04",
+      "description": "An S3 bucket has no logging configuration of its own but is explicitly referenced as the log destination by another bucket in the template.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Log destination buckets are intentionally exempt: enabling access logging on them would create recursive log entries. Exemption requires an explicit reference from another bucket as its log target."
+    },
+    {
+      "id": "REQ-05",
+      "description": "An S3 bucket has no logging configuration but appears intended as a log destination (e.g., by name or by a bucket policy granting the S3 logging service principal write access), without any other bucket in the template explicitly referencing it as a target.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision: exemption applies only when another bucket explicitly references this bucket as its log target. Naming heuristics or policy hints are not sufficient evidence of intent."
+    },
+    {
+      "id": "REQ-06",
+      "description": "An S3 bucket has no logging configuration of its own and is referenced as a log destination by another bucket whose own logging configuration is unresolvable at analysis time.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: when the referencing bucket's logging cannot be confirmed, apply the destination exemption to avoid false positives."
+    },
+    {
+      "id": "REQ-07",
+      "description": "An S3 bucket's logging configuration depends entirely on an unresolvable condition such that whether logging is enabled cannot be determined.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the rule cannot definitively assert non-compliance because the configuration value is not resolvable at analysis time, it should not flag."
+    },
+    {
+      "id": "REQ-08",
+      "description": "An S3 bucket has a logging configuration block present but it contains no destination bucket value (empty configuration).",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty logging configuration does not actually enable log delivery; effectively logging is not configured and the bucket is not exempted."
+    },
+    {
+      "id": "REQ-09",
+      "description": "An S3 bucket has server access logging configured with a destination bucket and an additional log file prefix.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Logging is enabled and delivered to a distinct destination; optional prefix configuration does not affect compliance."
+    },
+    {
+      "id": "REQ-10",
+      "description": "An S3 bucket is referenced as a log destination by multiple other buckets in the template and has no logging configuration of its own.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Being an explicit log destination for one or more other buckets qualifies for the exemption regardless of how many source buckets target it."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-server-access-logging.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-loggingconfiguration.html"
+  ]
+}

@@ -9,6 +9,9 @@ export class RuleContext {
     readonly srtRootFolderPath: string;
     readonly requirementsFilePath: string;
     readonly testsFolderPath: string;
+    readonly cdkFixtureFolderPath: string;
+    readonly terraformFixtureFolderPath: string;
+    readonly cloudFormationFixtureFolderPath: string;
     readonly ruleFolderPath: string;
     readonly ruleControlFilePath: string;
     readonly ruleAdapterBaseFilePath: string;
@@ -25,6 +28,9 @@ export class RuleContext {
         this.ruleFolderPath = this.getRuleFolderPath();
         this.requirementsFilePath = this.getRequirementsFilePath();
         this.testsFolderPath = this.getTestsFolderPath();
+        this.cdkFixtureFolderPath = this.getCdkFixtureFolderPath();
+        this.terraformFixtureFolderPath = this.getTerraformFixtureFolderPath();
+        this.cloudFormationFixtureFolderPath = this.getCloudFormationFixtureFolderPath();
         this.ruleControlFilePath = this.getRuleControlFilePath();
         this.ruleAdapterBaseFilePath = this.getRuleAdapterBaseFilePath();
         this.ruleAdapterCfnFilePath = this.getRuleAdapterCfnFilePath();
@@ -58,6 +64,18 @@ export class RuleContext {
 
     private getTestsFolderPath(): string {
         return path.join(this.srtRootFolderPath, `tests/core/scanners/srt/rules/${this.service}/${this.safeRuleId}`);
+    }
+
+    private getCdkFixtureFolderPath(): string {
+        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}/cdk`);
+    }
+
+    private getTerraformFixtureFolderPath(): string {
+        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}/terraform`);
+    }
+
+    private getCloudFormationFixtureFolderPath(): string {
+        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}/cfn`);
     }
 
     private getSafeRuleId(): string {
