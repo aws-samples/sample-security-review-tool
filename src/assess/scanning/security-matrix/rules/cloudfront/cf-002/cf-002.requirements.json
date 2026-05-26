@@ -1,0 +1,75 @@
+{
+  "ruleId": "CF-002",
+  "generatedAt": "2026-05-26T12:50:13.545Z",
+  "description": "CloudFront distributions require WAF protection",
+  "cfnResources": [
+    "AWS::CloudFront::Distribution"
+  ],
+  "tfResources": [
+    "aws_cloudfront_distribution"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "CloudFront distribution has no web ACL association configured",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Without a WAF web ACL associated, the distribution has no firewall protection against common web threats such as OWASP Top 10, SQL injection, and HTTP floods. AWS recommends associating a WAF web ACL with CloudFront distributions for protection."
+    },
+    {
+      "id": "REQ-02",
+      "description": "CloudFront distribution has a web ACL association set to an empty value",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty web ACL identifier is equivalent to no association — no WAF protection is in effect. The distribution remains exposed to web threats."
+    },
+    {
+      "id": "REQ-03",
+      "description": "CloudFront distribution is associated with a WAFv2 web ACL via its ARN",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Per AWS CloudFront documentation, a WAFv2 ACL ARN in the web ACL identifier field associates the distribution with WAFv2, providing the required firewall protection."
+    },
+    {
+      "id": "REQ-04",
+      "description": "CloudFront distribution is associated with a WAF Classic web ACL via its ACL ID",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: any WAF association (Classic or v2) satisfies the rule. AWS CloudFront supports both WAFv2 ARNs and WAF Classic ACL IDs in the web ACL identifier field, and either provides firewall protection."
+    },
+    {
+      "id": "REQ-05",
+      "description": "CloudFront distribution's web ACL identifier depends on a value that cannot be statically resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: pass to avoid false positives on unresolvable values. The rule cannot assert non-compliance when the actual association is determined only at deploy time."
+    },
+    {
+      "id": "REQ-06",
+      "description": "CloudFront distribution is associated with a web ACL that is referenced by a logical/symbolic identifier of another WAF web ACL resource defined in the same template",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A reference to another WAF web ACL resource resolves to a valid WAF association when deployed, satisfying the protection requirement."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Resource is not a CloudFront distribution (e.g., a different CDN, regional load balancer, or unrelated resource type)",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "The rule applies only to CloudFront distributions. Other resource types are out of scope and should not produce findings."
+    },
+    {
+      "id": "REQ-08",
+      "description": "CloudFront distribution has its web ACL identifier explicitly set to a null/none value",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "An explicitly null or unset web ACL identifier indicates no WAF protection is configured, leaving the distribution exposed to web threats."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-distributionconfig.md",
+    "https://docs.aws.amazon.com/sdk-for-kotlin/api/latest/cloudfront/aws.sdk.kotlin.services.cloudfront.model/-distribution-config/web-acl-id.html",
+    "https://aws.amazon.com/blogs/networking-and-content-delivery/mitigate-common-web-threats-with-one-click-in-amazon-cloudfront/",
+    "https://docs.aws.amazon.com/solutions/latest/constructs/aws_wafwebacl_cloudfront.html"
+  ]
+}
