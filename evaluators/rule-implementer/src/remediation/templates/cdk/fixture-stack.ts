@@ -1,4 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
@@ -14,5 +15,11 @@ export class FixtureStack extends cdk.Stack {
     });
 
     new s3.Bucket(this, 'Bucket');
+
+    new cloudfront.Distribution(this, 'Distribution', {
+      defaultBehavior: {
+        origin: new cdk.aws_cloudfront_origins.HttpOrigin('example.com'),
+      },
+    });
   }
 }
