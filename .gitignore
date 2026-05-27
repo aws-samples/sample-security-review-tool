@@ -117,4 +117,4 @@ bun.lock
 .playwright-cli/
 
 # Rule implementer fixture runtime outputs
-fixtures/
+/fixtures/
