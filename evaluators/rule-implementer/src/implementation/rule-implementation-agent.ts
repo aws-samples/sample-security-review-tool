@@ -21,6 +21,7 @@ export class RuleImplementationAgent {
             tools: [
                 AgentToolFactory.createWriteFileTool(),
                 AgentToolFactory.createFolderVitestTool(this.context.srtRootFolderPath, this.context.testsFolderPath),
+                AgentToolFactory.createReadUnitTestTool(this.context.testsFolderPath),
             ],
             structuredOutputSchema: ImplementationResultSchema,
         });

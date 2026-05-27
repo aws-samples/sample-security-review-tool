@@ -23,6 +23,26 @@ export class AgentToolFactory {
         });
     }
 
+    public static createReadUnitTestTool(testsFolderPath: string) {
+        return tool({
+            name: 'read_unit_tests',
+            description: 'Read the contents of a unit test file within the tests folder.',
+            inputSchema: z.object({
+                filePath: z.string().describe('The absolute path of the test file to read'),
+            }),
+            callback: async ({ filePath }) => {
+                const resolved = path.resolve(filePath);
+                if (!resolved.startsWith(testsFolderPath)) {
+                    return `Error: path must be within ${testsFolderPath}`;
+                }
+                if (!fs.existsSync(resolved)) {
+                    return `Error: file not found: ${resolved}`;
+                }
+                return fs.readFileSync(resolved, 'utf8');
+            },
+        });
+    }
+
     public static createSingleFileVitestTool(srtRootPath: string) {
         return tool({
             name: 'run_vitest',
