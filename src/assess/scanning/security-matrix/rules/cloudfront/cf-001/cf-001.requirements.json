@@ -1,0 +1,95 @@
+{
+  "ruleId": "CF-001",
+  "generatedAt": "2026-05-27T19:52:07.011Z",
+  "description": "CloudFront distributions must enforce a minimum TLS version of 1.2 for viewer connections",
+  "cfnResources": [
+    "AWS::CloudFront::Distribution"
+  ],
+  "tfResources": [
+    "aws_cloudfront_distribution"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "CloudFront distribution has no viewer certificate configuration at all (no SSL/TLS settings defined)",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Without any viewer certificate configuration, CloudFront falls back to the default CloudFront certificate behavior, but since no minimum protocol version is asserted by the user and there is no positive indication of TLS 1.2+, the rule cannot confirm TLS 1.2+ enforcement. Per AWS docs, security policy must be set to TLSv1.2_2018 or higher to enforce TLS 1.2+."
+    },
+    {
+      "id": "REQ-02",
+      "description": "CloudFront distribution has viewer certificate configuration but the minimum protocol version setting is missing",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Without an explicit minimum protocol version, CloudFront defaults to a permissive policy (e.g., TLSv1) that allows TLS versions below 1.2. AWS docs require explicitly choosing TLSv1.2_2018 or higher."
+    },
+    {
+      "id": "REQ-03",
+      "description": "CloudFront distribution explicitly sets the minimum protocol version to a TLS 1.2 or TLS 1.3 security policy (e.g., TLSv1.2_2018, TLSv1.2_2019, TLSv1.2_2021, TLSv1.2_2025, TLSv1.3_2025)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Per AWS CloudFront documentation, security policies TLSv1.2_2018 and higher enforce a minimum TLS protocol version of 1.2, which satisfies the rule."
+    },
+    {
+      "id": "REQ-04",
+      "description": "CloudFront distribution explicitly sets the minimum protocol version to a value that permits TLS versions below 1.2 (e.g., SSLv3, TLSv1, TLSv1_2016, TLSv1.1_2016)",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "These security policies allow TLS 1.1, TLS 1.0, or SSLv3 connections, which violate the requirement to enforce a minimum of TLS 1.2."
+    },
+    {
+      "id": "REQ-05",
+      "description": "CloudFront distribution is configured to use the default CloudFront certificate (the *.cloudfront.net certificate), regardless of any minimum protocol version value set",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "Per user-resolved decision: when the SSL certificate is the default CloudFront certificate, this rule passes (returns null). AWS forces TLSv1 in this case but the rule defers to the default-certificate scenario as out of scope."
+    },
+    {
+      "id": "REQ-06",
+      "description": "CloudFront distribution is disabled (not serving traffic) but the viewer TLS configuration still permits TLS versions below 1.2 or is missing",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Per user-resolved decision: configuration is evaluated regardless of distribution enabled state, due to drift and future re-enable risk."
+    },
+    {
+      "id": "REQ-07",
+      "description": "CloudFront distribution's minimum protocol version is set to a value the rule does not recognize (e.g., a future or unknown security policy string)",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "Per user-resolved decision: unknown values cannot be confirmed as TLS 1.2+ and therefore must be flagged."
+    },
+    {
+      "id": "REQ-08",
+      "description": "CloudFront distribution's minimum protocol version depends on an unresolvable condition (the value cannot be determined at analysis time)",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the minimum protocol version cannot be statically determined, the rule cannot assert non-compliance and should not produce a false positive."
+    },
+    {
+      "id": "REQ-09",
+      "description": "CloudFront distribution uses a custom (ACM or IAM) certificate and explicitly sets the minimum protocol version to a TLS 1.2+ security policy",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Custom certificates honor the configured minimum protocol version, and a TLS 1.2+ policy enforces the rule's requirement."
+    },
+    {
+      "id": "REQ-10",
+      "description": "CloudFront distribution uses a custom (ACM or IAM) certificate but does not specify a minimum protocol version",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "When using a custom certificate without specifying a minimum protocol version, CloudFront defaults to a policy that does not enforce TLS 1.2+, so the rule should flag."
+    },
+    {
+      "id": "REQ-11",
+      "description": "CloudFront distribution viewer certificate configuration is present but contains no usable values (empty)",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty viewer certificate configuration provides no assurance that TLS 1.2+ is enforced; CloudFront would fall back to permissive defaults."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-viewercertificate.html",
+    "https://docs.aws.amazon.com/help-panel/AmazonCloudFront/latest/console/distribution-security-policy.html"
+  ]
+}
