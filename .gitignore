@@ -116,5 +116,5 @@ bun.lock
 .mcp.json
 .playwright-cli/
 
-# Rule implementer fixtures
-evaluators/rule-implementer/src/remediation/fixtures/
+# Rule implementer fixture runtime outputs
+evaluators/rule-implementer/src/fixtures/

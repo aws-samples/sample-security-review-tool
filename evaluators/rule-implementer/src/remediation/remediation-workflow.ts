@@ -26,94 +26,75 @@ export class FixValidationResult {
 
 export class RemediationWorkflow {
     private validationResult: FixValidationResult | null = null;
-    private attempt = 1;
+    private issues: ScanResult[] = [];
+    private fixAttempt = 1;
 
     constructor(private readonly context: RuleContext) { }
 
     public async run(): Promise<void> {
         this.resetWorkflow();
+        await this.testRule();
 
-        while (this.shouldIterate()) {
-            await this.prepareFixtures();
-            await this.testRule();
-            await this.validateRuleTriggered();
-            await this.backupIssuesFile();
-            await this.applyFix();
-            await this.validateFix();
+        for (const issue of this.issues) {
+            this.resetFixAttempts();
 
-            if (this.fixWasSuccessful()) return;
+            console.log(`\nValidating fix for issue ${issue.check_id} on resource ${issue.resourceName} (attempt ${this.fixAttempt})`);
 
-            await this.updateFixInstructions();
-            this.tryAgain();
+            while (this.shouldIterate()) {
+                await this.backupIssuesFile();
+                await this.applyFix(issue);
+                await this.validateFix(issue);
+                if (this.fixWasSuccessful()) break;
+                await this.updateFixInstructions();
+                this.tryAgain();
+            }
         }
     }
 
     private resetWorkflow(): void {
         this.validationResult = null;
-        this.attempt = 1;
+        this.issues = [];
+        this.fixAttempt = 1;
     }
 
-    private shouldIterate(): boolean {
-        return this.attempt <= 3;
-    }
-
-    private async prepareFixtures(): Promise<void> {
-        if (this.isFirstAttempt()) await fs.promises.rm(this.context.rootFixtureFolderPath, { recursive: true, force: true });                
-
-        await fs.promises.mkdir(this.context.cdkFixtureFolderPath, { recursive: true });
-        await fs.promises.mkdir(this.context.terraformFixtureFolderPath, { recursive: true });
-        await fs.promises.mkdir(this.context.cloudFormationFixtureFolderPath, { recursive: true });
-
-        const cdkTemplatePath = path.join(this.context.srtRootFolderPath, 'evaluators/rule-implementer/src/remediation/templates/cdk');
-        const terraformTemplatePath = path.join(this.context.srtRootFolderPath, 'evaluators/rule-implementer/src/remediation/templates/terraform');
-        const cfnTemplatePath = path.join(this.context.srtRootFolderPath, 'evaluators/rule-implementer/src/remediation/templates/cfn');
-
-        fs.cpSync(cdkTemplatePath, this.context.cdkFixtureFolderPath, { recursive: true });
-        fs.cpSync(terraformTemplatePath, this.context.terraformFixtureFolderPath, { recursive: true });
-        fs.cpSync(cfnTemplatePath, this.context.cloudFormationFixtureFolderPath, { recursive: true });
-    }
-
-    private isFirstAttempt(): boolean {
-        return this.attempt === 1;
-    }
-
-    private async testRule() {
-        const assessor = new AssessCoordinator(this.context.cdkFixtureFolderPath, () => { });
+    private async testRule(): Promise<void> {
+        const assessor = new AssessCoordinator(this.context.cdkFixtureOutputFolderPath, () => { });
         await assessor.assess('aws', false, false, false);
-    }
 
-    private async validateRuleTriggered(): Promise<void> {
-        const issuesPath = path.join(this.context.cdkFixtureFolderPath, '.srt', 'issues.json');
+        const issuesPath = path.join(this.context.cdkFixtureOutputFolderPath, '.srt', 'issues.json');
         const issuesData = await fs.promises.readFile(issuesPath, 'utf-8');
-        const issues: ScanResult[] = JSON.parse(issuesData);
+        const issues = JSON.parse(issuesData) as ScanResult[];
 
-        if (issues.every(x => x.check_id !== this.context.ruleId)) {
-            throw new Error(`Rule did not trigger on initial fixture. Please check the fixture and rule implementation.`);
+        this.issues = issues.filter(x => x.check_id === this.context.ruleId);
+
+        if (this.issues.length === 0) {
+            throw new Error(`Rule ${this.context.ruleId} did not trigger on fixture. Check the fixture and rule implementation.`);
         }
     }
 
+    private resetFixAttempts(): void {
+        this.fixAttempt = 1;
+    }
+
+    private shouldIterate(): boolean {
+        return this.fixAttempt <= 3;
+    }
+
     private async backupIssuesFile(): Promise<void> {
-        if (this.attempt !== 1) return;
-        
-        const issuesPath = path.join(this.context.cdkFixtureFolderPath, '.srt', 'issues.json');
+        const issuesPath = path.join(this.context.cdkFixtureOutputFolderPath, '.srt', 'issues.json');
         await fs.promises.copyFile(issuesPath, issuesPath.replace('.json', '.original.json'));
     }
 
-    private async applyFix(): Promise<void> {
-        const fixer = await FixCoordinator.create(this.context.cdkFixtureFolderPath, () => { });
-        const issuesPath = path.join(this.context.cdkFixtureFolderPath, '.srt', 'issues.json');
-        const issuesData = await fs.promises.readFile(issuesPath, 'utf-8');
-        const issues: ScanResult[] = JSON.parse(issuesData);
-        const issue = issues.find(x => x.check_id === this.context.ruleId);
-
-        const fix = await fixer.generateFix(issue!);
-        await fixer.applyFix(issue!, fix!);
+    private async applyFix(issue: ScanResult): Promise<void> {
+        const fixer = await FixCoordinator.create(this.context.cdkFixtureOutputFolderPath, () => { });
+        const fix = await fixer.generateFix(issue);
+        await fixer.applyFix(issue, fix!);
     }
 
-    private async validateFix(): Promise<void> {
+    private async validateFix(issue: ScanResult): Promise<void> {
         await this.testRule();
 
-        const issuesPath = path.join(this.context.cdkFixtureFolderPath, '.srt', 'issues.json');
+        const issuesPath = path.join(this.context.cdkFixtureOutputFolderPath, '.srt', 'issues.json');
         const originalPath = issuesPath.replace('.json', '.original.json');
 
         const [currentData, originalData] = await Promise.all([
@@ -124,12 +105,12 @@ export class RemediationWorkflow {
         const currentIssues: ScanResult[] = JSON.parse(currentData);
         const originalIssues: ScanResult[] = JSON.parse(originalData);
 
-        const targetIssue = currentIssues.find(i => i.check_id === this.context.ruleId);
+        const targetIssue = currentIssues.find(i => i.check_id === issue.check_id && i.resourceName === issue.resourceName);
 
-        if (!targetIssue) throw new Error(`After applying the fix, the original issue (${this.context.ruleId}) is no longer detected, which is unexpected. Please investigate the fix and the test fixture.`);
+        if (!targetIssue) throw new Error(`After applying the fix, the original issue (${issue.check_id}) is no longer detected, which is unexpected. Please investigate the fix and the test fixture.`);
 
         if (targetIssue.status?.toLowerCase() !== 'fixed') {
-            console.log(`  ✗ Fix did not resolve ${this.context.ruleId}`);
+            console.log(`  ✗ Fix did not resolve ${issue.check_id}`);
             this.validationResult = new FixValidationResult(targetIssue, false);
         }
 
@@ -144,6 +125,7 @@ export class RemediationWorkflow {
 
         console.log(`  ✓ Fix resolved ${this.context.ruleId} without introducing new HIGH priority issues`);
         this.validationResult = new FixValidationResult(targetIssue, true);
+
     }
 
     private fixWasSuccessful(): boolean {
@@ -155,6 +137,6 @@ export class RemediationWorkflow {
     }
 
     private tryAgain(): void {
-        this.attempt++;
+        this.fixAttempt++;
     }
 }

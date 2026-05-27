@@ -49,4 +49,16 @@ export class AgentToolFactory {
             },
         });
     }
+
+    public static createTscTool(cdkProjectPath: string) {
+        return tool({
+            name: 'run_tsc',
+            description: 'Run the TypeScript compiler against the CDK fixture project to check for compilation errors. Returns pass/fail and any error messages.',
+            callback: async () => {
+                const result = spawnSync('npx', ['tsc', '--noEmit'], { cwd: cdkProjectPath, encoding: 'utf8', timeout: 30_000 });
+                const output = ((result.stdout ?? '') + (result.stderr ?? ''));
+                return { passed: result.status === 0, output };
+            },
+        });
+    }
 }

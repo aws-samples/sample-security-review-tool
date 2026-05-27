@@ -7,6 +7,7 @@ import { ScaffoldingWorkflow } from './scaffolding/scaffolding-workflow.js';
 import { ImplementationWorkflow } from './implementation/implementation-workflow.js';
 import { RemediationWorkflow } from './remediation/remediation-workflow.js';
 import { RuleContext } from './shared/rule-context.js';
+import { FixtureWorkflow } from './fixtures/fixture-workflow.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
 fs.mkdirSync(logsFolderPath, { recursive: true });
@@ -30,7 +31,10 @@ async function main(): Promise<void> {
     console.log(`\nPhase 3: Rule implementation`);
     await new ImplementationWorkflow(context).run(requirements);
 
-    console.log(`\nPhase 4: Remediation validation`);
+    console.log(`\nPhase 4: Generating fixtures`);
+    await new FixtureWorkflow(context).run();
+
+    console.log(`\nPhase 5: Remediation validation`);
     await new RemediationWorkflow(context).run();
 
     console.log(`\n✓ Done.`);

@@ -5,9 +5,12 @@ import z from 'zod';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec } from '../shared/types/requirements.js';
 import { RequirementsAgent } from './requirements-agent.js';
-import { AmbiguitySchema } from './requirements-schema.js';
+import { AmbiguitySchema, RequirementsOutputSchema } from './requirements-schema.js';
 
 const CUSTOM_INTERPRETATION = -1;
+const MAX_RESOLUTION_ITERATIONS = 5;
+
+type RequirementsOutput = z.infer<typeof RequirementsOutputSchema>;
 
 export interface RequirementsWorkflowOptions {
     regenerate?: boolean;
@@ -17,19 +20,48 @@ export class RequirementsWorkflow {
     constructor(private readonly context: RuleContext) { }
 
     public async run(options: RequirementsWorkflowOptions = {}): Promise<RequirementsSpec> {
-        if (!options.regenerate && fs.existsSync(this.context.requirementsFilePath)) {
-            return JSON.parse(fs.readFileSync(this.context.requirementsFilePath, 'utf8'));
-        }
+        if (this.hasCachedSpec(options)) return this.loadCachedSpec();
 
         const agent = new RequirementsAgent();
-        let output = await agent.invoke(this.context.description);
+        const output = await this.generateResolvedRequirements(agent);
+        const spec = this.buildSpec(output);
+        this.persist(spec);
+        return spec;
+    }
 
-        if (output.ambiguities.length > 0) {
-            const resolvedDecisions = await this.resolveAmbiguities(output.ambiguities);
+    private hasCachedSpec(options: RequirementsWorkflowOptions): boolean {
+        return !options.regenerate && fs.existsSync(this.context.requirementsFilePath);
+    }
+
+    private loadCachedSpec(): RequirementsSpec {
+        return JSON.parse(fs.readFileSync(this.context.requirementsFilePath, 'utf8'));
+    }
+
+    private async generateResolvedRequirements(agent: RequirementsAgent): Promise<RequirementsOutput> {
+        let output = await agent.invoke(this.context.description);
+        const resolvedDecisions: string[] = [];
+
+        for (let i = 0; i < MAX_RESOLUTION_ITERATIONS && this.hasUnresolvedAmbiguities(output); i++) {
+            resolvedDecisions.push(...await this.resolveAmbiguities(output.ambiguities));
             output = await agent.invokeWithResolutions(this.context.description, resolvedDecisions);
         }
 
-        const spec: RequirementsSpec = {
+        this.warnIfUnresolved(output);
+        return output;
+    }
+
+    private hasUnresolvedAmbiguities(output: RequirementsOutput): boolean {
+        return output.ambiguities.length > 0;
+    }
+
+    private warnIfUnresolved(output: RequirementsOutput): void {
+        if (this.hasUnresolvedAmbiguities(output)) {
+            console.log(`  ⚠ ${output.ambiguities.length} unresolved ambiguities remain after ${MAX_RESOLUTION_ITERATIONS} iterations.`);
+        }
+    }
+
+    private buildSpec(output: RequirementsOutput): RequirementsSpec {
+        return {
             ruleId: this.context.ruleId,
             generatedAt: new Date().toISOString(),
             description: this.context.description,
@@ -38,9 +70,6 @@ export class RequirementsWorkflow {
             requirements: output.requirements,
             awsDocReferences: output.awsDocReferences,
         };
-
-        this.persist(spec);
-        return spec;
     }
 
     private async resolveAmbiguities(ambiguities: z.infer<typeof AmbiguitySchema>[]): Promise<string[]> {

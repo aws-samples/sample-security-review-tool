@@ -1,0 +1,94 @@
+{
+  "ruleId": "CF-004",
+  "generatedAt": "2026-05-26T15:23:32.419Z",
+  "description": "CloudFront distributions must only accept traffic over HTTPS",
+  "cfnResources": [
+    "AWS::CloudFront::Distribution"
+  ],
+  "tfResources": [
+    "aws_cloudfront_distribution"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Distribution's default cache behavior has no viewer protocol policy configured",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Without an explicit viewer protocol policy that enforces HTTPS, CloudFront permits HTTP traffic. The rule requires HTTPS-only or redirect-to-HTTPS to be set."
+    },
+    {
+      "id": "REQ-02",
+      "description": "Default cache behavior allows both HTTP and HTTPS (allow-all)",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "The 'allow-all' viewer protocol policy permits unencrypted HTTP traffic to reach the distribution, violating the requirement to only accept HTTPS."
+    },
+    {
+      "id": "REQ-03",
+      "description": "Default cache behavior is configured to require HTTPS only",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Per AWS documentation, the 'https-only' policy returns HTTP 403 for HTTP requests, fully enforcing HTTPS for viewer connections."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Default cache behavior is configured to redirect HTTP requests to HTTPS",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, 'redirect-to-https' is a documented HTTPS enforcement mode and is treated as compliant despite HTTP being accepted at the edge for redirection."
+    },
+    {
+      "id": "REQ-05",
+      "description": "Default cache behavior enforces HTTPS but at least one additional cache behavior allows both HTTP and HTTPS",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Each cache behavior controls protocol enforcement for its matched path pattern. A non-compliant additional cache behavior leaves a subset of paths reachable over HTTP."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Default cache behavior and all additional cache behaviors enforce HTTPS (via https-only or redirect-to-https, in any combination)",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "All viewer paths require HTTPS; mixing 'https-only' and 'redirect-to-https' across behaviors still satisfies the HTTPS-only requirement."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Distribution is disabled but has a cache behavior with a non-compliant viewer protocol policy",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision, configuration correctness is evaluated regardless of whether the distribution is currently enabled, since it can be enabled later without further changes."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Default cache behavior is compliant and all additional cache behaviors are compliant, but only the default cache behavior's viewer protocol policy value is unresolvable at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, when the value cannot be determined the rule should avoid false positives and pass."
+    },
+    {
+      "id": "REQ-09",
+      "description": "An additional cache behavior's viewer protocol policy value is unresolvable at analysis time, while default and other behaviors are compliant",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Consistent with the resolved decision for unresolvable values: the rule cannot assert non-compliance and should pass to avoid false positives."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Distribution has no cache behaviors collection populated and no default cache behavior viewer protocol policy",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "Without any viewer protocol policy enforced anywhere on the distribution, HTTP traffic is permitted by default and the rule must flag."
+    },
+    {
+      "id": "REQ-11",
+      "description": "Default cache behavior is non-compliant (allow-all) even though all additional cache behaviors enforce HTTPS",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The default cache behavior matches any request that does not match an additional behavior's path pattern, so an allow-all default exposes paths to HTTP."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https-viewers-to-cloudfront.html",
+    "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_UpdateDistribution.html"
+  ]
+}

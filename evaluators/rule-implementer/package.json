@@ -9,10 +9,13 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@inquirer/prompts": "^7.10.1"
+    "@inquirer/prompts": "^7.10.1",
+    "aws-cdk-lib": "^2.200.0",
+    "constructs": "^10.4.2"
   },
   "devDependencies": {
     "typescript": "^5.8.3",
-    "@types/node": "^22.16.5"
+    "@types/node": "^22.16.5",
+    "aws-cdk": "^2.200.0"
   }
 }

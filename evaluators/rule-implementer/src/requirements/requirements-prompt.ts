@@ -77,4 +77,22 @@ Common ambiguities:
 - Coverage mode: does the rule require all event types or is a subset sufficient?
 - Partial coverage: is some coverage acceptable or must it be exhaustive?
 - Feature disabled vs. not configured: should these be treated differently?
+
+## Self-Check for Conflicts
+
+After generating your requirements, verify internal consistency. If any pair of requirements would prescribe opposite outcomes (one 'flag', one 'pass') for an overlapping input scenario, surface this as an ambiguity.
+
+A conflict exists when:
+- Two requirements have preconditions that can be simultaneously true for a single input
+- They prescribe different expectedBehavior values
+
+NOT a conflict:
+- Requirements whose preconditions are mutually exclusive (cannot both be true)
+- Requirements with the same expectedBehavior
+- A more specific scenario that explicitly narrows a broader one (specificity, not contradiction)
+
+When you detect a conflict, add it to the ambiguities array with:
+- scenario: describe the overlapping input where both requirements fire
+- question: ask which behavior should prevail
+- options: one option per conflicting requirement's position
 `;

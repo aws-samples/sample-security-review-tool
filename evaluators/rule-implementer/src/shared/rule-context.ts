@@ -10,9 +10,11 @@ export class RuleContext {
     readonly requirementsFilePath: string;
     readonly testsFolderPath: string;
     readonly rootFixtureFolderPath: string;
-    readonly cdkFixtureFolderPath: string;
-    readonly terraformFixtureFolderPath: string;
-    readonly cloudFormationFixtureFolderPath: string;
+    readonly cdkFixtureResourceFilePath: string;
+    readonly cdkFixtureTemplateFolderPath: string;
+    readonly cdkFixtureOutputFolderPath: string;
+    readonly terraformFixtureOutputFolderPath: string;
+    readonly cloudFormationFixtureOutputFolderPath: string;
     readonly ruleFolderPath: string;
     readonly ruleControlFilePath: string;
     readonly ruleAdapterBaseFilePath: string;
@@ -22,6 +24,7 @@ export class RuleContext {
     readonly securityControlTypesFilePath: string;
     readonly serviceControlsIndexPath: string;
     readonly controlsRegistryPath: string;
+    readonly ruleFixtureFilePath: string;
 
     constructor(readonly ruleId: string, readonly service: string, readonly description: string) {
         this.safeRuleId = this.getSafeRuleId();
@@ -30,9 +33,11 @@ export class RuleContext {
         this.requirementsFilePath = this.getRequirementsFilePath();
         this.testsFolderPath = this.getTestsFolderPath();
         this.rootFixtureFolderPath = this.getRootFixtureFolderPath();
-        this.cdkFixtureFolderPath = this.getCdkFixtureFolderPath();
-        this.terraformFixtureFolderPath = this.getTerraformFixtureFolderPath();
-        this.cloudFormationFixtureFolderPath = this.getCloudFormationFixtureFolderPath();
+        this.cdkFixtureResourceFilePath = this.getCdkFixtureResourceFilePath();
+        this.cdkFixtureTemplateFolderPath = this.getCdkFixtureTemplateFolderPath();
+        this.cdkFixtureOutputFolderPath = this.getCdkFixtureOutputFolderPath();
+        this.terraformFixtureOutputFolderPath = this.getTerraformFixtureOutputFolderPath();
+        this.cloudFormationFixtureOutputFolderPath = this.getCloudFormationFixtureOutputFolderPath();
         this.ruleControlFilePath = this.getRuleControlFilePath();
         this.ruleAdapterBaseFilePath = this.getRuleAdapterBaseFilePath();
         this.ruleAdapterCfnFilePath = this.getRuleAdapterCfnFilePath();
@@ -41,6 +46,7 @@ export class RuleContext {
         this.securityControlTypesFilePath = this.getSecurityControlTypesFilePath();
         this.serviceControlsIndexPath = this.getServiceControlsIndexPath();
         this.controlsRegistryPath = this.getControlsRegistryPath();
+        this.ruleFixtureFilePath = this.getRuleFixtureFilePath();
     }
 
     private getSrtRootFolderPath(): string {
@@ -65,23 +71,31 @@ export class RuleContext {
     }
 
     private getTestsFolderPath(): string {
-        return path.join(this.srtRootFolderPath, `tests/core/scanners/srt/rules/${this.service}/${this.safeRuleId}`);
+        return path.join(this.srtRootFolderPath, 'tests', 'core', 'scanners', 'srt', 'rules', this.service, this.safeRuleId);
     }
 
     private getRootFixtureFolderPath(): string {
-        return path.join(this.srtRootFolderPath, `evaluators/rule-implementer/src/remediation/fixtures/${this.safeRuleId}`);
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-implementer', 'src', 'remediation', 'fixtures', this.safeRuleId);
     }
 
-    private getCdkFixtureFolderPath(): string {
-        return path.join(this.getRootFixtureFolderPath(), `cdk`);
+    private getCdkFixtureOutputFolderPath(): string {
+        return path.join(this.srtRootFolderPath, 'fixtures', this.safeRuleId, 'cdk');
     }
 
-    private getTerraformFixtureFolderPath(): string {
-        return path.join(this.getRootFixtureFolderPath(), `terraform`);
+    private getCdkFixtureTemplateFolderPath(): string {
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-implementer', 'src', 'fixtures', 'templates', 'cdk');
     }
 
-    private getCloudFormationFixtureFolderPath(): string {
-        return path.join(this.getRootFixtureFolderPath(), `cfn`);
+    private getCdkFixtureResourceFilePath(): string {
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-implementer', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'cdk.ts');
+    }
+
+    private getTerraformFixtureOutputFolderPath(): string {
+        return path.join(this.srtRootFolderPath, 'fixtures', this.safeRuleId, 'terraform');
+    }
+
+    private getCloudFormationFixtureOutputFolderPath(): string {
+        return path.join(this.srtRootFolderPath, 'fixtures', this.safeRuleId, 'cfn');
     }
 
     private getSafeRuleId(): string {
@@ -89,7 +103,7 @@ export class RuleContext {
     }
 
     private getRuleFolderPath(): string {
-        return path.join(this.srtRootFolderPath, `src/assess/scanning/security-matrix/rules/${this.service}/${this.safeRuleId}`);
+        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'rules', this.service, this.safeRuleId);
     }
 
     private getRuleControlFilePath(): string {
@@ -109,18 +123,22 @@ export class RuleContext {
     }
 
     private getSecurityControlBaseFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'src/assess/scanning/security-matrix/controls/security-control.ts');
+        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'controls', 'security-control.ts');
     }
 
     private getSecurityControlTypesFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'src/assess/scanning/security-matrix/controls/types.ts');
+        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'controls', 'types.ts');
     }
 
     private getServiceControlsIndexPath(): string {
-        return path.join(this.srtRootFolderPath, `src/assess/scanning/security-matrix/rules/${this.service}/controls/index.ts`);
+        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'rules', this.service, 'controls', 'index.ts');
     }
 
     private getControlsRegistryPath(): string {
-        return path.join(this.srtRootFolderPath, 'src/assess/scanning/security-matrix/rules/controls-registry.ts');
+        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'rules', 'controls-registry.ts');
+    }
+
+    private getRuleFixtureFilePath(): string {
+        return path.join(this.getRootFixtureFolderPath(), 'fixture-stack.ts');
     }
 }

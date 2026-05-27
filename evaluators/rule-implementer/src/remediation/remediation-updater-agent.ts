@@ -26,7 +26,7 @@ export class RemediationUpdaterAgent {
             structuredOutputSchema: RemediationSchema
         });
 
-        const fixtureContent = await fs.readFile(path.join(this.context.cdkFixtureFolderPath, 'fixture-stack.ts'), 'utf8');
+        const fixtureContent = await fs.readFile(path.join(this.context.cdkFixtureOutputFolderPath, 'fixture-stack.ts'), 'utf8');
         const userPrompt = this.promptBuilder.buildUserPrompt(details, fixtureContent);
 
         const result = await agent.invoke(userPrompt);

@@ -24,7 +24,29 @@ Bad: 'Configure a CloudTrail trail with a data event selector for AWS::DynamoDB:
 
 ## CloudFormation Template Preprocessing
 
-${PREPROCESSING_BEHAVIOR}`;
+${PREPROCESSING_BEHAVIOR}
+
+## Conflict Detection & Structured Output
+
+After implementing the requirement, run all tests. Your final structured output must be one of:
+
+- **Success**: All tests pass → return \`{ "status": "success" }\`
+- **Conflict**: The current requirement's tests cannot pass without breaking a previously-passing requirement's tests → return a conflict report
+
+A conflict report:
+\`\`\`json
+{
+  "status": "conflict",
+  "currentRequirementId": "REQ-05",
+  "conflictingRequirementId": "REQ-03",
+  "explanation": "Both requirements target the same field but demand opposite outcomes for indistinguishable inputs in Terraform's data model"
+}
+\`\`\`
+
+Rules:
+- Make at least 3 genuine attempts to satisfy both requirements before reporting a conflict.
+- The conflicting requirement ID is in the failing test filename (e.g., "REQ-03.cfn.test.ts" → "REQ-03").
+- Only report a conflict when you are confident the requirements are fundamentally irreconcilable in the current data model.`;
     }
 
     public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement): string {
