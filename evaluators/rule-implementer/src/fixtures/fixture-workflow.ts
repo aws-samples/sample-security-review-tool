@@ -12,9 +12,6 @@ export class FixtureWorkflow {
     }
 
     private prepareFixtures(): void {
-        console.log(`CDK Fixture Output Folder Path: ${this.context.cdkFixtureOutputFolderPath}`);
-        console.log(`CDK Fixture Template Folder Path: ${this.context.cdkFixtureTemplateFolderPath}`);
-
         fs.rmSync(this.context.cdkFixtureOutputFolderPath, { recursive: true, force: true });
         fs.cpSync(this.context.cdkFixtureTemplateFolderPath, this.context.cdkFixtureOutputFolderPath, { recursive: true });
     }

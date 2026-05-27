@@ -18,7 +18,7 @@ export class RemediationUpdaterAgent {
         this.promptBuilder = new RemediationUpdaterPromptBuilder();
     }
 
-    public async invoke(details: FixValidationResult): Promise<void> { 
+    public async invoke(details: FixValidationResult): Promise<string> {
         const agent = new Agent({
             model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 16384 }),
             systemPrompt: this.promptBuilder.buildSystemPrompt(),
@@ -34,22 +34,14 @@ export class RemediationUpdaterAgent {
 
         const controlContent = await fs.readFile(this.context.ruleControlFilePath, 'utf8');
         const escapedInstructions = this.escapeForStringLiteral(structuredOutput.remediationInstructions);
-        const updatedControlContent = controlContent.replace(details.targetIssue.fix || '', escapedInstructions);
+        const escapedOriginalFix = this.escapeForStringLiteral(details.targetIssue.fix || '');
+        const updatedControlContent = controlContent.replace(escapedOriginalFix, escapedInstructions);
         await fs.writeFile(this.context.ruleControlFilePath, updatedControlContent, 'utf8');
-    }
 
+        return structuredOutput.remediationInstructions;
+    }
 
     private escapeForStringLiteral(value: string): string {
         return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '\\r');
     }
-
-    // public async update(result: ValidationCycleResult, fixtureContent: string): Promise<void> {
-    //     const agent = new Agent({
-    //         model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 16384 }),
-    //         systemPrompt: this.promptBuilder.buildSystemPrompt(),
-    //         tools: [AgentToolFactory.createWriteFileTool()],
-    //     });
-
-    //     await agent.invoke(this.promptBuilder.buildUserPrompt(result, fixtureContent));
-    // }
 }

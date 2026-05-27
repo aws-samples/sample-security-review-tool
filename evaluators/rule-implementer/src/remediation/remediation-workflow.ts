@@ -33,19 +33,19 @@ export class RemediationWorkflow {
 
     public async run(): Promise<void> {
         this.resetWorkflow();
+        this.prepareFixtures();
+
         await this.testRule();
+        await this.backupIssuesFile();
 
         for (const issue of this.issues) {
             this.resetFixAttempts();
 
-            console.log(`\nValidating fix for issue ${issue.check_id} on resource ${issue.resourceName} (attempt ${this.fixAttempt})`);
-
             while (this.shouldIterate()) {
-                await this.backupIssuesFile();
                 await this.applyFix(issue);
                 await this.validateFix(issue);
                 if (this.fixWasSuccessful()) break;
-                await this.updateFixInstructions();
+                await this.updateFixInstructions(issue);
                 this.tryAgain();
             }
         }
@@ -57,19 +57,33 @@ export class RemediationWorkflow {
         this.fixAttempt = 1;
     }
 
+    private prepareFixtures(): void {
+        fs.rmSync(this.context.cdkFixtureOutputFolderPath, { recursive: true, force: true });
+        fs.cpSync(this.context.cdkFixtureTemplateFolderPath, this.context.cdkFixtureOutputFolderPath, { recursive: true });
+        fs.cpSync(this.context.cdkFixtureResourceFilePath, path.join(this.context.cdkFixtureOutputFolderPath, 'fixture-stack.ts'));
+    }
+
     private async testRule(): Promise<void> {
         const assessor = new AssessCoordinator(this.context.cdkFixtureOutputFolderPath, () => { });
         await assessor.assess('aws', false, false, false);
-
-        const issuesPath = path.join(this.context.cdkFixtureOutputFolderPath, '.srt', 'issues.json');
-        const issuesData = await fs.promises.readFile(issuesPath, 'utf-8');
-        const issues = JSON.parse(issuesData) as ScanResult[];
-
+        const issues = await this.loadIssues();
         this.issues = issues.filter(x => x.check_id === this.context.ruleId);
 
         if (this.issues.length === 0) {
             throw new Error(`Rule ${this.context.ruleId} did not trigger on fixture. Check the fixture and rule implementation.`);
         }
+    }
+
+    private async loadIssues() {
+        const issuesPath = path.join(this.context.cdkFixtureOutputFolderPath, '.srt', 'issues.json');
+        const issuesData = await fs.promises.readFile(issuesPath, 'utf-8');
+        const issues = JSON.parse(issuesData) as ScanResult[];
+        return issues;
+    }
+
+    private async backupIssuesFile(): Promise<void> {
+        const issuesPath = path.join(this.context.cdkFixtureOutputFolderPath, '.srt', 'issues.json');
+        await fs.promises.copyFile(issuesPath, issuesPath.replace('.json', '.original.json'));
     }
 
     private resetFixAttempts(): void {
@@ -78,11 +92,6 @@ export class RemediationWorkflow {
 
     private shouldIterate(): boolean {
         return this.fixAttempt <= 3;
-    }
-
-    private async backupIssuesFile(): Promise<void> {
-        const issuesPath = path.join(this.context.cdkFixtureOutputFolderPath, '.srt', 'issues.json');
-        await fs.promises.copyFile(issuesPath, issuesPath.replace('.json', '.original.json'));
     }
 
     private async applyFix(issue: ScanResult): Promise<void> {
@@ -112,6 +121,7 @@ export class RemediationWorkflow {
         if (targetIssue.status?.toLowerCase() !== 'fixed') {
             console.log(`  ✗ Fix did not resolve ${issue.check_id}`);
             this.validationResult = new FixValidationResult(targetIssue, false);
+            return;
         }
 
         const originalCheckIds = new Set(originalIssues.map(i => i.check_id));
@@ -121,19 +131,19 @@ export class RemediationWorkflow {
             const ids = newIssues.map(i => i.check_id).join(', ');
             console.log(`  ✗ Fix introduced new HIGH priority issues: ${ids}`);
             this.validationResult = new FixValidationResult(targetIssue, true, newIssues);
+            return;
         }
 
         console.log(`  ✓ Fix resolved ${this.context.ruleId} without introducing new HIGH priority issues`);
         this.validationResult = new FixValidationResult(targetIssue, true);
-
     }
 
     private fixWasSuccessful(): boolean {
         return this.validationResult?.isSuccessful ?? false;
     }
 
-    private async updateFixInstructions(): Promise<void> {
-        await new RemediationUpdaterAgent(this.context).invoke(this.validationResult!);
+    private async updateFixInstructions(issue: ScanResult): Promise<void> {
+        issue.fix = await new RemediationUpdaterAgent(this.context).invoke(this.validationResult!);
     }
 
     private tryAgain(): void {

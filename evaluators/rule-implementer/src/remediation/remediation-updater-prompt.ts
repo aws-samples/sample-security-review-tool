@@ -9,7 +9,7 @@ export class RemediationUpdaterPromptBuilder {
     }
 
     public buildUserPrompt(failureDetails: FixValidationResult, fixtureContent: string): string {
-        return `${failureDetails.failureDescription}. Update the remediation instructions to fix the problem.
+        return `${failureDetails.failureDescription} Update the remediation instructions to fix the problem.
         
         <failing-remediation-instructions>
         ${failureDetails.targetIssue.fix}
