@@ -75,7 +75,7 @@ export class RuleContext {
     }
 
     private getRootFixtureFolderPath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-implementer', 'src', 'remediation', 'fixtures', this.safeRuleId);
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'remediation', 'fixtures', this.safeRuleId);
     }
 
     private getCdkFixtureOutputFolderPath(): string {
@@ -83,11 +83,11 @@ export class RuleContext {
     }
 
     private getCdkFixtureTemplateFolderPath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-implementer', 'src', 'fixtures', 'templates', 'cdk');
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'fixtures', 'templates', 'cdk');
     }
 
     private getCdkFixtureResourceFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-implementer', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'cdk.ts');
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'cdk.ts');
     }
 
     private getTerraformFixtureOutputFolderPath(): string {
