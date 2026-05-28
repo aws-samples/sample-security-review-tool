@@ -6,6 +6,7 @@ export interface SecurityControlMetadata {
     readonly priority: Priority;
     readonly description: string;
     readonly remediationScenarios: RemediationScenario[];
+    readonly relatedRules?: readonly SecurityControl[];
 }
 
 export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlAdapter> {
@@ -13,12 +14,14 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
     public readonly priority: Priority;
     public readonly description: string;
     public readonly remediationScenarios: RemediationScenario[];
+    public readonly relatedRules: readonly SecurityControl[];
 
     constructor(metadata: SecurityControlMetadata) {
         this.id = metadata.id;
         this.priority = metadata.priority;
         this.description = metadata.description;
         this.remediationScenarios = metadata.remediationScenarios;
+        this.relatedRules = metadata.relatedRules ?? [];
     }
 
     protected abstract evaluate(adapter: TAdapter): ControlFinding | null;
@@ -32,7 +35,10 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
 
     private buildRemediation(adapter: TAdapter, scenario: string): string {
         const def = this.remediationScenarios.find(s => s.scenario === scenario);
-        return def?.intent ?? '';
+        const primaryIntent = def?.intent ?? '';
+        if (this.relatedRules.length === 0) return primaryIntent;
+        const relatedGuidance = this.relatedRules.map(rule => `[${rule.id}] ${rule.description}: ${rule.remediationScenarios[0]?.intent ?? ''}`).join('\n\n');
+        return `${primaryIntent}\n\nAdditional constraints (your fix must also satisfy these related rules):\n\n${relatedGuidance}`;
     }
 
     private buildScanResult(context: IacContext, adapter: TAdapter, finding: ControlFinding, fix: string): ScanResult {
