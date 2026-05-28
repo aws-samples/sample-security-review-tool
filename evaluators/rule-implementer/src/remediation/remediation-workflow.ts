@@ -1,7 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as url from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { RuleContext } from '../shared/rule-context.js';
 import { RemediationUpdaterAgent } from './remediation-updater-agent.js';
+import { RelatedRulesRecorder } from './related-rules-recorder.js';
 import type { ScanResult } from '../../../../src/assess/scanning/base-scanner.js';
 
 export class FixValidationResult {
@@ -43,7 +46,7 @@ export class RemediationWorkflow {
                 await this.applyFix(issue);
                 await this.validateFix(issue);
                 if (this.fixWasSuccessful()) break;
-                await this.updateFixInstructions(issue);
+                await this.updateFix(issue);
                 this.tryAgain();
             }
         }
@@ -62,15 +65,18 @@ export class RemediationWorkflow {
     }
 
     private async testRule(): Promise<void> {
-        const { AssessCoordinator } = await import('../../../../src/assess/coordinator.js');
-        const assessor = new AssessCoordinator(this.context.cdkFixtureOutputFolderPath, () => { });
-        await assessor.assess('aws', false, false, false);
+        this.runAssessment();
         const issues = await this.loadIssues();
         this.issues = issues.filter(x => x.check_id === this.context.ruleId);
 
         if (this.issues.length === 0) {
             throw new Error(`Rule ${this.context.ruleId} did not trigger on fixture. Check the fixture and rule implementation.`);
         }
+    }
+
+    private runAssessment(): void {
+        const runnerPath = url.fileURLToPath(new URL('./assess-runner.ts', import.meta.url));
+        execFileSync(process.execPath, [runnerPath, this.context.cdkFixtureOutputFolderPath], { stdio: 'inherit' });
     }
 
     private async loadIssues() {
@@ -142,8 +148,30 @@ export class RemediationWorkflow {
         return this.validationResult?.isSuccessful ?? false;
     }
 
-    private async updateFixInstructions(issue: ScanResult): Promise<void> {
-        issue.fix = await new RemediationUpdaterAgent(this.context).invoke(this.validationResult!);
+    private async updateFix(issue: ScanResult): Promise<void> {
+        if (this.fixIntroducedRegressions()) {
+            await this.recordRelatedRules();
+            await this.refreshFixGuidance(issue);
+        } else {
+            issue.fix = await new RemediationUpdaterAgent(this.context).invoke(this.validationResult!);
+        }
+    }
+
+    private fixIntroducedRegressions(): boolean {
+        return !!this.validationResult?.fixedOriginalFinding && this.validationResult.introducedRegressions;
+    }
+
+    private async recordRelatedRules(): Promise<void> {
+        const triggeredCheckIds = this.validationResult!.introducedFindings.map(f => f.check_id!).filter(Boolean);
+        await new RelatedRulesRecorder(this.context).record(triggeredCheckIds);
+    }
+
+    private async refreshFixGuidance(issue: ScanResult): Promise<void> {
+        this.prepareFixtures();
+        this.runAssessment();
+        await this.backupIssuesFile();
+        const refreshed = (await this.loadIssues()).find(i => i.check_id === issue.check_id && i.resourceName === issue.resourceName);
+        if (refreshed) issue.fix = refreshed.fix;
     }
 
     private tryAgain(): void {
