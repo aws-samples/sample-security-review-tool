@@ -5,8 +5,12 @@ import { Lambda004TfAdapterFactory } from '../lambda-004/lambda-004.adapter.tf.j
 import { lambda011Control } from '../lambda-011/lambda-011.control.js';
 import { Lambda011CfnAdapterFactory } from '../lambda-011/lambda-011.adapter.cfn.js';
 import { Lambda011TfAdapterFactory } from '../lambda-011/lambda-011.adapter.tf.js';
+import { lambda012Control } from '../lambda-012/lambda-012.control.js';
+import { Lambda012CfnAdapterFactory } from '../lambda-012/lambda-012.adapter.cfn.js';
+import { Lambda012TfAdapterFactory } from '../lambda-012/lambda-012.adapter.tf.js';
 
 export const lambdaControls: RegisteredControl[] = [
   { control: lambda004Control, cfnAdapter: new Lambda004CfnAdapterFactory(), tfAdapter: new Lambda004TfAdapterFactory() },
   { control: lambda011Control, cfnAdapter: new Lambda011CfnAdapterFactory(), tfAdapter: new Lambda011TfAdapterFactory() },
+  { control: lambda012Control, cfnAdapter: new Lambda012CfnAdapterFactory(), tfAdapter: new Lambda012TfAdapterFactory() },
 ];

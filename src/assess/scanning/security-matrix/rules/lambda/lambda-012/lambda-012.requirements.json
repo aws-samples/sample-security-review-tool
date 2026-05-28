@@ -1,0 +1,103 @@
+{
+  "ruleId": "LAMBDA-012",
+  "generatedAt": "2026-05-28T16:34:31.118Z",
+  "description": "Lambda functions must have unique IAM execution roles",
+  "cfnResources": [
+    "AWS::Lambda::Function",
+    "AWS::Serverless::Function"
+  ],
+  "tfResources": [
+    "aws_lambda_function"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Two Lambda functions in the same template reference the same in-template execution role resource.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "Sharing a single execution role across multiple Lambda functions violates the principle of least privilege: any permission needed by one function is automatically granted to the other, expanding the blast radius beyond what each function requires. AWS recommends a unique, narrowly-scoped execution role per function."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A Lambda function references an execution role that no other Lambda function in the template references.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A role used by exactly one Lambda function in scope satisfies the uniqueness requirement. No sharing is observed within the analyzable scope."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A Lambda function has no execution role configured at all.",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "This rule's purpose is to detect role sharing across Lambda functions. A missing role is a different security concern (handled by a separate rule that requires an execution role be specified). With no role identifier to compare, this rule cannot establish a sharing violation and should not flag."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Two Lambda functions reference distinct, separately-defined execution role resources, each with its own identity, even if their attached permissions or policy contents are identical.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: identity-only semantics. The rule checks role identity (distinct IAM role resources/ARNs), not policy equivalence. Two separate role identities pass even if their policies happen to be the same."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A Lambda function references an external execution role identified by an ARN that is not defined in the template, and no other Lambda function in the template references the same ARN.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: analyzable-scope semantics. The rule cannot see other templates or stacks that may share the role, so with no in-scope sharing observed, the function passes."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Two Lambda functions in the same template both reference the same external execution role identified by an out-of-template ARN.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "Even though the role is defined externally, the in-scope evidence shows two Lambda functions sharing the same role ARN, which violates the unique-role-per-function requirement."
+    },
+    {
+      "id": "REQ-07",
+      "description": "A Lambda function's execution role reference cannot be resolved to a concrete identifier at analysis time (e.g., it depends on a runtime parameter or unresolvable expression).",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: when a role identifier is unresolvable, equality with other roles cannot be determined. The rule must avoid false positives and pass."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Two Lambda functions in the same template each have unresolvable execution role references that may or may not refer to the same value.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: equality between two unresolvable references cannot be established, so the rule cannot assert a sharing violation and should pass to avoid false positives."
+    },
+    {
+      "id": "REQ-09",
+      "description": "A template contains exactly one Lambda function that references an execution role, and the same role is also referenced by a non-Lambda resource (for example, used as an instance profile by a compute resource or assumed by a different service via a multi-principal trust policy).",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "User-resolved decision: any cross-resource sharing of an execution role violates the rule. A role intended as a Lambda execution role should not be reused by other resource types or other service principals."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Three or more Lambda functions in the same template all reference the same execution role.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "Any sharing of a single execution role across multiple Lambda functions is a violation, regardless of how many functions share it. The rule should flag the assessed function whenever its role is also used by at least one other Lambda function in scope."
+    },
+    {
+      "id": "REQ-11",
+      "description": "A template defines an execution role resource that is not referenced by any Lambda function (an unused or orphan role).",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "This rule evaluates Lambda functions, not IAM roles. An unreferenced role has no Lambda consumers and therefore no sharing violation. The rule has nothing to flag."
+    },
+    {
+      "id": "REQ-12",
+      "description": "A single Lambda function in the template references an execution role, and no other resource of any kind references that role.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A role used by exactly one Lambda function and no other resource fully satisfies the uniqueness and dedicated-use requirement."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html",
+    "https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html",
+    "https://aws.amazon.com/blogs/compute/operating-lambda-building-a-solid-security-foundation-part-1/"
+  ]
+}
