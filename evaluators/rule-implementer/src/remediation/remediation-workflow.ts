@@ -2,9 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RuleContext } from '../shared/rule-context.js';
 import { RemediationUpdaterAgent } from './remediation-updater-agent.js';
-import { AssessCoordinator } from '../../../../src/assess/coordinator.js';
-import { ScanResult } from '../../../../src/assess/scanning/base-scanner.js';
-import { FixCoordinator } from '../../../../src/fix/coordinator.js';
+import type { ScanResult } from '../../../../src/assess/scanning/base-scanner.js';
 
 export class FixValidationResult {
     constructor(public readonly targetIssue: ScanResult, public readonly fixedOriginalFinding: boolean, public readonly introducedFindings: ReadonlyArray<ScanResult> = []) { }
@@ -64,6 +62,7 @@ export class RemediationWorkflow {
     }
 
     private async testRule(): Promise<void> {
+        const { AssessCoordinator } = await import('../../../../src/assess/coordinator.js');
         const assessor = new AssessCoordinator(this.context.cdkFixtureOutputFolderPath, () => { });
         await assessor.assess('aws', false, false, false);
         const issues = await this.loadIssues();
@@ -95,6 +94,7 @@ export class RemediationWorkflow {
     }
 
     private async applyFix(issue: ScanResult): Promise<void> {
+        const { FixCoordinator } = await import('../../../../src/fix/coordinator.js');
         const fixer = await FixCoordinator.create(this.context.cdkFixtureOutputFolderPath, () => { });
         const fix = await fixer.generateFix(issue);
         await fixer.applyFix(issue, fix!);
