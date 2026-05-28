@@ -1,0 +1,117 @@
+{
+  "ruleId": "CF-006",
+  "generatedAt": "2026-05-28T15:14:34.842Z",
+  "description": "CloudFront distributions must enable origin access control",
+  "cfnResources": [
+    "AWS::CloudFront::Distribution"
+  ],
+  "tfResources": [
+    "aws_cloudfront_distribution"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "A CloudFront distribution has an S3 bucket origin with no origin access control identifier and no legacy origin access identity configured.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "An S3 origin with no restriction mechanism allows direct public access to the bucket, defeating the purpose of using CloudFront for access control. AWS recommends OAC to secure S3 origins."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A CloudFront distribution has an S3 bucket origin that references an origin access control resource defined in the same template by its identifier.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "The S3 origin is properly secured by an in-template OAC resource, satisfying the rule's intent of restricting origin access."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A CloudFront distribution has an S3 bucket origin that uses the legacy origin access identity (OAI) mechanism but does not configure origin access control.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, any recognized restriction mechanism (OAI or OAC) satisfies the spirit of the rule, even though OAC is recommended."
+    },
+    {
+      "id": "REQ-04",
+      "description": "A CloudFront distribution has an S3 bucket origin whose origin access control identifier is an empty string or otherwise unset.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty identifier is equivalent to having no OAC attached; the S3 origin remains unrestricted."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A CloudFront distribution has an S3 bucket origin whose origin access control identifier value cannot be resolved at analysis time because it depends on a parameter, variable, or condition.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, when the OAC identifier value is unresolvable, the rule cannot assert non-compliance for any origin type."
+    },
+    {
+      "id": "REQ-06",
+      "description": "A CloudFront distribution has an S3 bucket origin whose origin access control identifier does not resolve to any origin access control resource defined in the template.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision, the rule requires the identifier to resolve to an OAC resource within the template; a dangling reference is treated as non-compliant."
+    },
+    {
+      "id": "REQ-07",
+      "description": "A CloudFront distribution has an S3 bucket origin that simultaneously specifies a legacy origin access identity and an origin access control identifier that does not resolve to any OAC resource in the template.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, the valid OAI provides a recognized restriction mechanism and supersedes the dangling OAC reference."
+    },
+    {
+      "id": "REQ-08",
+      "description": "A CloudFront distribution has multiple origins where every S3 origin has a properly resolved origin access control attached and all other origin types are non-OAC-eligible.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "All OAC-eligible origins are protected; non-eligible origins (e.g., custom HTTP origins) are out of scope for OAC."
+    },
+    {
+      "id": "REQ-09",
+      "description": "A CloudFront distribution has multiple origins where at least one S3 origin lacks any origin access control or origin access identity, while other S3 origins are correctly secured.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Every OAC-eligible origin must be secured; one unprotected S3 origin exposes the bucket and constitutes non-compliance."
+    },
+    {
+      "id": "REQ-10",
+      "description": "A CloudFront distribution has only non-S3 origins that are nevertheless OAC-eligible (such as Lambda function URL origins, MediaStore origins, or MediaPackage v2 origins) and none of them has an origin access control attached.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision, all OAC-eligible origin types must have OAC configured; missing OAC on these origins is non-compliant."
+    },
+    {
+      "id": "REQ-11",
+      "description": "A CloudFront distribution has an OAC-eligible non-S3 origin (Lambda function URL, MediaStore, or MediaPackage v2) where the origin access control identifier value is provided via an unresolvable expression.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision, unresolvable values cannot be asserted as non-compliant on any origin type."
+    },
+    {
+      "id": "REQ-12",
+      "description": "A CloudFront distribution has only origin types that are not eligible for OAC (such as a generic custom HTTP origin pointing at an arbitrary domain).",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "OAC applies to specific origin types (S3, Lambda function URL, MediaStore, MediaPackage v2); generic custom origins are out of scope for this rule."
+    },
+    {
+      "id": "REQ-13",
+      "description": "A CloudFront distribution has an empty origins collection.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "With no origins, there are no OAC-eligible origins to evaluate; the rule has no applicable subject. Schema validity is enforced elsewhere."
+    },
+    {
+      "id": "REQ-14",
+      "description": "A CloudFront distribution has an S3 bucket origin with a properly attached origin access control, alongside an OAC resource configured with a wildcard or generic signing/origin-type configuration that still resolves to a valid OAC.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "The S3 origin is associated with a recognized OAC resource. The rule checks the presence and resolution of the OAC reference, not the granularity of its internal configuration."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-mediastore.html",
+    "https://aws.amazon.com/blogs/networking-and-content-delivery/amazon-cloudfront-introduces-origin-access-control-oac/",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudfront-originaccesscontrol.html"
+  ]
+}

@@ -1,0 +1,51 @@
+import { describe, it, expect } from 'vitest';
+import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
+import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
+import type { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+
+describe('CF-006 CloudFormation - generic custom HTTP origin (not OAC-eligible)', () => {
+  it('passes when distribution only has a generic custom HTTP origin not eligible for OAC', () => {
+    const template: Template = {
+      Resources: {
+        MyDistribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Enabled: true,
+              DefaultCacheBehavior: {
+                TargetOriginId: 'custom-http-origin',
+                ViewerProtocolPolicy: 'redirect-to-https',
+              },
+              Origins: [
+                {
+                  Id: 'custom-http-origin',
+                  DomainName: 'origin.example.com',
+                  CustomOriginConfig: {
+                    OriginProtocolPolicy: 'https-only',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+
+    const context: CfnContext = {
+      stackName: 'test-stack',
+      template,
+      resource: template.Resources!.MyDistribution,
+      logicalId: 'MyDistribution',
+    };
+
+    const factory = new Cf006CfnAdapterFactory();
+    expect(factory.appliesTo('AWS::CloudFront::Distribution')).toBe(true);
+
+    const adapter = factory.bind(context);
+    const result = cf006Control.run(adapter, context);
+
+    expect(result).toBeNull();
+    expect(adapter.unprotectedS3Origins).toEqual([]);
+    expect(adapter.unprotectedOacEligibleOrigins).toEqual([]);
+  });
+});

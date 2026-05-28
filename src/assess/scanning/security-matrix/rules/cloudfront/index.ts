@@ -2,30 +2,25 @@
 import rule003 from './003-access-logging.cf.js';
 import rule004 from './004-https-only.cf.js';
 import rule005 from './005-origin-https.cf.js';
-import rule006 from './006-origin-access-control.cf.js';
 
 export const cloudfrontRules = [
   rule003,
   rule004,
   rule005,
-  rule006,
 ];
 
 export {
   rule003 as accessLoggingRule,
   rule004 as httpsOnlyRule,
   rule005 as originHttpsRule,
-  rule006 as originAccessControlRule,
 };
 
 import tfRule002 from './003-access-logging.tf.js';
 import tfRule003 from './004-https-only.tf.js';
 import tfRule004 from './005-origin-https.tf.js';
-import tfRule005 from './006-origin-access-control.tf.js';
 
 export const tfCloudfrontRules = [
   tfRule002,
   tfRule003,
   tfRule004,
-  tfRule005,
 ];
