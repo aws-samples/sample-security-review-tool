@@ -3,16 +3,17 @@ import { RuleContext } from '../shared/rule-context.js';
 import { AgentToolFactory } from '../implementation/agent-tools.js';
 import { createAwsKnowledgeMcpClient } from '../shared/aws-knowledge-mcp-client.js';
 import { FixtureGenerationPromptBuilder } from './fixture-generation-prompt.js';
+import { FixtureType } from './fixture-type.js';
 
 export class FixtureGenerationAgent {
     private readonly promptBuilder: FixtureGenerationPromptBuilder;
 
-    constructor(private readonly context: RuleContext) {
-        this.promptBuilder = new FixtureGenerationPromptBuilder(context);
+    constructor(private readonly context: RuleContext, private readonly fixtureType: FixtureType) {
+        this.promptBuilder = new FixtureGenerationPromptBuilder(context, fixtureType);
     }
 
     public async invoke(): Promise<void> {
-        console.log(`\n==== Generating remediation fixture for ${this.context.ruleId} ====\n`);
+        console.log(`\n==== Generating ${this.fixtureType.label} remediation fixture for ${this.context.ruleId} ====\n`);
 
         const mcpClient = createAwsKnowledgeMcpClient();
 
@@ -23,7 +24,7 @@ export class FixtureGenerationAgent {
                 tools: [
                     mcpClient,
                     AgentToolFactory.createWriteFileTool({ ensureDir: true }),
-                    AgentToolFactory.createTscTool(this.context.cdkFixtureOutputFolderPath),
+                    this.fixtureType.createValidationTool(),
                 ],
             });
 

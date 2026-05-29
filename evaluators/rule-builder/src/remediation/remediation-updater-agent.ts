@@ -4,7 +4,8 @@ import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import { AgentToolFactory } from '../implementation/agent-tools.js';
 import { RemediationUpdaterPromptBuilder } from './remediation-updater-prompt.js';
-import { FixValidationResult } from './remediation-workflow.js';
+import { FixValidationResult } from './fixture-remediator.js';
+import { FixtureType } from '../fixtures/fixture-type.js';
 import z from 'zod';
 
 const RemediationSchema = z.object({
@@ -14,7 +15,7 @@ const RemediationSchema = z.object({
 export class RemediationUpdaterAgent {
     private readonly promptBuilder: RemediationUpdaterPromptBuilder;
 
-    constructor(private readonly context: RuleContext) {
+    constructor(private readonly context: RuleContext, private readonly fixtureType: FixtureType) {
         this.promptBuilder = new RemediationUpdaterPromptBuilder();
     }
 
@@ -26,7 +27,7 @@ export class RemediationUpdaterAgent {
             structuredOutputSchema: RemediationSchema
         });
 
-        const fixtureContent = await fs.readFile(path.join(this.context.cdkFixtureOutputFolderPath, 'fixture-stack.ts'), 'utf8');
+        const fixtureContent = await fs.readFile(path.join(this.fixtureType.outputFolderPath, this.fixtureType.resourceFileName), 'utf8');
         const userPrompt = this.promptBuilder.buildUserPrompt(details, fixtureContent);
 
         const result = await agent.invoke(userPrompt);

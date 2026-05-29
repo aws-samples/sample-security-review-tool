@@ -14,6 +14,8 @@ export class RuleContext {
     readonly cdkFixtureTemplateFolderPath: string;
     readonly cdkFixtureOutputFolderPath: string;
     readonly terraformFixtureOutputFolderPath: string;
+    readonly terraformFixtureTemplateFolderPath: string;
+    readonly terraformFixtureResourceFilePath: string;
     readonly cloudFormationFixtureOutputFolderPath: string;
     readonly ruleFolderPath: string;
     readonly ruleControlFilePath: string;
@@ -37,6 +39,8 @@ export class RuleContext {
         this.cdkFixtureTemplateFolderPath = this.getCdkFixtureTemplateFolderPath();
         this.cdkFixtureOutputFolderPath = this.getCdkFixtureOutputFolderPath();
         this.terraformFixtureOutputFolderPath = this.getTerraformFixtureOutputFolderPath();
+        this.terraformFixtureTemplateFolderPath = this.getTerraformFixtureTemplateFolderPath();
+        this.terraformFixtureResourceFilePath = this.getTerraformFixtureResourceFilePath();
         this.cloudFormationFixtureOutputFolderPath = this.getCloudFormationFixtureOutputFolderPath();
         this.ruleControlFilePath = this.getRuleControlFilePath();
         this.ruleAdapterBaseFilePath = this.getRuleAdapterBaseFilePath();
@@ -92,6 +96,14 @@ export class RuleContext {
 
     private getTerraformFixtureOutputFolderPath(): string {
         return path.join(this.srtRootFolderPath, 'fixtures', this.safeRuleId, 'terraform');
+    }
+
+    private getTerraformFixtureTemplateFolderPath(): string {
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'fixtures', 'templates', 'terraform');
+    }
+
+    private getTerraformFixtureResourceFilePath(): string {
+        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'terraform.tf');
     }
 
     private getCloudFormationFixtureOutputFolderPath(): string {

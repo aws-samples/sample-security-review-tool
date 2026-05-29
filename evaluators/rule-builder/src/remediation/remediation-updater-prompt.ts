@@ -1,5 +1,5 @@
 import { RuleContext } from '../shared/rule-context.js';
-import { FixValidationResult } from './remediation-workflow.js';
+import { FixValidationResult } from './fixture-remediator.js';
 
 export class RemediationUpdaterPromptBuilder {
     public buildSystemPrompt(): string {

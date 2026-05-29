@@ -70,6 +70,23 @@ export class AgentToolFactory {
         });
     }
 
+    public static createTerraformValidateTool(terraformProjectPath: string) {
+        return tool({
+            name: 'run_terraform_validate',
+            description: 'Run terraform init, validate, and plan against the Terraform fixture project to check for HCL, configuration, and planning errors. Plan runs with dummy credentials and no AWS access, so live data sources will fail here. Returns pass/fail and any error messages.',
+            callback: async () => {
+                const steps = [['init', '-backend=false', '-input=false'], ['validate', '-no-color'], ['plan', '-input=false', '-no-color']];
+                let output = '';
+                for (const args of steps) {
+                    const result = spawnSync('terraform', args, { cwd: terraformProjectPath, encoding: 'utf8', timeout: 120_000 });
+                    output += (result.stdout ?? '') + (result.stderr ?? '');
+                    if (result.status !== 0) return { passed: false, output };
+                }
+                return { passed: true, output };
+            },
+        });
+    }
+
     public static createTscTool(cdkProjectPath: string) {
         return tool({
             name: 'run_tsc',
