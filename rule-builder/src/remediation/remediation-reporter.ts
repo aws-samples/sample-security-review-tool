@@ -7,7 +7,7 @@ export class RemediationReporter {
         console.log(`\nTesting ${fixtureType.label} fixture`);
     }
 
-    public foundIssues(count: number, ruleId: string): void {
+    public ruleTriggered(count: number, ruleId: string): void {
         console.log(`  Found ${count} ${ruleId} issue(s) to remediate`);
     }
 

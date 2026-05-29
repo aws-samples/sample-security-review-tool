@@ -20,25 +20,25 @@ async function main(): Promise<void> {
 
     console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
 
-    console.log('\n==== PHASE 1: REQUIREMENTS ====');
+    console.log('\n==== PHASE 1: REQUIREMENTS ====\n');
     const requirements = await new RequirementsWorkflow(context).run({ regenerate: false });
     console.log(`==== PHASE 1 COMPLETE: GENERATED ${requirements.requirements.length} REQUIREMENTS ====`);
 
-    console.log('\n==== PHASE 2: SCAFFOLDING ====');
+    console.log('\n==== PHASE 2: SCAFFOLDING ====\n');
     new ScaffoldingWorkflow(context).run(requirements);
-    console.log(`==== PHASE 2 COMPLETE: SCAFFOLDED ${context.ruleId} ====`);
+    console.log(`\n==== PHASE 2 COMPLETE: SCAFFOLDED ${context.ruleId} ====\n`);
 
     console.log(`\n==== PHASE 3: IMPLEMENTATION ====`);
     await new ImplementationWorkflow(context).run(requirements);
-    console.log(`\n==== PHASE 3 COMPLETE: IMPLEMENTED ${context.ruleId} ====`);
+    console.log(`\n==== PHASE 3 COMPLETE: IMPLEMENTED ${context.ruleId} ====\n`);
 
-    console.log(`\n==== PHASE 4: FIXTURES ====`);
+    console.log(`\n==== PHASE 4: FIXTURES ====\n`);
     await new FixtureWorkflow(context).run();
-    console.log(`\n==== PHASE 4 COMPLETE: GENERATED FIXTURES FOR ${context.ruleId} ====`);
+    console.log(`\n==== PHASE 4 COMPLETE: GENERATED FIXTURES FOR ${context.ruleId} ====\n`);
 
-    console.log(`\n==== PHASE 5: REMEDIATION ====`);
+    console.log(`\n==== PHASE 5: REMEDIATION ====\n`);
     await new RemediationWorkflow(context).run();
-    console.log(`\n==== PHASE 5 COMPLETE: TESTED REMEDIATIONS FOR ${context.ruleId} ====`);
+    console.log(`\n==== PHASE 5 COMPLETE: TESTED REMEDIATIONS FOR ${context.ruleId} ====\n`);
 
     console.log(`\n✓ Done.`);
 }

@@ -26,7 +26,7 @@ export class FixtureRemediator {
 
         await this.testRule();
         await this.backupIssuesFile();
-        this.reportFoundIssues();
+        this.reportRuleTriggeredSuccessfully();
 
         for (const issue of this.issues) {
             this.resetFixAttempts();
@@ -86,8 +86,8 @@ export class FixtureRemediator {
         await fs.promises.copyFile(issuesPath, issuesPath.replace('.json', '.original.json'));
     }
 
-    private reportFoundIssues(): void {
-        this.reporter.foundIssues(this.issues.length, this.context.ruleId);
+    private reportRuleTriggeredSuccessfully(): void {
+        this.reporter.ruleTriggered(this.issues.length, this.context.ruleId);
     }
 
     private resetFixAttempts(): void {
