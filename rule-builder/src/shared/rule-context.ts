@@ -79,7 +79,7 @@ export class RuleContext {
     }
 
     private getRootFixtureFolderPath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'remediation', 'fixtures', this.safeRuleId);
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'remediation', 'fixtures', this.safeRuleId);
     }
 
     private getCdkFixtureOutputFolderPath(): string {
@@ -87,11 +87,11 @@ export class RuleContext {
     }
 
     private getCdkFixtureTemplateFolderPath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'fixtures', 'templates', 'cdk');
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'fixtures', 'templates', 'cdk');
     }
 
     private getCdkFixtureResourceFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'cdk.ts');
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'cdk.ts');
     }
 
     private getTerraformFixtureOutputFolderPath(): string {
@@ -99,11 +99,11 @@ export class RuleContext {
     }
 
     private getTerraformFixtureTemplateFolderPath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'fixtures', 'templates', 'terraform');
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'fixtures', 'templates', 'terraform');
     }
 
     private getTerraformFixtureResourceFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'evaluators', 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'terraform.tf');
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'terraform.tf');
     }
 
     private getCloudFormationFixtureOutputFolderPath(): string {
