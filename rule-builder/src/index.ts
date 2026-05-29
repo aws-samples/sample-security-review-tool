@@ -20,24 +20,25 @@ async function main(): Promise<void> {
 
     console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
 
-    if (context.regenerate) clearGeneratedArtifacts(context);
-
-    console.log('\nPhase 1: Requirements generation');
+    console.log('\n==== PHASE 1: REQUIREMENTS ====');
     const requirements = await new RequirementsWorkflow(context).run({ regenerate: false });
-    console.log(`Phase 1 complete: Generated ${requirements.requirements.length} requirements`);
+    console.log(`==== PHASE 1 COMPLETE: GENERATED ${requirements.requirements.length} REQUIREMENTS ====`);
 
-    console.log('\nPhase 2: Scaffolding rule files');
+    console.log('\n==== PHASE 2: SCAFFOLDING ====');
     new ScaffoldingWorkflow(context).run(requirements);
-    console.log(`Phase 2 complete: Scaffolded rule files for ${context.ruleId}`);
+    console.log(`==== PHASE 2 COMPLETE: SCAFFOLDED ${context.ruleId} ====`);
 
-    console.log(`\nPhase 3: Rule implementation`);
+    console.log(`\n==== PHASE 3: IMPLEMENTATION ====`);
     await new ImplementationWorkflow(context).run(requirements);
+    console.log(`\n==== PHASE 3 COMPLETE: IMPLEMENTED ${context.ruleId} ====`);
 
-    console.log(`\nPhase 4: Generating fixtures`);
+    console.log(`\n==== PHASE 4: FIXTURES ====`);
     await new FixtureWorkflow(context).run();
+    console.log(`\n==== PHASE 4 COMPLETE: GENERATED FIXTURES FOR ${context.ruleId} ====`);
 
-    console.log(`\nPhase 5: Remediation validation`);
+    console.log(`\n==== PHASE 5: REMEDIATION ====`);
     await new RemediationWorkflow(context).run();
+    console.log(`\n==== PHASE 5 COMPLETE: TESTED REMEDIATIONS FOR ${context.ruleId} ====`);
 
     console.log(`\n✓ Done.`);
 }
@@ -93,7 +94,7 @@ function parseArgs(argv: string[]): RuleContext {
     if (!service) throw new Error('--service is required');
     if (!description) throw new Error('--description is required');
 
-    return new RuleContext(ruleId, service, description, regenerate);
+    return new RuleContext(ruleId, service, description);
 }
 
 function printUsage(): void {

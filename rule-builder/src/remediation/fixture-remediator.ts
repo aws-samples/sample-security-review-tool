@@ -8,27 +8,34 @@ import { RelatedRulesRecorder } from './related-rules-recorder.js';
 import { FixtureType } from '../fixtures/fixture-type.js';
 import type { ScanResult } from '../../../src/assess/scanning/base-scanner.js';
 import { FixValidationResult } from './fix-validation-result.js';
+import { RemediationReporter } from './remediation-reporter.js';
+
+const MAX_FIX_ATTEMPTS = 3;
 
 export class FixtureRemediator {
     private validationResult: FixValidationResult | null = null;
     private issues: ScanResult[] = [];
     private fixAttempt = 1;
 
-    constructor(private readonly context: RuleContext, private readonly fixtureType: FixtureType) { }
+    constructor(private readonly context: RuleContext, private readonly fixtureType: FixtureType, private readonly reporter: RemediationReporter) { }
 
     public async run(): Promise<void> {
         this.resetWorkflow();
         this.prepareFixtures();
+        this.reportTestingFixture();
 
         await this.testRule();
         await this.backupIssuesFile();
+        this.reportFoundIssues();
 
         for (const issue of this.issues) {
             this.resetFixAttempts();
 
             while (this.shouldIterate()) {
+                this.reportFixAttempt(issue);
                 await this.applyFix(issue);
                 await this.validateFix(issue);
+                this.reportValidationOutcome();
                 if (this.fixWasSuccessful()) break;
                 await this.updateFix(issue);
                 this.tryAgain();
@@ -46,6 +53,10 @@ export class FixtureRemediator {
         fs.rmSync(this.fixtureType.outputFolderPath, { recursive: true, force: true });
         fs.cpSync(this.fixtureType.templateFolderPath, this.fixtureType.outputFolderPath, { recursive: true });
         fs.cpSync(this.fixtureType.resourceFilePath, path.join(this.fixtureType.outputFolderPath, this.fixtureType.resourceFileName));
+    }
+
+    private reportTestingFixture(): void {
+        this.reporter.testingFixture(this.fixtureType);
     }
 
     private async testRule(): Promise<void> {
@@ -75,12 +86,20 @@ export class FixtureRemediator {
         await fs.promises.copyFile(issuesPath, issuesPath.replace('.json', '.original.json'));
     }
 
+    private reportFoundIssues(): void {
+        this.reporter.foundIssues(this.issues.length, this.context.ruleId);
+    }
+
     private resetFixAttempts(): void {
         this.fixAttempt = 1;
     }
 
     private shouldIterate(): boolean {
-        return this.fixAttempt <= 3;
+        return this.fixAttempt <= MAX_FIX_ATTEMPTS;
+    }
+
+    private reportFixAttempt(issue: ScanResult): void {
+        this.reporter.attemptingFix(issue, this.fixAttempt, MAX_FIX_ATTEMPTS);
     }
 
     private async applyFix(issue: ScanResult): Promise<void> {
@@ -109,7 +128,6 @@ export class FixtureRemediator {
         if (!targetIssue) throw new Error(`After applying the fix, the original issue (${issue.check_id}) is no longer detected, which is unexpected. Please investigate the fix and the test fixture.`);
 
         if (targetIssue.status?.toLowerCase() !== 'fixed') {
-            console.log(`  ✗ Fix did not resolve ${issue.check_id}`);
             this.validationResult = new FixValidationResult(targetIssue, false);
             return;
         }
@@ -119,14 +137,18 @@ export class FixtureRemediator {
         const newIssues = currentIssues.filter(i => i.priority === 'HIGH' && i.status?.toLowerCase() === 'open' && !originalKeys.has(keyOf(i)) && !i.isCustomResource);
 
         if (newIssues.length > 0) {
-            const ids = newIssues.map(i => i.check_id).join(', ');
-            console.log(`  ✗ Fix introduced new HIGH priority issues: ${ids}`);
             this.validationResult = new FixValidationResult(targetIssue, true, newIssues);
             return;
         }
 
-        console.log(`  ✓ Fix resolved ${this.context.ruleId} without introducing new HIGH priority issues`);
         this.validationResult = new FixValidationResult(targetIssue, true);
+    }
+
+    private reportValidationOutcome(): void {
+        const result = this.validationResult!;
+        if (result.isSuccessful) return this.reporter.fixSucceeded(result);
+        if (result.introducedRegressions) return this.reporter.fixIntroducedRegressions(result);
+        this.reporter.fixNotResolved(result);
     }
 
     private fixWasSuccessful(): boolean {
