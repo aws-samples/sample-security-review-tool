@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CF-002 fixture - CloudFront distribution missing WAF Web ACL association
+
+Resources:
+  # Scenario: missing-web-acl-association
+  # The DistributionConfig has no WebACLId property, so hasWebAclAssociation() returns false.
+  DistributionWithoutWebAcl:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Fixture distribution without WAF Web ACL
+        DefaultCacheBehavior:
+          TargetOriginId: fixture-origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        Origins:
+          - Id: fixture-origin
+            DomainName: example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
