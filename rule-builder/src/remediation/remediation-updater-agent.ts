@@ -4,7 +4,7 @@ import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import { AgentToolFactory } from '../implementation/agent-tools.js';
 import { RemediationUpdaterPromptBuilder } from './remediation-updater-prompt.js';
-import { FixValidationResult } from './fixture-remediator.js';
+import { FixValidationResult } from './fix-validation-result.js';
 import { FixtureType } from '../fixtures/fixture-type.js';
 import z from 'zod';
 
