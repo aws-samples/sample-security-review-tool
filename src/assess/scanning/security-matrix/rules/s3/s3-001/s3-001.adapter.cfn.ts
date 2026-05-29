@@ -1,10 +1,11 @@
 import { AdapterFactory, CfnContext, Resource, Template } from '../../../controls/types.js';
 import { S3001Adapter } from './s3-001.adapter.js';
 
+const S3_BUCKET_TYPE = 'AWS::S3::Bucket';
 const UNRESOLVED_INTRINSIC_KEYS = ['Fn::If', 'Fn::ImportValue'];
 
 export class S3001CfnAdapterFactory implements AdapterFactory<CfnContext> {
-  readonly applicableResourceTypes = ['AWS::S3::Bucket'];
+  readonly applicableResourceTypes = [S3_BUCKET_TYPE];
 
   appliesTo(resourceType: string): boolean {
     return this.applicableResourceTypes.includes(resourceType);
@@ -24,43 +25,71 @@ class S3001CfnAdapter implements S3001Adapter {
     this.resourceType = ctx.resource.Type;
   }
 
-  hasServerAccessLogging(): boolean {
-    const properties = this.ctx.resource.Properties as Record<string, unknown> | undefined;
-    const loggingConfiguration = properties?.LoggingConfiguration;
-    if (this.hasUnresolvedIntrinsic(loggingConfiguration)) return true;
-    return this.isNonEmptyObject(loggingConfiguration);
+  hasLoggingConfigured(): boolean {
+    const properties = this.getProperties(this.ctx.resource);
+    const loggingConfig = properties['LoggingConfiguration'];
+    if (!this.isPlainObject(loggingConfig)) return false;
+    // When the logging configuration is governed by an unresolvable intrinsic
+    // (Fn::If, Fn::ImportValue), we cannot determine compliance and must
+    // treat it as "configured" so the control passes.
+    if (this.isUnresolvedIntrinsic(loggingConfig)) return true;
+    return this.hasDestinationBucket(loggingConfig as Record<string, unknown>);
   }
 
   isLogDestination(): boolean {
-    const buckets = this.collectOtherBuckets();
-    return buckets.some(bucket => this.bucketMayLogTo(bucket, this.resourceId));
+    const buckets = this.collectOtherBuckets(this.ctx.template);
+    return buckets.some(bucket => this.bucketTargetsThis(bucket));
   }
 
-  private collectOtherBuckets(): Resource[] {
-    const resources = (this.ctx.template as Template).Resources ?? {};
-    const otherBuckets: Resource[] = [];
+  private hasDestinationBucket(loggingConfig: Record<string, unknown>): boolean {
+    const destination = loggingConfig['DestinationBucketName'];
+    if (typeof destination === 'string' && destination.length > 0) return true;
+    // If the destination is itself an unresolvable intrinsic, treat as configured.
+    return this.isUnresolvedIntrinsic(destination);
+  }
+
+  private collectOtherBuckets(template: Template): Resource[] {
+    const resources = template.Resources ?? {};
+    const result: Resource[] = [];
     for (const [logicalId, resource] of Object.entries(resources)) {
-      if (logicalId === this.resourceId) continue;
-      if (resource.Type === 'AWS::S3::Bucket') otherBuckets.push(resource);
+      if (logicalId === this.ctx.logicalId) continue;
+      if (resource.Type === S3_BUCKET_TYPE) result.push(resource);
     }
-    return otherBuckets;
+    return result;
   }
 
-  private bucketMayLogTo(bucket: Resource, targetLogicalId: string): boolean {
-    const properties = bucket.Properties as Record<string, unknown> | undefined;
-    const loggingConfiguration = properties?.LoggingConfiguration;
-    if (!loggingConfiguration) return false;
-    if (this.hasUnresolvedIntrinsic(loggingConfiguration)) return true;
-    const destination = (loggingConfiguration as Record<string, unknown>).DestinationBucketName;
-    return destination === targetLogicalId;
+  private bucketTargetsThis(bucket: Resource): boolean {
+    const properties = this.getProperties(bucket);
+    const loggingConfig = properties['LoggingConfiguration'];
+    if (!this.isPlainObject(loggingConfig)) return false;
+    if (this.isUnresolvedIntrinsic(loggingConfig)) {
+      return this.referencesThisBucket(loggingConfig);
+    }
+    const destination = (loggingConfig as Record<string, unknown>)['DestinationBucketName'];
+    return typeof destination === 'string' && destination === this.ctx.logicalId;
   }
 
-  private hasUnresolvedIntrinsic(value: unknown): boolean {
-    if (typeof value !== 'object' || value === null) return false;
-    return UNRESOLVED_INTRINSIC_KEYS.some(key => key in (value as object));
+  private isUnresolvedIntrinsic(value: unknown): boolean {
+    if (!this.isPlainObject(value)) return false;
+    const keys = Object.keys(value as Record<string, unknown>);
+    return keys.some(k => UNRESOLVED_INTRINSIC_KEYS.includes(k));
   }
 
-  private isNonEmptyObject(value: unknown): boolean {
-    return typeof value === 'object' && value !== null && Object.keys(value as object).length > 0;
+  private referencesThisBucket(value: unknown): boolean {
+    if (typeof value === 'string') return value === this.ctx.logicalId;
+    if (Array.isArray(value)) return value.some(v => this.referencesThisBucket(v));
+    if (this.isPlainObject(value)) {
+      return Object.values(value as Record<string, unknown>).some(v => this.referencesThisBucket(v));
+    }
+    return false;
+  }
+
+  private getProperties(resource: Resource): Record<string, unknown> {
+    const properties = (resource as { Properties?: unknown }).Properties;
+    return this.isPlainObject(properties) ? (properties as Record<string, unknown>) : {};
+  }
+
+  private isPlainObject(value: unknown): boolean {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 }

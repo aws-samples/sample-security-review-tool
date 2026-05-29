@@ -1,0 +1,10 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Fixture for S3-001: triggers the 'enable-server-access-logging' scenario.
+  The bucket below has no LoggingConfiguration and is not referenced as a
+  logging destination by any other bucket in the template.
+Resources:
+  NonCompliantBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: s3-001-noncompliant-bucket-fixture

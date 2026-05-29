@@ -3,11 +3,11 @@ import { s3001Control } from '../../../../../../../src/assess/scanning/security-
 import { S3001CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/s3/s3-001/s3-001.adapter.cfn.js';
 import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('S3-001 CloudFormation - REQ-10: bucket referenced as log destination by multiple other buckets', () => {
-  it('passes when the bucket has no logging configuration but is the log destination for multiple other buckets', () => {
+describe('S3-001 CloudFormation - REQ-10: bucket referenced as log destination by multiple buckets', () => {
+  it('passes when an S3 bucket has no logging config but is the log destination for multiple other buckets', () => {
     const template: Template = {
       Resources: {
-        CentralLogBucket: {
+        CentralLogsBucket: {
           Type: 'AWS::S3::Bucket',
           Properties: {},
         },
@@ -15,7 +15,7 @@ describe('S3-001 CloudFormation - REQ-10: bucket referenced as log destination b
           Type: 'AWS::S3::Bucket',
           Properties: {
             LoggingConfiguration: {
-              DestinationBucketName: 'CentralLogBucket',
+              DestinationBucketName: 'CentralLogsBucket',
             },
           },
         },
@@ -23,7 +23,7 @@ describe('S3-001 CloudFormation - REQ-10: bucket referenced as log destination b
           Type: 'AWS::S3::Bucket',
           Properties: {
             LoggingConfiguration: {
-              DestinationBucketName: 'CentralLogBucket',
+              DestinationBucketName: 'CentralLogsBucket',
             },
           },
         },
@@ -31,21 +31,24 @@ describe('S3-001 CloudFormation - REQ-10: bucket referenced as log destination b
           Type: 'AWS::S3::Bucket',
           Properties: {
             LoggingConfiguration: {
-              DestinationBucketName: 'CentralLogBucket',
+              DestinationBucketName: 'CentralLogsBucket',
             },
           },
         },
       },
     } as unknown as Template;
 
+    const factory = new S3001CfnAdapterFactory();
+    const logicalId = 'CentralLogsBucket';
+    const resource = template.Resources![logicalId];
+
     const context: CfnContext = {
       stackName: 'test-stack',
       template,
-      resource: template.Resources!.CentralLogBucket,
-      logicalId: 'CentralLogBucket',
+      resource,
+      logicalId,
     };
 
-    const factory = new S3001CfnAdapterFactory();
     const adapter = factory.bind(context);
     const result = s3001Control.run(adapter, context);
 
