@@ -8,7 +8,7 @@ export class RemediationReporter {
     }
 
     public ruleTriggered(count: number, ruleId: string): void {
-        console.log(`  Found ${count} ${ruleId} issue(s) to remediate`);
+        console.log(`  Successfully triggered ${ruleId}`);
     }
 
     public attemptingFix(issue: ScanResult, attempt: number, maxAttempts: number): void {

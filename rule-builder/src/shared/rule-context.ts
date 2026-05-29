@@ -95,7 +95,7 @@ export class RuleContext {
     }
 
     private getCdkFixtureResourceFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'cdk.ts');
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, `${this.safeRuleId}.ts`);
     }
 
     private getTerraformFixtureOutputFolderPath(): string {
@@ -107,7 +107,7 @@ export class RuleContext {
     }
 
     private getTerraformFixtureResourceFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'terraform.tf');
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, `${this.safeRuleId}.tf`);
     }
 
     private getCloudFormationFixtureOutputFolderPath(): string {
@@ -119,7 +119,7 @@ export class RuleContext {
     }
 
     private getCloudFormationFixtureResourceFilePath(): string {
-        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, 'template.yaml');
+        return path.join(this.srtRootFolderPath, 'rule-builder', 'src', 'shared', 'rules', this.service, this.safeRuleId, `${this.safeRuleId}.yaml`);
     }
 
     private getSafeRuleId(): string {

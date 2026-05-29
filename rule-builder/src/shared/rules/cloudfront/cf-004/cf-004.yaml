@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Fixture for CF-004 - CloudFront distributions must only accept HTTPS traffic.
+
+Resources:
+  # Scenario 1: missing-default-viewer-protocol-policy
+  # DefaultCacheBehavior does not specify a ViewerProtocolPolicy at all.
+  # cfn-lint flags this as a required property; we intentionally omit it to
+  # exercise the rule's missing-property detection.
+  DistributionMissingViewerProtocolPolicy:
+    Type: AWS::CloudFront::Distribution
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3003
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-004 fixture - missing ViewerProtocolPolicy on default cache behavior
+        Origins:
+          - Id: example-origin
+            DomainName: example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: example-origin
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          # No ViewerProtocolPolicy specified - triggers MISSING_VIEWER_PROTOCOL_POLICY_SCENARIO
+
+  # Scenario 2: default-viewer-protocol-policy-allows-http
+  # DefaultCacheBehavior has ViewerProtocolPolicy set to allow-all.
+  DistributionDefaultAllowsHttp:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-004 fixture - default cache behavior allows HTTP
+        Origins:
+          - Id: example-origin
+            DomainName: example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: example-origin
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ViewerProtocolPolicy: allow-all
+
+  # Scenario 3: additional-cache-behavior-allows-http
+  # Default cache behavior is compliant (redirect-to-https), but an additional
+  # cache behavior in CacheBehaviors uses allow-all.
+  DistributionAdditionalBehaviorAllowsHttp:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-004 fixture - additional cache behavior allows HTTP
+        Origins:
+          - Id: example-origin
+            DomainName: example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: example-origin
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - PathPattern: /insecure/*
+            TargetOriginId: example-origin
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+            ViewerProtocolPolicy: allow-all
