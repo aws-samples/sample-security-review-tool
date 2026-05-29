@@ -1,8 +1,8 @@
 import * as os from 'node:os';
 import * as fs from 'node:fs';
-import { SrtLogger } from '../../../../src/shared/logging/srt-logger.js';
-import { BedrockConfig } from '../../../../src/config/aws/bedrock-config.js';
-import { AssessCoordinator } from '../../../../src/assess/coordinator.js';
+import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
+import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
+import { AssessCoordinator } from '../../../src/assess/coordinator.js';
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
 fs.mkdirSync(logsFolderPath, { recursive: true });

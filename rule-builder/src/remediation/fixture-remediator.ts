@@ -6,7 +6,7 @@ import { RuleContext } from '../shared/rule-context.js';
 import { RemediationUpdaterAgent } from './remediation-updater-agent.js';
 import { RelatedRulesRecorder } from './related-rules-recorder.js';
 import { FixtureType } from '../fixtures/fixture-type.js';
-import type { ScanResult } from '../../../../src/assess/scanning/base-scanner.js';
+import type { ScanResult } from '../../../src/assess/scanning/base-scanner.js';
 
 export class FixValidationResult {
     constructor(public readonly targetIssue: ScanResult, public readonly fixedOriginalFinding: boolean, public readonly introducedFindings: ReadonlyArray<ScanResult> = []) { }
@@ -101,7 +101,7 @@ export class FixtureRemediator {
     }
 
     private async applyFix(issue: ScanResult): Promise<void> {
-        const { FixCoordinator } = await import('../../../../src/fix/coordinator.js');
+        const { FixCoordinator } = await import('../../../src/fix/coordinator.js');
         const fixer = await FixCoordinator.create(this.fixtureType.outputFolderPath, () => { });
         const fix = await fixer.generateFix(issue);
         await fixer.applyFix(issue, fix!);

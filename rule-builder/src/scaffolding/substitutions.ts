@@ -1,7 +1,7 @@
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec } from '../shared/types/requirements.js';
 
-const CONTROLS_IMPORT_PLACEHOLDER = '../../../../../src/assess/scanning/security-matrix/controls/';
+const CONTROLS_IMPORT_PLACEHOLDER = '../../../../src/assess/scanning/security-matrix/controls/';
 const CONTROLS_IMPORT_OUTPUT = '../../../controls/';
 
 export class Substitutions {

@@ -1,7 +1,7 @@
 import * as os from 'os';
 import * as fs from 'fs';
-import { SrtLogger } from '../../../src/shared/logging/srt-logger.js';
-import { BedrockConfig } from '../../../src/config/aws/bedrock-config.js';
+import { SrtLogger } from '../../src/shared/logging/srt-logger.js';
+import { BedrockConfig } from '../../src/config/aws/bedrock-config.js';
 import { RequirementsWorkflow } from './requirements/requirements-workflow.js';
 import { ScaffoldingWorkflow } from './scaffolding/scaffolding-workflow.js';
 import { ImplementationWorkflow } from './implementation/implementation-workflow.js';

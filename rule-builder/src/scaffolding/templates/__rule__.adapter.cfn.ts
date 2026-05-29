@@ -1,4 +1,4 @@
-import { AdapterFactory, CfnContext } from '../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { AdapterFactory, CfnContext } from '../../../../src/assess/scanning/security-matrix/controls/types.js';
 import { __Rule__Adapter } from './__safe-rule-id__.adapter.js';
 
 export class __Rule__CfnAdapterFactory implements AdapterFactory<CfnContext> {
