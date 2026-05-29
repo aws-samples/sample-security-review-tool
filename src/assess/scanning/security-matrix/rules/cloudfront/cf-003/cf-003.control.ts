@@ -1,6 +1,8 @@
 import { SecurityControl } from '../../../controls/security-control.js';
 import { ControlFinding } from '../../../controls/types.js';
 import { Cf003Adapter } from './cf-003.adapter.js';
+import { s3001Control } from '../../s3/s3-001/s3-001.control.js';
+import { s3008Control } from '../../s3/s3-008/s3-008.control.js';
 
 const NO_LOGGING_SCENARIO = 'no-access-logging';
 
@@ -17,6 +19,8 @@ export class Cf003Control extends SecurityControl<Cf003Adapter> {
             'Enable access logging for the CloudFront distribution so that viewer requests are captured, either by configuring inline standard logging on the distribution or by wiring a complete dedicated log delivery pipeline (both source and destination) that targets it.',
         },
       ],
+    
+      relatedRules: [s3001Control, s3008Control],
     });
   }
 

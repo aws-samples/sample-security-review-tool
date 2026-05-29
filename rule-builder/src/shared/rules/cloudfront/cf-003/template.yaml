@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  CF-003 fixture: triggers the 'no-access-logging' scenario. The CloudFront
+  distribution has no inline Logging configuration and no external delivery
+  pipeline (DeliverySource/DeliveryDestination) or MonitoringSubscription
+  associated with it, so hasAccessLogging evaluates to false.
+
+Resources:
+  # Scenario: no-access-logging
+  # DistributionConfig intentionally omits the Logging property and there are
+  # no AWS::Logs::DeliverySource, AWS::Logs::DeliveryDestination, or
+  # AWS::CloudFront::MonitoringSubscription resources referencing this
+  # distribution. The CFN adapter's applicableResourceTypes is restricted to
+  # AWS::CloudFront::Distribution, so supporting log-delivery resources are
+  # deliberately excluded from this fixture.
+  UnloggedDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: CF-003 fixture distribution without access logging
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: cf003-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        Origins:
+          - Id: cf003-origin
+            DomainName: example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
