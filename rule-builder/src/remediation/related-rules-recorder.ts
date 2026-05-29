@@ -10,7 +10,8 @@ export class RelatedRulesRecorder {
     }
 
     public async record(triggeredCheckIds: string[]): Promise<void> {
-        const relatedRules = triggeredCheckIds.map(id => this.resolveControl(id)).filter(Boolean) as ResolvedControl[];
+        const uniqueCheckIds = Array.from(new Set(triggeredCheckIds));
+        const relatedRules = uniqueCheckIds.map(id => this.resolveControl(id)).filter(Boolean) as ResolvedControl[];
         if (relatedRules.length === 0) return;
 
         let content = await fs.promises.readFile(this.context.ruleControlFilePath, 'utf8');

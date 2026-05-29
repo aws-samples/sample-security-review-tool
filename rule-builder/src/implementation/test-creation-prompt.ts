@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
 import { PREPROCESSING_BEHAVIOR } from './preprocessing-behavior.js';
+import { TERRAFORM_PLAN_BEHAVIOR } from './terraform-plan-behavior.js';
 
 export class TestCreationPromptBuilder {
     constructor(private readonly context: RuleContext) { }
@@ -17,7 +18,11 @@ export class TestCreationPromptBuilder {
 
 ## CloudFormation Template Preprocessing
 
-${PREPROCESSING_BEHAVIOR}`;
+${PREPROCESSING_BEHAVIOR}
+
+## Terraform Plan Behavior
+
+${TERRAFORM_PLAN_BEHAVIOR}`;
     }
 
     public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement): string {

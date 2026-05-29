@@ -38,6 +38,26 @@ Important constraints:
 - Use the AWS documentation tools to look up the correct Terraform resource arguments before writing the fixture.
 - If a scenario cannot be expressed in Terraform, do NOT attempt workarounds. Instead, include an HCL comment explaining which scenario is skipped and why it cannot be triggered.`;
 
+const CFN_SYSTEM_PROMPT = `You write CloudFormation fixture templates that trigger security rule scenarios for remediation testing.
+
+Your output is a single YAML file (template.yaml) defining the Resources needed to trigger the rule. The file must:
+- Begin with AWSTemplateFormatVersion: '2010-09-09'.
+- Trigger EVERY remediation scenario defined in the control's remediationScenarios array.
+- Use as many resources as needed per scenario (supporting resources are fine).
+- Only include resources relevant to this rule.
+- Declare exactly the AWS::* resource Types listed in the CloudFormation adapter's applicableResourceTypes array.
+- Each scannable resource must be intentionally non-compliant in the specific way its target scenario detects.
+- Pass cfn-lint cleanly.
+
+Important constraints:
+- The control's evaluate() method returns on the FIRST matching finding per resource. To trigger multiple scenarios you typically need separate resources, each configured to match a different scenario's condition while NOT matching earlier conditions in the evaluate chain.
+- Study the evaluate() method and the CloudFormation adapter carefully to understand the order of checks, which AWS::* resource types apply, and which resource property each scenario reads.
+- Use static, hardcoded values for all properties. Do NOT use Parameters, Mappings, or Conditions to indirect the values the rule reads — the property must be visible directly on the resource so the scanner can evaluate it.
+- Do NOT use intrinsic functions (!Ref, !GetAtt, !Sub, !Join, !ImportValue, pseudo-parameters like AWS::Region or AWS::AccountId) for values the rule inspects. If you reference another fixture resource, !Ref is acceptable for resource wiring (e.g. a SecurityGroup id), but the property the rule checks must be a literal.
+- Keep the fixture minimal: include ONLY the resources needed to trigger the scenario. Do NOT add supporting resources that would satisfy the rule and prevent the finding from firing.
+- Use the AWS documentation tools to look up the correct CloudFormation resource type and property names before writing the fixture.
+- If a scenario cannot be expressed in CloudFormation, do NOT attempt workarounds. Instead, include a YAML comment explaining which scenario is skipped and why it cannot be triggered.`;
+
 export class FixtureType {
     constructor(public readonly label: string, public readonly outputFolderPath: string, public readonly templateFolderPath: string, public readonly resourceFilePath: string, public readonly resourceFileName: string, public readonly adapterFilePath: string, public readonly systemPrompt: string, public readonly createValidationTool: () => InvokableTool<unknown, any>) { }
 
@@ -47,5 +67,9 @@ export class FixtureType {
 
     static terraform(context: RuleContext): FixtureType {
         return new FixtureType('Terraform', context.terraformFixtureOutputFolderPath, context.terraformFixtureTemplateFolderPath, context.terraformFixtureResourceFilePath, 'main.tf', context.ruleAdapterTfFilePath, TERRAFORM_SYSTEM_PROMPT, () => AgentToolFactory.createTerraformValidateTool(context.terraformFixtureOutputFolderPath));
+    }
+
+    static cloudFormation(context: RuleContext): FixtureType {
+        return new FixtureType('CloudFormation', context.cloudFormationFixtureOutputFolderPath, context.cloudFormationFixtureTemplateFolderPath, context.cloudFormationFixtureResourceFilePath, 'template.yaml', context.ruleAdapterCfnFilePath, CFN_SYSTEM_PROMPT, () => AgentToolFactory.createCfnLintTool(context.cloudFormationFixtureOutputFolderPath));
     }
 }

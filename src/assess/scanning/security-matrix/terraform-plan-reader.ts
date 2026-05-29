@@ -39,9 +39,10 @@ export async function readTerraformPlan(planJsonPath: string): Promise<Terraform
 
 // `planned_values` holds resolved literals but omits any value that is unknown at plan time
 // (e.g. an attribute referencing another resource that has not been created yet). The plan's
-// `configuration` block preserves those as `{ references: [...] }` — the Terraform analogue of
-// CloudFormation's Fn::GetAtt. We merge those references back into each resource's values so rules
-// can see that a reference exists, mirroring how the CloudFormationResolver tracks referenced resources.
+// `configuration` block preserves those as `{ references: [...] }`. To match how CloudFormation
+// preprocessing collapses `!Ref X`/`!GetAtt X.Attr` to the logical-ID string `"X"`, we collapse a
+// Terraform reference to the target resource's address (`aws_<type>.<name>`). Adapters then do plain
+// string equality against `target.address` instead of inspecting a references array.
 export class TerraformPlanReader {
   public async read(planJsonPath: string): Promise<TerraformResource[]> {
     try {
@@ -109,10 +110,22 @@ export class TerraformPlanReader {
   }
 
   private mergeExpression(value: any, expression: any): any {
-    if (this.isReferenceExpression(expression)) return value !== undefined ? value : { references: expression.references };
+    if (this.isReferenceExpression(expression)) return this.resolveReference(value, expression.references);
     if (Array.isArray(expression)) return this.mergeExpressionArray(value, expression);
     if (this.isNestedBlock(expression)) return this.mergeNestedBlock(value, expression);
     return value;
+  }
+
+  private resolveReference(value: any, references: string[]): any {
+    if (value != null) return value;
+    return this.extractAddress(references) ?? value;
+  }
+
+  private extractAddress(references: string[]): string | null {
+    if (!references.length) return null;
+    const addresses = references.map(ref => ref.split('.').slice(0, 2).join('.'));
+    const first = addresses[0];
+    return addresses.every(address => address === first) ? first : null;
   }
 
   private mergeExpressionArray(value: any, expression: any[]): any {

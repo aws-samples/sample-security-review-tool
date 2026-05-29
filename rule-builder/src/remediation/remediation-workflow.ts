@@ -8,5 +8,6 @@ export class RemediationWorkflow {
     public async run(): Promise<void> {
         await new FixtureRemediator(this.context, FixtureType.cdk(this.context)).run();
         await new FixtureRemediator(this.context, FixtureType.terraform(this.context)).run();
+        await new FixtureRemediator(this.context, FixtureType.cloudFormation(this.context)).run();
     }
 }

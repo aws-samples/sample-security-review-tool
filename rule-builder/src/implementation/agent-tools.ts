@@ -3,6 +3,9 @@ import * as path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { tool } from '@strands-agents/sdk';
 import z from 'zod';
+import { UvManager } from '../../../src/shared/scanner-tools/uv-manager.js';
+import { ScannerToolManager } from '../../../src/shared/scanner-tools/scanner-tool-manager.js';
+import { ScanTool } from '../../../src/shared/scanner-tools/types.js';
 
 export class AgentToolFactory {
     public static createWriteFileTool(options: { ensureDir: boolean } = { ensureDir: false }) {
@@ -83,6 +86,21 @@ export class AgentToolFactory {
                     if (result.status !== 0) return { passed: false, output };
                 }
                 return { passed: true, output };
+            },
+        });
+    }
+
+    public static createCfnLintTool(cfnProjectPath: string) {
+        return tool({
+            name: 'run_cfn_lint',
+            description: 'Run cfn-lint against the CloudFormation fixture template (template.yaml) to check for syntax and schema errors. Returns pass/fail and any error messages.',
+            callback: async () => {
+                const uvPath = await UvManager.ensureUvAvailable();
+                const toolArgs = ScannerToolManager.getToolRunArgs(ScanTool.CFN_LINT);
+                const templatePath = path.join(cfnProjectPath, 'template.yaml');
+                const result = spawnSync(uvPath, [...toolArgs, templatePath], { encoding: 'utf8', timeout: 60_000 });
+                const output = ((result.stdout ?? '') + (result.stderr ?? ''));
+                return { passed: result.status === 0, output };
             },
         });
     }

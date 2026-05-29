@@ -20,6 +20,8 @@ async function main(): Promise<void> {
 
     console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
 
+    if (context.regenerate) clearGeneratedArtifacts(context);
+
     console.log('\nPhase 1: Requirements generation');
     const requirements = await new RequirementsWorkflow(context).run({ regenerate: false });
     console.log(`Phase 1 complete: Generated ${requirements.requirements.length} requirements`);
@@ -38,6 +40,15 @@ async function main(): Promise<void> {
     await new RemediationWorkflow(context).run();
 
     console.log(`\n✓ Done.`);
+}
+
+function clearGeneratedArtifacts(context: RuleContext): void {
+    console.log(`\nRegenerating ${context.ruleId}: clearing tests, control, and adapter files`);
+    fs.rmSync(context.testsFolderPath, { recursive: true, force: true });
+    fs.rmSync(context.ruleControlFilePath, { force: true });
+    fs.rmSync(context.ruleAdapterBaseFilePath, { force: true });
+    fs.rmSync(context.ruleAdapterCfnFilePath, { force: true });
+    fs.rmSync(context.ruleAdapterTfFilePath, { force: true });
 }
 
 function parseArgs(argv: string[]): RuleContext {
@@ -82,7 +93,7 @@ function parseArgs(argv: string[]): RuleContext {
     if (!service) throw new Error('--service is required');
     if (!description) throw new Error('--description is required');
 
-    return new RuleContext(ruleId, service, description);
+    return new RuleContext(ruleId, service, description, regenerate);
 }
 
 function printUsage(): void {
@@ -93,7 +104,7 @@ Options:
   --rule <checkId>        Rule ID (e.g. S3-001, DDB-002)
   --service <service>     Service folder name (e.g. s3, dynamodb, cloudfront)
   --description <desc>    Description of the rule
-  --regenerate            Force regeneration of cached requirements
+  --regenerate            Clear tests, control, and adapter files before running (keeps cached requirements)
   -h, --help              Show this help message
 `);
 }

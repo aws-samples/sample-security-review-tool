@@ -8,5 +8,6 @@ export class FixtureWorkflow {
     public async run(): Promise<void> {
         await new FixtureGenerator(this.context, FixtureType.cdk(this.context)).generate();
         await new FixtureGenerator(this.context, FixtureType.terraform(this.context)).generate();
+        await new FixtureGenerator(this.context, FixtureType.cloudFormation(this.context)).generate();
     }
 }

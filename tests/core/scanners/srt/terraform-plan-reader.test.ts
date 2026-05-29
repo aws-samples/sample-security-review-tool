@@ -38,7 +38,7 @@ describe('TerraformPlanReader', () => {
     expect(resources[0].values.bucket).toBe('my-bucket');
   });
 
-  it('merges a top-level reference that planned_values dropped because it is unknown at plan time', async () => {
+  it('collapses a top-level reference that planned_values dropped because it is unknown at plan time', async () => {
     const planPath = await writePlan({
       planned_values: {
         root_module: {
@@ -67,10 +67,76 @@ describe('TerraformPlanReader', () => {
     const resources = await readTerraformPlan(planPath);
 
     expect(resources[0].values.name).toBe('trail');
-    expect(resources[0].values.s3_bucket_name).toEqual({ references: ['aws_s3_bucket.logs.id', 'aws_s3_bucket.logs'] });
+    expect(resources[0].values.s3_bucket_name).toBe('aws_s3_bucket.logs');
   });
 
-  it('merges references nested inside block expressions and arrays', async () => {
+  it('collapses a reference that appears as null in planned_values to the target address', async () => {
+    const planPath = await writePlan({
+      planned_values: {
+        root_module: {
+          resources: [
+            {
+              type: 'aws_s3_bucket_logging',
+              name: 'cf_logs',
+              address: 'aws_s3_bucket_logging.cf_logs',
+              values: { bucket: null, target_prefix: 's3-logs/' }
+            }
+          ]
+        }
+      },
+      configuration: {
+        root_module: {
+          resources: [
+            {
+              address: 'aws_s3_bucket_logging.cf_logs',
+              type: 'aws_s3_bucket_logging',
+              name: 'cf_logs',
+              expressions: {
+                bucket: { references: ['aws_s3_bucket.cf_logs.id', 'aws_s3_bucket.cf_logs'] },
+                target_prefix: { constant_value: 's3-logs/' }
+              }
+            }
+          ]
+        }
+      }
+    });
+
+    const resources = await readTerraformPlan(planPath);
+
+    expect(resources[0].values.bucket).toBe('aws_s3_bucket.cf_logs');
+    expect(resources[0].values.target_prefix).toBe('s3-logs/');
+  });
+
+  it('leaves a multi-source reference alone when no single address covers all entries', async () => {
+    const planPath = await writePlan({
+      planned_values: {
+        root_module: {
+          resources: [
+            { type: 'aws_cloudtrail', name: 'ct', address: 'aws_cloudtrail.ct', values: { s3_bucket_name: null } }
+          ]
+        }
+      },
+      configuration: {
+        root_module: {
+          resources: [
+            {
+              address: 'aws_cloudtrail.ct',
+              type: 'aws_cloudtrail',
+              name: 'ct',
+              expressions: {
+                s3_bucket_name: { references: ['aws_s3_bucket.a.id', 'aws_s3_bucket.b.id'] }
+              }
+            }
+          ]
+        }
+      }
+    });
+
+    const resources = await readTerraformPlan(planPath);
+    expect(resources[0].values.s3_bucket_name).toBeNull();
+  });
+
+  it('collapses references nested inside block expressions and arrays to addresses', async () => {
     const planPath = await writePlan({
       planned_values: {
         root_module: {
@@ -116,7 +182,7 @@ describe('TerraformPlanReader', () => {
     const dataResource = resources[0].values.event_selector[0].data_resource[0];
 
     expect(dataResource.type).toBe('AWS::DynamoDB::Table');
-    expect(dataResource.values).toEqual({ references: ['aws_dynamodb_table.t.arn', 'aws_dynamodb_table.t'] });
+    expect(dataResource.values).toBe('aws_dynamodb_table.t');
   });
 
   it('does not overwrite a known value with its reference', async () => {
@@ -184,7 +250,7 @@ describe('TerraformPlanReader', () => {
     const resources = await readTerraformPlan(planPath);
 
     expect(resources[0].address).toBe('module.m.aws_cloudtrail.ct');
-    expect(resources[0].values.s3_bucket_name).toEqual({ references: ['aws_s3_bucket.inner.id'] });
+    expect(resources[0].values.s3_bucket_name).toBe('aws_s3_bucket.inner');
   });
 
   it('returns an empty array when the plan has no planned values', async () => {

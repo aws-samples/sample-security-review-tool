@@ -131,8 +131,9 @@ export class FixtureRemediator {
             return;
         }
 
-        const originalCheckIds = new Set(originalIssues.map(i => i.check_id));
-        const newIssues = currentIssues.filter(i => i.priority === 'HIGH' && i.status?.toLowerCase() === 'open' && !originalCheckIds.has(i.check_id) && !i.isCustomResource);
+        const keyOf = (i: ScanResult) => `${i.resourceName}::${i.check_id}`;
+        const originalKeys = new Set(originalIssues.map(keyOf));
+        const newIssues = currentIssues.filter(i => i.priority === 'HIGH' && i.status?.toLowerCase() === 'open' && !originalKeys.has(keyOf(i)) && !i.isCustomResource);
 
         if (newIssues.length > 0) {
             const ids = newIssues.map(i => i.check_id).join(', ');
