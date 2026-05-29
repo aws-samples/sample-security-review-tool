@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Fixture template for CF-001. Each distribution intentionally violates one
+  remediation scenario for the rule that requires CloudFront viewer certificates
+  to enforce a minimum TLS version of 1.2.
+
+Resources:
+  # Scenario 1: missing-viewer-certificate
+  # DistributionConfig has no ViewerCertificate block at all.
+  MissingViewerCertificateDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-001 missing viewer certificate fixture
+        DefaultCacheBehavior:
+          TargetOriginId: missing-viewer-cert-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        Origins:
+          - Id: missing-viewer-cert-origin
+            DomainName: example-origin-1.example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+
+  # Scenario 2: missing-minimum-protocol-version
+  # ViewerCertificate is present (with AcmCertificateArn so it is NOT the
+  # default CloudFront certificate), but MinimumProtocolVersion is omitted.
+  MissingMinimumProtocolVersionDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Aliases:
+          - cf-001-missing-min-protocol.example.com
+        Comment: CF-001 missing minimum protocol version fixture
+        DefaultCacheBehavior:
+          TargetOriginId: missing-min-protocol-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        Origins:
+          - Id: missing-min-protocol-origin
+            DomainName: example-origin-2.example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        ViewerCertificate:
+          AcmCertificateArn: arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000001
+          SslSupportMethod: sni-only
+
+  # Scenario 3: insecure-minimum-protocol-version
+  # ViewerCertificate present with an explicit MinimumProtocolVersion that
+  # does not enforce TLS 1.2 or higher (SSLv3).
+  InsecureMinimumProtocolVersionDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Aliases:
+          - cf-001-insecure-min-protocol.example.com
+        Comment: CF-001 insecure minimum protocol version fixture
+        DefaultCacheBehavior:
+          TargetOriginId: insecure-min-protocol-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        Origins:
+          - Id: insecure-min-protocol-origin
+            DomainName: example-origin-3.example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        ViewerCertificate:
+          AcmCertificateArn: arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000002
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: SSLv3
