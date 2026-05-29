@@ -5,6 +5,7 @@ import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirem
 import { ImplementationConflictResolver } from './implementation-conflict-resolver.js';
 import { TestCreationAgent } from './test-creation-agent.js';
 import { RuleImplementationAgent } from './rule-implementation-agent.js';
+import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 const MAX_CONFLICT_ESCALATIONS = 3;
 
@@ -12,6 +13,7 @@ export class ImplementationWorkflow {
     private readonly testCreationAgent: TestCreationAgent;
     private readonly ruleImplementationAgent: RuleImplementationAgent;
     private readonly conflictResolver: ImplementationConflictResolver;
+    private readonly logger = new RuleBuilderLogger();
 
     constructor(private readonly context: RuleContext) {
         this.testCreationAgent = new TestCreationAgent(context);
@@ -44,7 +46,7 @@ export class ImplementationWorkflow {
             if (resolution.removedRequirementId === requirement.id) return true;
         }
 
-        console.log(`  ⚠ Max conflict escalations reached for ${requirement.id}. Skipping.`);
+        this.logger.warning(`Max conflict escalations reached for ${requirement.id}. Skipping.`);
         return false;
     }
 }

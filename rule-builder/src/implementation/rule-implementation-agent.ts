@@ -4,17 +4,17 @@ import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirem
 import { AgentToolFactory } from './agent-tools.js';
 import { ImplementationResultSchema, type ImplementationResult } from './implementation-result-schema.js';
 import { RuleImplementationPromptBuilder } from './rule-implementation-prompt.js';
+import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 export class RuleImplementationAgent {
     private readonly promptBuilder: RuleImplementationPromptBuilder;
+    private readonly logger = new RuleBuilderLogger();
 
     constructor(private readonly context: RuleContext) {
         this.promptBuilder = new RuleImplementationPromptBuilder(context);
     }
 
     public async implement(spec: RequirementsSpec, requirement: RuleRequirement): Promise<ImplementationResult> {
-        console.log(`\n==== Implementing ${spec.ruleId} ${requirement.id} ====\n`);
-
         const agent = new Agent({
             model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
             systemPrompt: this.promptBuilder.buildSystemPrompt(),
@@ -26,7 +26,7 @@ export class RuleImplementationAgent {
             structuredOutputSchema: ImplementationResultSchema,
         });
 
-        const result = await agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement));
+        const result = await this.logger.agentBlock(`implementing ${spec.ruleId} ${requirement.id}`, () => agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement)));
         return result.structuredOutput as ImplementationResult;
     }
 }

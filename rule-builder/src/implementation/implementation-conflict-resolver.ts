@@ -4,12 +4,15 @@ import { select } from '@inquirer/prompts';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec } from '../shared/types/requirements.js';
 import type { ImplementationResult } from './implementation-result-schema.js';
+import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 export interface ConflictResolution {
     removedRequirementId: string;
 }
 
 export class ImplementationConflictResolver {
+    private readonly logger = new RuleBuilderLogger();
+
     constructor(private readonly context: RuleContext) {}
 
     public async resolve(conflict: ImplementationResult, spec: RequirementsSpec): Promise<ConflictResolution> {
@@ -28,11 +31,10 @@ export class ImplementationConflictResolver {
         const current = spec.requirements.find(r => r.id === currentId);
         const conflicting = spec.requirements.find(r => r.id === conflictingId);
 
-        console.log(`\n  ⚠ Conflict detected between ${currentId} and ${conflictingId}`);
-        console.log(`  ${explanation}\n`);
-        if (current) console.log(`    ${current.id}: "${current.description}" → ${current.expectedBehavior}`);
-        if (conflicting) console.log(`    ${conflicting.id}: "${conflicting.description}" → ${conflicting.expectedBehavior}`);
-        console.log('');
+        this.logger.warning(`Conflict detected between ${currentId} and ${conflictingId}`);
+        this.logger.step(explanation);
+        if (current) this.logger.substep(`${current.id}: "${current.description}" → ${current.expectedBehavior}`);
+        if (conflicting) this.logger.substep(`${conflicting.id}: "${conflicting.description}" → ${conflicting.expectedBehavior}`);
     }
 
     private async promptUserForResolution(currentId: string, conflictingId: string, spec: RequirementsSpec): Promise<string> {
@@ -54,7 +56,7 @@ export class ImplementationConflictResolver {
         if (fs.existsSync(cfnPath)) fs.unlinkSync(cfnPath);
         if (fs.existsSync(tfPath)) fs.unlinkSync(tfPath);
 
-        console.log(`  Deleted test files for ${requirementId}`);
+        this.logger.step(`Deleted test files for ${requirementId}`);
     }
 
     private removeRequirementFromSpec(requirementId: string, spec: RequirementsSpec): void {

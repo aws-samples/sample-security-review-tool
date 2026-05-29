@@ -6,6 +6,7 @@ import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec } from '../shared/types/requirements.js';
 import { RequirementsAgent } from './requirements-agent.js';
 import { AmbiguitySchema, RequirementsOutputSchema } from './requirements-schema.js';
+import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 const CUSTOM_INTERPRETATION = -1;
 const MAX_RESOLUTION_ITERATIONS = 5;
@@ -17,6 +18,8 @@ export interface RequirementsWorkflowOptions {
 }
 
 export class RequirementsWorkflow {
+    private readonly logger = new RuleBuilderLogger();
+
     constructor(private readonly context: RuleContext) { }
 
     public async run(options: RequirementsWorkflowOptions = {}): Promise<RequirementsSpec> {
@@ -56,7 +59,7 @@ export class RequirementsWorkflow {
 
     private warnIfUnresolved(output: RequirementsOutput): void {
         if (this.hasUnresolvedAmbiguities(output)) {
-            console.log(`  ⚠ ${output.ambiguities.length} unresolved ambiguities remain after ${MAX_RESOLUTION_ITERATIONS} iterations.`);
+            this.logger.warning(`${output.ambiguities.length} unresolved ambiguities remain after ${MAX_RESOLUTION_ITERATIONS} iterations.`);
         }
     }
 
@@ -76,7 +79,7 @@ export class RequirementsWorkflow {
         const decisions: string[] = [];
 
         for (const ambiguity of ambiguities) {
-            console.log(`\n  Ambiguity: ${ambiguity.scenario}`);
+            this.logger.step(`Ambiguity: ${ambiguity.scenario}`);
 
             const choices = [
                 ...ambiguity.options.map((opt, i) => ({ value: i, name: `${opt.label} (→ ${opt.expectedBehavior})` })),

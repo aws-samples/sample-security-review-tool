@@ -8,6 +8,9 @@ import { ImplementationWorkflow } from './implementation/implementation-workflow
 import { RemediationWorkflow } from './remediation/remediation-workflow.js';
 import { RuleContext } from './shared/rule-context.js';
 import { FixtureWorkflow } from './fixtures/fixture-workflow.js';
+import { RuleBuilderLogger } from './shared/logging/rule-builder-logger.js';
+
+const PHASE_COUNT = 5;
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
 fs.mkdirSync(logsFolderPath, { recursive: true });
@@ -15,36 +18,38 @@ fs.mkdirSync(logsFolderPath, { recursive: true });
 SrtLogger.initialize(logsFolderPath);
 BedrockConfig.initialize('default', 'us-east-1');
 
+const logger = new RuleBuilderLogger();
+
 async function main(): Promise<void> {
     const context = parseArgs(process.argv.slice(2));
 
-    console.log(`\nImplementing rule ${context.ruleId} (${context.description})\n`);
+    logger.runStart(context.ruleId, context.description);
 
-    console.log('\n==== PHASE 1: REQUIREMENTS ====\n');
+    logger.phaseStart(1, PHASE_COUNT, 'Requirements');
     const requirements = await new RequirementsWorkflow(context).run({ regenerate: false });
-    console.log(`==== PHASE 1 COMPLETE: GENERATED ${requirements.requirements.length} REQUIREMENTS ====`);
+    logger.phaseComplete(`${requirements.requirements.length} requirements generated`);
 
-    console.log('\n==== PHASE 2: SCAFFOLDING ====\n');
+    logger.phaseStart(2, PHASE_COUNT, 'Scaffolding');
     new ScaffoldingWorkflow(context).run(requirements);
-    console.log(`\n==== PHASE 2 COMPLETE: SCAFFOLDED ${context.ruleId} ====\n`);
+    logger.phaseComplete('control file + adapters scaffolded');
 
-    console.log(`\n==== PHASE 3: IMPLEMENTATION ====`);
+    logger.phaseStart(3, PHASE_COUNT, 'Implementation');
     await new ImplementationWorkflow(context).run(requirements);
-    console.log(`\n==== PHASE 3 COMPLETE: IMPLEMENTED ${context.ruleId} ====\n`);
+    logger.phaseComplete(`${context.ruleId} implemented`);
 
-    console.log(`\n==== PHASE 4: FIXTURES ====\n`);
+    logger.phaseStart(4, PHASE_COUNT, 'Fixtures');
     await new FixtureWorkflow(context).run();
-    console.log(`\n==== PHASE 4 COMPLETE: GENERATED FIXTURES FOR ${context.ruleId} ====\n`);
+    logger.phaseComplete('fixtures generated');
 
-    console.log(`\n==== PHASE 5: REMEDIATION ====\n`);
+    logger.phaseStart(5, PHASE_COUNT, 'Remediation');
     await new RemediationWorkflow(context).run();
-    console.log(`\n==== PHASE 5 COMPLETE: TESTED REMEDIATIONS FOR ${context.ruleId} ====\n`);
+    logger.phaseComplete('remediations tested');
 
-    console.log(`\n✓ Done.`);
+    logger.runComplete(context.ruleId);
 }
 
 function clearGeneratedArtifacts(context: RuleContext): void {
-    console.log(`\nRegenerating ${context.ruleId}: clearing tests, control, and adapter files`);
+    logger.info(`Regenerating ${context.ruleId}: clearing tests, control, and adapter files`);
     fs.rmSync(context.testsFolderPath, { recursive: true, force: true });
     fs.rmSync(context.ruleControlFilePath, { force: true });
     fs.rmSync(context.ruleAdapterBaseFilePath, { force: true });
@@ -111,6 +116,6 @@ Options:
 }
 
 main().catch(error => {
-    console.error(error.message);
+    logger.error(error.message);
     process.exit(1);
 });
