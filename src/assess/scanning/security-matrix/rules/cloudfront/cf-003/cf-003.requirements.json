@@ -1,0 +1,89 @@
+{
+  "ruleId": "CF-003",
+  "generatedAt": "2026-05-29T14:07:10.917Z",
+  "description": "CloudFront distributions must enable access logging",
+  "cfnResources": [
+    "AWS::CloudFront::Distribution"
+  ],
+  "tfResources": [
+    "aws_cloudfront_distribution"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "CloudFront distribution is defined with no access logging configuration of any kind, and no external log delivery source resource references the distribution.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "CloudFront standard logging is disabled by default. Without inline logging configuration or an external log delivery pipeline targeting the distribution, no access logs are produced, violating the rule."
+    },
+    {
+      "id": "REQ-02",
+      "description": "CloudFront distribution has inline access logging configured with a non-empty destination bucket value.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Per the CloudFront Logging configuration reference, specifying a destination bucket enables legacy standard access logging for the distribution, satisfying the rule. The user resolved that no prefix is required."
+    },
+    {
+      "id": "REQ-03",
+      "description": "CloudFront distribution has inline access logging configured with a destination bucket value but no prefix specified.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "Per resolved decision: only the destination bucket is required; prefix is optional. The CloudFront Logging property treats Prefix as optional."
+    },
+    {
+      "id": "REQ-04",
+      "description": "CloudFront distribution has inline access logging configured but the destination bucket value is an empty string.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision: an empty string destination is equivalent to missing. Without a real bucket, logs cannot be delivered, so the configuration does not satisfy the rule."
+    },
+    {
+      "id": "REQ-05",
+      "description": "CloudFront distribution has no inline access logging, and an external log delivery source resource explicitly references this distribution and is paired with a delivery destination resource in the same template.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "CloudFront standard logging (v2) is configured via the CloudWatch Logs vended-logs delivery model: a delivery source references the distribution ARN, paired with a delivery destination, which collectively enables access log delivery."
+    },
+    {
+      "id": "REQ-06",
+      "description": "CloudFront distribution has no inline access logging, and an external log delivery source resource references this distribution, but no corresponding delivery destination resource is present in the same template.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision: strict mode requires the complete delivery chain (source plus destination) in the same template. Without a destination resource paired with the source, the v2 logging chain is incomplete and the analyzer cannot confirm log delivery is enabled."
+    },
+    {
+      "id": "REQ-07",
+      "description": "CloudFront distribution has no inline access logging, and an external log delivery source resource exists in the template but references a different CloudFront distribution.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "A delivery source bound to a different distribution provides no logging coverage for the assessed distribution. The presence of unrelated logging infrastructure does not satisfy the rule for this resource."
+    },
+    {
+      "id": "REQ-08",
+      "description": "CloudFront distribution's inline access logging destination bucket value depends on a condition that cannot be resolved at analysis time.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the destination bucket value cannot be determined statically, the analyzer cannot assert that logging is absent or misconfigured. To avoid false positives, the rule should not fire on unresolvable values."
+    },
+    {
+      "id": "REQ-09",
+      "description": "CloudFront distribution has multiple logging configurations (inline plus external delivery source-destination chain), and at least one is fully valid.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Standard logging (v2) and standard logging (legacy) can coexist on the same distribution. Any one valid logging configuration delivering access logs satisfies the rule."
+    },
+    {
+      "id": "REQ-10",
+      "description": "CloudFront distribution has inline access logging configured with a destination bucket value referencing another resource (e.g., a logical resource reference).",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A reference to a concrete resource as the destination bucket is a valid, resolvable destination — logs will be delivered to that bucket."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-logging.html",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logging.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-logs-deliverysource.html",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html"
+  ]
+}
