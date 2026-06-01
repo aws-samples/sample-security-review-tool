@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: LAMBDA-012 fixture - two Lambda functions share the same IAM execution role ARN (shared-execution-role scenario).
+
+Resources:
+  # Both functions reference the SAME literal role ARN string.
+  # The adapter only inspects Properties.Role when it is a string literal,
+  # so the role ARN is hardcoded (not !GetAtt) on purpose.
+  SharedRoleFunctionA:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda-012-shared-role-a
+      Runtime: nodejs24.x
+      Handler: index.handler
+      Role: arn:aws:iam::123456789012:role/lambda-012-shared-execution-role
+      Code:
+        ZipFile: |
+          exports.handler = async () => ({ statusCode: 200 });
+
+  SharedRoleFunctionB:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda-012-shared-role-b
+      Runtime: nodejs24.x
+      Handler: index.handler
+      Role: arn:aws:iam::123456789012:role/lambda-012-shared-execution-role
+      Code:
+        ZipFile: |
+          exports.handler = async () => ({ statusCode: 200 });
