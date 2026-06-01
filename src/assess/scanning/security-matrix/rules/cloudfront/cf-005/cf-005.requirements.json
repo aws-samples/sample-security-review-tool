@@ -1,0 +1,117 @@
+{
+  "ruleId": "CF-005",
+  "generatedAt": "2026-06-01T13:03:32.002Z",
+  "description": "CloudFront distributions must use HTTPS with a secure TLS version for all custom (non-S3) origin connections.",
+  "cfnResources": [
+    "AWS::CloudFront::Distribution"
+  ],
+  "tfResources": [
+    "aws_cloudfront_distribution"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "A distribution has no origins defined at all (no custom origins to evaluate).",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "With no custom origins, there is no insecure origin connection to flag. The rule has no applicable target."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A distribution has only S3 (native, non-website) origins and no custom origins.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "The rule applies only to custom (non-S3) origin connections. Native S3 origins use S3-specific origin configuration and are out of scope."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A custom origin is configured to always connect to the origin over HTTP only.",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "An HTTP-only origin protocol policy means CloudFront connects to the origin in plaintext, violating the requirement to use HTTPS for all custom origin connections."
+    },
+    {
+      "id": "REQ-04",
+      "description": "A custom origin is configured to mirror the viewer's protocol (HTTP when the viewer uses HTTP, HTTPS when the viewer uses HTTPS), regardless of the distribution's viewer protocol policy.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision, match-viewer is flagged unconditionally because origin-level configuration alone must guarantee HTTPS to the origin. Relying on viewer-side enforcement is insufficient."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A custom origin is configured to always connect to the origin over HTTPS, and the allowed origin SSL/TLS protocol list contains exclusively secure protocol versions (TLS 1.2 or higher).",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "HTTPS-only with a secure-only TLS protocol list satisfies the rule: every connection to the origin is encrypted with a modern TLS version."
+    },
+    {
+      "id": "REQ-06",
+      "description": "A custom origin is configured to always connect to the origin over HTTPS, but the allowed origin SSL/TLS protocol list contains at least one legacy protocol version (SSLv3, TLS 1.0, or TLS 1.1), even if a secure version (TLS 1.2 or higher) is also present.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision (strict mode): the presence of any legacy protocol in the allowed list permits CloudFront to negotiate it with the origin, weakening security."
+    },
+    {
+      "id": "REQ-07",
+      "description": "A custom origin is configured to always connect to the origin over HTTPS, but the allowed origin SSL/TLS protocol list contains only legacy protocol versions (e.g., only SSLv3, TLS 1.0, and/or TLS 1.1).",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "All allowed protocols are deprecated/insecure; CloudFront would connect to the origin using a legacy protocol vulnerable to known attacks (e.g., POODLE, BEAST)."
+    },
+    {
+      "id": "REQ-08",
+      "description": "A custom origin is configured to always connect to the origin over HTTPS, but the allowed origin SSL/TLS protocol list is omitted entirely.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision: the rule requires explicit selection of a secure TLS minimum. An omitted protocol list does not provide an explicit guarantee of a secure floor."
+    },
+    {
+      "id": "REQ-09",
+      "description": "A custom origin is configured to always connect to the origin over HTTPS, but the allowed origin SSL/TLS protocol list is present and empty.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty allowed-protocol list provides no explicit secure minimum and is not a valid secure configuration."
+    },
+    {
+      "id": "REQ-10",
+      "description": "A custom origin points at an S3 static website hosting endpoint (which only supports HTTP from CloudFront) and uses an HTTP-only origin protocol policy.",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "Per resolved decision: the rule enforces HTTPS for all custom origins regardless of the S3 website endpoint protocol limitation. Users should use a native S3 origin or a different HTTPS-capable fronting mechanism."
+    },
+    {
+      "id": "REQ-11",
+      "description": "A distribution has multiple custom origins where at least one is configured insecurely (HTTP-only, match-viewer, or HTTPS with an insecure/missing TLS protocol list) and others are securely configured.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires HTTPS with a secure TLS version for ALL custom origin connections. Any non-compliant custom origin in the distribution is sufficient to flag."
+    },
+    {
+      "id": "REQ-12",
+      "description": "The custom origin's protocol policy value cannot be determined at analysis time because it depends on an unresolvable input.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the value driving compliance is unknown at analysis time, the rule cannot assert non-compliance and must not produce a false positive."
+    },
+    {
+      "id": "REQ-13",
+      "description": "The custom origin uses HTTPS to the origin, but the contents of the allowed SSL/TLS protocol list cannot be determined at analysis time because they depend on an unresolvable input.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Without resolvable protocol values, the rule cannot determine whether any legacy protocol is allowed and must not assert non-compliance."
+    },
+    {
+      "id": "REQ-14",
+      "description": "A distribution has multiple custom origins, all of which are configured for HTTPS-only to the origin with an explicit allowed-protocol list containing only secure TLS versions (TLS 1.2 or higher).",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Every custom origin meets the requirement of HTTPS with a secure TLS minimum; nothing to flag."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_CustomOriginConfig.html",
+    "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_OriginSslProtocols.html",
+    "https://aws.amazon.com/blogs/aws/cloudfront-update-https-tls-v1-1v1-2-to-the-origin-addmodify-headers/",
+    "https://aws.amazon.com/security/security-bulletins/CVE-2014-3566-advisory/"
+  ]
+}

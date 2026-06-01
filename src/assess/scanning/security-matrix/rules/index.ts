@@ -10,7 +10,6 @@ import { identityAccessRules } from './iam/index.js';
 import { s3Rules } from './s3/index.js';
 import { rdsRules } from './rds/index.js';
 import { apiGatewayRules } from './api-gateway/index.js';
-import { cloudfrontRules } from './cloudfront/index.js';
 import { vpcConfigurationRules } from './vpc/index.js';
 import { securityGroupRules } from './security-group/index.js';
 import { stepFunctionsRules } from './step-functions/index.js';
@@ -64,7 +63,6 @@ export const allCloudFormationRules = [
   ...s3Rules,
   ...rdsRules,
   ...apiGatewayRules,
-  ...cloudfrontRules,
   ...vpcConfigurationRules,
   ...securityGroupRules,
   ...cognitoRules,
@@ -113,7 +111,6 @@ import { tfIamRules } from './iam/index.js';
 import { tfS3Rules } from './s3/index.js';
 import { tfRdsRules } from './rds/index.js';
 import { tfApiGatewayRules } from './api-gateway/index.js';
-import { tfCloudfrontRules } from './cloudfront/index.js';
 import { tfVpcRules } from './vpc/index.js';
 import { tfSecurityGroupRules } from './security-group/index.js';
 import { tfStepFunctionsRules } from './step-functions/index.js';
@@ -172,7 +169,6 @@ export const allTerraformRules: BaseTerraformRule[] = [
   ...tfS3Rules,
   ...tfRdsRules,
   ...tfApiGatewayRules,
-  ...tfCloudfrontRules,
   ...tfVpcRules,
   ...tfSecurityGroupRules,
   ...tfCognitoRules,

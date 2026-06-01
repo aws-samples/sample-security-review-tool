@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CF-005 fixture - CloudFront custom origins with insecure HTTPS/TLS configurations.
+
+Resources:
+  # Scenario: custom-origin-http-only
+  # The custom origin is configured with OriginProtocolPolicy=http-only,
+  # so traffic from CloudFront to the origin is sent in plaintext.
+  DistributionHttpOnly:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-005 http-only custom origin
+        DefaultCacheBehavior:
+          TargetOriginId: http-only-origin
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: false
+        Origins:
+          - Id: http-only-origin
+            DomainName: origin-http-only.example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+              OriginSSLProtocols:
+                - TLSv1.2
+
+  # Scenario: custom-origin-match-viewer
+  # The custom origin uses OriginProtocolPolicy=match-viewer, which allows
+  # plaintext HTTP to the origin whenever a viewer connects via HTTP.
+  DistributionMatchViewer:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-005 match-viewer custom origin
+        DefaultCacheBehavior:
+          TargetOriginId: match-viewer-origin
+          ViewerProtocolPolicy: allow-all
+          ForwardedValues:
+            QueryString: false
+        Origins:
+          - Id: match-viewer-origin
+            DomainName: origin-match-viewer.example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: match-viewer
+              OriginSSLProtocols:
+                - TLSv1.2
+
+  # Scenario: custom-origin-legacy-ssl-protocol
+  # The custom origin uses https-only (so it doesn't trip earlier checks)
+  # but permits a legacy SSL/TLS protocol (TLSv1) to be negotiated.
+  DistributionLegacySsl:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-005 legacy SSL protocol custom origin
+        DefaultCacheBehavior:
+          TargetOriginId: legacy-ssl-origin
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: false
+        Origins:
+          - Id: legacy-ssl-origin
+            DomainName: origin-legacy-ssl.example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1
+                - TLSv1.1
+                - TLSv1.2
+
+  # Scenario: custom-origin-missing-ssl-protocols
+  # The custom origin uses https-only but does NOT declare OriginSSLProtocols,
+  # leaving the minimum TLS floor for origin connections unspecified.
+  DistributionMissingSslProtocols:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-005 missing SSL protocols custom origin
+        DefaultCacheBehavior:
+          TargetOriginId: missing-ssl-origin
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: false
+        Origins:
+          - Id: missing-ssl-origin
+            DomainName: origin-missing-ssl.example.com
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
