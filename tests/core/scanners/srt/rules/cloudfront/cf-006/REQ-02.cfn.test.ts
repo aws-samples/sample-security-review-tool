@@ -3,11 +3,17 @@ import { cf006Control } from '../../../../../../../src/assess/scanning/security-
 import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
 import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 REQ-02 (CloudFormation): S3 origin references in-template OAC by identifier', () => {
-  it('passes when the S3 origin has OriginAccessControlId resolved from a Ref to an in-template OAC resource', () => {
-    // After parseCfnTemplate preprocessing, !Ref MyOAC becomes the string "MyOAC".
+describe('CF-006 REQ-02 CloudFormation: S3 origin with in-template OAC reference', () => {
+  it('passes when an S3 origin references an in-template OriginAccessControl by its identifier', () => {
+    // After parseCfnTemplate preprocessing:
+    // - !Ref MyOAC -> "MyOAC"
+    // - !GetAtt MyBucket.RegionalDomainName -> "MyBucket"
     const template: Template = {
       Resources: {
+        MyBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
         MyOAC: {
           Type: 'AWS::CloudFront::OriginAccessControl',
           Properties: {
@@ -31,9 +37,8 @@ describe('CF-006 REQ-02 (CloudFormation): S3 origin references in-template OAC b
               Origins: [
                 {
                   Id: 's3-origin',
-                  DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
-                  // Resolved value of !Ref MyOAC after preprocessing
-                  OriginAccessControlId: 'MyOAC',
+                  DomainName: 'MyBucket', // resolved from !GetAtt MyBucket.RegionalDomainName
+                  OriginAccessControlId: 'MyOAC', // resolved from !Ref MyOAC
                   S3OriginConfig: {},
                 },
               ],
@@ -43,20 +48,19 @@ describe('CF-006 REQ-02 (CloudFormation): S3 origin references in-template OAC b
       },
     };
 
+    const resource = template.Resources!['MyDistribution']!;
     const context: CfnContext = {
       stackName: 'test-stack',
       template,
-      resource: template.Resources!.MyDistribution,
+      resource,
       logicalId: 'MyDistribution',
     };
 
     const factory = new Cf006CfnAdapterFactory();
-    expect(factory.appliesTo('AWS::CloudFront::Distribution')).toBe(true);
-
+    expect(factory.appliesTo(resource.Type)).toBe(true);
     const adapter = factory.bind(context);
-    const result = cf006Control.run(adapter, context);
 
-    expect(adapter.unprotectedS3Origins).toEqual([]);
+    const result = cf006Control.run(adapter, context);
     expect(result).toBeNull();
   });
 });

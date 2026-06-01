@@ -1,9 +1,17 @@
 import { SecurityControl } from '../../../controls/security-control.js';
 import { ControlFinding } from '../../../controls/types.js';
-import { Cf006Adapter } from './cf-006.adapter.js';
+import { Cf006Adapter, S3OriginWithoutAccessControl } from './cf-006.adapter.js';
+import { s3001Control } from '../../s3/s3-001/s3-001.control.js';
+import { s3008Control } from '../../s3/s3-008/s3-008.control.js';
 
-const SCENARIO_S3_ORIGIN_UNPROTECTED = 's3-origin-without-access-control';
-const SCENARIO_NON_S3_OAC_ELIGIBLE_UNPROTECTED = 'non-s3-oac-eligible-origin-without-access-control';
+const S3_ORIGIN_ISSUE =
+  'CloudFront distribution has an S3 bucket origin with no access control mechanism, ' +
+  'allowing direct public access to the bucket and bypassing the distribution.';
+
+const NON_S3_OAC_ELIGIBLE_ISSUE =
+  'CloudFront distribution has an OAC-eligible non-S3 origin (such as a Lambda function URL, ' +
+  'MediaStore, or MediaPackage v2 origin) with no origin access control attached, ' +
+  'allowing the origin to be reached directly and bypassing the distribution.';
 
 export class Cf006Control extends SecurityControl<Cf006Adapter> {
   constructor() {
@@ -13,31 +21,42 @@ export class Cf006Control extends SecurityControl<Cf006Adapter> {
       description: 'CloudFront distributions must enable origin access control',
       remediationScenarios: [
         {
-          scenario: SCENARIO_S3_ORIGIN_UNPROTECTED,
-          intent: 'estrict the S3 origin so the bucket can only be reached through the CloudFront distribution by attaching an origin access control to the distribution origin and granting only that distribution permission to read from the bucket.\n\nWhen introducing additional Lambda functions as part of this fix (for example, any helper or edge functions used by the distribution), ensure each Lambda function is configured with its own dedicated IAM execution role. Do not share a single execution role across multiple Lambda functions — every function must have a 1:1 relationship with its execution role.',
+          scenario: 'S3_ORIGIN_WITHOUT_ACCESS_CONTROL',
+          intent:
+            'Restrict the S3 origin so that only the CloudFront distribution can read objects from the bucket, ' +
+            'using an origin access control association on the distribution origin and a bucket policy that only ' +
+            'allows that distribution to read.',
         },
         {
-          scenario: SCENARIO_NON_S3_OAC_ELIGIBLE_UNPROTECTED,
-          intent: 'Restrict the OAC-eligible origin so it can only be reached through the CloudFront distribution by attaching an origin access control to the distribution origin and configuring the upstream service to only accept signed requests from that distribution.',
+          scenario: 'NON_S3_OAC_ELIGIBLE_ORIGIN_WITHOUT_ACCESS_CONTROL',
+          intent:
+            'Attach an origin access control to every OAC-eligible non-S3 origin (Lambda function URL, MediaStore, ' +
+            'or MediaPackage v2) on the distribution and configure the origin to require requests signed by that ' +
+            'distribution, so the origin cannot be reached directly outside CloudFront.',
         },
       ],
+    
+      relatedRules: [s3001Control, s3008Control],
     });
   }
 
   protected evaluate(adapter: Cf006Adapter): ControlFinding | null {
-    if (adapter.unprotectedS3Origins.length > 0) {
+    const unprotectedOrigins = adapter.findS3OriginsWithoutAccessControl();
+    if (unprotectedOrigins.length === 0) return null;
+    if (this.hasS3Origin(unprotectedOrigins)) {
       return {
-        scenario: SCENARIO_S3_ORIGIN_UNPROTECTED,
-        issue: 'CloudFront distribution has an S3 bucket origin that is not restricted by an origin access control or a legacy origin access identity, allowing the bucket to be reached directly without going through the distribution',
+        scenario: 'S3_ORIGIN_WITHOUT_ACCESS_CONTROL',
+        issue: S3_ORIGIN_ISSUE,
       };
     }
-    if (adapter.unprotectedOacEligibleOrigins.length > 0) {
-      return {
-        scenario: SCENARIO_NON_S3_OAC_ELIGIBLE_UNPROTECTED,
-        issue: 'CloudFront distribution has an origin that supports origin access control but does not have one attached, allowing the upstream origin to be reached directly without going through the distribution',
-      };
-    }
-    return null;
+    return {
+      scenario: 'NON_S3_OAC_ELIGIBLE_ORIGIN_WITHOUT_ACCESS_CONTROL',
+      issue: NON_S3_OAC_ELIGIBLE_ISSUE,
+    };
+  }
+
+  private hasS3Origin(origins: S3OriginWithoutAccessControl[]): boolean {
+    return origins.some(origin => origin.originType === 's3');
   }
 }
 

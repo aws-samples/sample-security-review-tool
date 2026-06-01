@@ -1,101 +1,117 @@
 import { describe, it, expect } from 'vitest';
-import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
+import { Cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
-import { CfnContext } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-function buildContext(distributionProperties: any): CfnContext {
-  const template: any = {
-    Resources: {
-      MyDistribution: {
-        Type: 'AWS::CloudFront::Distribution',
-        Properties: distributionProperties,
-      },
-    },
-  };
-  return {
-    stackName: 'test-stack',
-    template,
-    resource: template.Resources.MyDistribution,
-    logicalId: 'MyDistribution',
-  };
-}
+/**
+ * REQ-04 (CFN): A CloudFront distribution has an S3 bucket origin whose origin access
+ * control identifier is an empty string or otherwise unset.
+ * Expected: flag (S3_ORIGIN_WITHOUT_ACCESS_CONTROL).
+ */
+describe('CF-006 REQ-04 (CloudFormation): S3 origin with empty/unset OriginAccessControlId is flagged', () => {
+  const control = new Cf006Control();
+  const factory = new Cf006CfnAdapterFactory();
 
-describe('CF-006 CFN: S3 origin with empty/unset OriginAccessControlId', () => {
-  it('flags an S3 origin whose OriginAccessControlId is an empty string', () => {
-    const context = buildContext({
-      DistributionConfig: {
-        Origins: [
-          {
-            Id: 'S3OriginEmptyOac',
-            DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
-            OriginAccessControlId: '',
-            S3OriginConfig: {
-              OriginAccessIdentity: '',
+  function runControl(template: Template, logicalId: string) {
+    const resource = template.Resources![logicalId];
+    const ctx: CfnContext = {
+      stackName: 'test-stack',
+      template,
+      resource,
+      logicalId,
+    };
+    const adapter = factory.bind(ctx);
+    return control.run(adapter, ctx);
+  }
+
+  it('flags an S3 origin (S3OriginConfig) when OriginAccessControlId is an empty string and no legacy OAI', () => {
+    const template: Template = {
+      Resources: {
+        SiteBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        Distribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Origins: [
+                {
+                  Id: 's3-origin',
+                  DomainName: 'SiteBucket',
+                  OriginAccessControlId: '',
+                  S3OriginConfig: {
+                    OriginAccessIdentity: '',
+                  },
+                },
+              ],
             },
           },
-        ],
+        },
       },
-    });
+    };
 
-    const factory = new Cf006CfnAdapterFactory();
-    const adapter = factory.bind(context);
-    const result = cf006Control.run(adapter, context);
+    const result = runControl(template, 'Distribution');
 
     expect(result).not.toBeNull();
-    expect(result?.check_id).toBe('CF-006');
-    expect(result?.resourceType).toBe('AWS::CloudFront::Distribution');
-    expect(result?.resourceName).toBe('MyDistribution');
-    expect(adapter.unprotectedS3Origins).toHaveLength(1);
-    expect(adapter.unprotectedS3Origins[0].originId).toBe('S3OriginEmptyOac');
+    expect(result!.check_id).toBe('CF-006');
+    expect(result!.resourceName).toBe('Distribution');
+    expect(result!.issue).toMatch(/S3 bucket origin/i);
   });
 
-  it('flags an S3 origin where OriginAccessControlId is omitted entirely', () => {
-    const context = buildContext({
-      DistributionConfig: {
-        Origins: [
-          {
-            Id: 'S3OriginNoOac',
-            DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
-            S3OriginConfig: {
-              OriginAccessIdentity: '',
+  it('flags an S3 origin when OriginAccessControlId is omitted entirely and no legacy OAI', () => {
+    const template: Template = {
+      Resources: {
+        SiteBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        Distribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Origins: [
+                {
+                  Id: 's3-origin',
+                  DomainName: 'SiteBucket',
+                  S3OriginConfig: {},
+                },
+              ],
             },
           },
-        ],
+        },
       },
-    });
+    };
 
-    const factory = new Cf006CfnAdapterFactory();
-    const adapter = factory.bind(context);
-    const result = cf006Control.run(adapter, context);
+    const result = runControl(template, 'Distribution');
 
     expect(result).not.toBeNull();
-    expect(result?.check_id).toBe('CF-006');
-    expect(adapter.unprotectedS3Origins).toHaveLength(1);
-    expect(adapter.unprotectedS3Origins[0].originId).toBe('S3OriginNoOac');
+    expect(result!.check_id).toBe('CF-006');
   });
 
-  it('flags an S3 origin where OriginAccessControlId is whitespace only', () => {
-    const context = buildContext({
-      DistributionConfig: {
-        Origins: [
-          {
-            Id: 'S3OriginWhitespaceOac',
-            DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
-            OriginAccessControlId: '   ',
-            S3OriginConfig: {
-              OriginAccessIdentity: '',
+  it('flags an S3 origin identified by literal S3 domain name when OriginAccessControlId is whitespace-only', () => {
+    const template: Template = {
+      Resources: {
+        Distribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Origins: [
+                {
+                  Id: 's3-literal-origin',
+                  DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
+                  OriginAccessControlId: '   ',
+                },
+              ],
             },
           },
-        ],
+        },
       },
-    });
+    };
 
-    const factory = new Cf006CfnAdapterFactory();
-    const adapter = factory.bind(context);
-    const result = cf006Control.run(adapter, context);
+    const result = runControl(template, 'Distribution');
 
     expect(result).not.toBeNull();
-    expect(adapter.unprotectedS3Origins).toHaveLength(1);
-    expect(adapter.unprotectedS3Origins[0].originId).toBe('S3OriginWhitespaceOac');
+    expect(result!.check_id).toBe('CF-006');
   });
 });

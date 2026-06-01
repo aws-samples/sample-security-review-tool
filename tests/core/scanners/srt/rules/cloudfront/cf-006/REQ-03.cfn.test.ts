@@ -1,13 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
 import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 REQ-03 (CloudFormation): S3 origin protected by legacy OAI (no OAC) should pass', () => {
-  it('does not produce a finding when origin uses OriginAccessIdentity but no OriginAccessControlId', () => {
+describe('CF-006 REQ-03 (CloudFormation): S3 origin with legacy OAI but no OAC', () => {
+  it('passes when an S3 bucket origin uses legacy OriginAccessIdentity even though OAC is not configured', () => {
     const template: Template = {
       Resources: {
-        MyDistribution: {
+        SiteBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        Distribution: {
           Type: 'AWS::CloudFront::Distribution',
           Properties: {
             DistributionConfig: {
@@ -19,9 +23,9 @@ describe('CF-006 REQ-03 (CloudFormation): S3 origin protected by legacy OAI (no 
               Origins: [
                 {
                   Id: 's3-origin',
-                  DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
+                  DomainName: 'SiteBucket',
                   S3OriginConfig: {
-                    OriginAccessIdentity: 'origin-access-identity/cloudfront/E1ABCDEF1234567',
+                    OriginAccessIdentity: 'origin-access-identity/cloudfront/E1ABCDEFGHIJK',
                   },
                 },
               ],
@@ -31,12 +35,12 @@ describe('CF-006 REQ-03 (CloudFormation): S3 origin protected by legacy OAI (no 
       },
     };
 
-    const resource = template.Resources!['MyDistribution'];
+    const distribution = template.Resources!['Distribution']!;
     const context: CfnContext = {
       stackName: 'test-stack',
       template,
-      resource,
-      logicalId: 'MyDistribution',
+      resource: distribution,
+      logicalId: 'Distribution',
     };
 
     const factory = new Cf006CfnAdapterFactory();
@@ -45,7 +49,6 @@ describe('CF-006 REQ-03 (CloudFormation): S3 origin protected by legacy OAI (no 
     const adapter = factory.bind(context);
     const result = cf006Control.run(adapter, context);
 
-    expect(adapter.unprotectedS3Origins).toEqual([]);
     expect(result).toBeNull();
   });
 });

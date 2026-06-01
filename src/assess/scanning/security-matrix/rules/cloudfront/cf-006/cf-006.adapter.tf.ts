@@ -1,14 +1,14 @@
-import { AdapterFactory, TfContext } from '../../../controls/types.js';
-import {
-  Cf006Adapter,
-  UnprotectedOacEligibleOrigin,
-  UnprotectedS3Origin,
-  isMissing,
-  isOacEligibleNonS3Domain,
-  isS3OriginDomain,
-} from './cf-006.adapter.js';
+import { AdapterFactory, TerraformResource, TfContext } from '../../../controls/types.js';
+import { Cf006Adapter, OacEligibleOriginType, S3OriginWithoutAccessControl } from './cf-006.adapter.js';
 
+const S3_DOMAIN_PATTERN = /\.s3[.-][^.]+\.amazonaws\.com$/i;
+const S3_GLOBAL_DOMAIN_PATTERN = /\.s3\.amazonaws\.com$/i;
+const LAMBDA_URL_DOMAIN_PATTERN = /\.lambda-url\.[^.]+\.on\.aws$/i;
+const MEDIASTORE_DOMAIN_PATTERN = /\.data\.mediastore\.[^.]+\.amazonaws\.com$/i;
+const MEDIAPACKAGE_V2_DOMAIN_PATTERN = /\.egress\.mediapackagev2\.[^.]+\.amazonaws\.com$/i;
+const S3_BUCKET_ADDRESS_PREFIX = 'aws_s3_bucket.';
 const OAC_RESOURCE_TYPE = 'aws_cloudfront_origin_access_control';
+const OAC_ADDRESS_PREFIX = 'aws_cloudfront_origin_access_control.';
 
 export class Cf006TfAdapterFactory implements AdapterFactory<TfContext> {
   readonly applicableResourceTypes = ['aws_cloudfront_distribution'];
@@ -25,74 +25,125 @@ export class Cf006TfAdapterFactory implements AdapterFactory<TfContext> {
 class Cf006TfAdapter implements Cf006Adapter {
   readonly resourceId: string;
   readonly resourceType: string;
-  readonly unprotectedS3Origins: UnprotectedS3Origin[];
-  readonly unprotectedOacEligibleOrigins: UnprotectedOacEligibleOrigin[];
 
-  constructor(ctx: TfContext) {
+  constructor(private readonly ctx: TfContext) {
     this.resourceId = ctx.resource.address;
     this.resourceType = ctx.resource.type;
-    const origins = this.getOrigins(ctx);
-    const oacIdentifiers = this.collectOacIdentifiers(ctx);
-    this.unprotectedS3Origins = this.findUnprotectedS3Origins(origins, oacIdentifiers);
-    this.unprotectedOacEligibleOrigins = this.findUnprotectedOacEligibleOrigins(origins, oacIdentifiers);
   }
 
-  private findUnprotectedS3Origins(origins: any[], oacIdentifiers: Set<string>): UnprotectedS3Origin[] {
-    return origins
-      .filter(origin => this.isUnprotectedS3Origin(origin, oacIdentifiers))
-      .map(origin => ({ originId: String(origin?.origin_id ?? '') }));
+  findS3OriginsWithoutAccessControl(): S3OriginWithoutAccessControl[] {
+    return this.getOrigins()
+      .map(origin => this.classifyUnprotectedOrigin(origin))
+      .filter((entry): entry is S3OriginWithoutAccessControl => entry !== null);
   }
 
-  private findUnprotectedOacEligibleOrigins(origins: any[], oacIdentifiers: Set<string>): UnprotectedOacEligibleOrigin[] {
-    return origins
-      .filter(origin => this.isUnprotectedNonS3OacEligibleOrigin(origin, oacIdentifiers))
-      .map(origin => ({ originId: String(origin?.origin_id ?? '') }));
+  private classifyUnprotectedOrigin(origin: Record<string, unknown>): S3OriginWithoutAccessControl | null {
+    const originType = this.detectOacEligibleType(origin);
+    if (originType === null) return null;
+    if (this.hasUnresolvableOriginAccessControl(origin)) return null;
+    if (this.hasResolvedOriginAccessControl(origin)) return null;
+    if (originType === 's3' && this.hasLegacyOriginAccessIdentity(origin)) return null;
+    return { originId: this.getOriginId(origin), originType };
   }
 
-  private getOrigins(ctx: TfContext): any[] {
-    const origins = (ctx.resource as any).values?.origin;
-    return Array.isArray(origins) ? origins : [];
+  private getOrigins(): Record<string, unknown>[] {
+    const values = (this.ctx.resource.values ?? {}) as Record<string, unknown>;
+    const origins = values['origin'];
+    if (!Array.isArray(origins)) return [];
+    return origins.filter((o): o is Record<string, unknown> => typeof o === 'object' && o !== null);
   }
 
-  private collectOacIdentifiers(ctx: TfContext): Set<string> {
-    const identifiers = new Set<string>();
-    for (const resource of ctx.allResources) {
-      if (resource.type !== OAC_RESOURCE_TYPE) continue;
-      const id = (resource as any).values?.id;
-      if (typeof id === 'string' && id !== '') identifiers.add(id);
+  private detectOacEligibleType(origin: Record<string, unknown>): OacEligibleOriginType | null {
+    if (this.isS3Origin(origin)) return 's3';
+    const domainName = origin['domain_name'];
+    if (typeof domainName !== 'string') return null;
+    if (LAMBDA_URL_DOMAIN_PATTERN.test(domainName)) return 'lambda-url';
+    if (MEDIASTORE_DOMAIN_PATTERN.test(domainName)) return 'mediastore';
+    if (MEDIAPACKAGE_V2_DOMAIN_PATTERN.test(domainName)) return 'mediapackagev2';
+    return null;
+  }
+
+  private isS3Origin(origin: Record<string, unknown>): boolean {
+    if (origin['s3_origin_config'] !== undefined) return true;
+    const domainName = origin['domain_name'];
+    if (typeof domainName !== 'string') return false;
+    if (this.isLiteralS3Domain(domainName)) return true;
+    return this.referencesS3Bucket(domainName);
+  }
+
+  private isLiteralS3Domain(domainName: string): boolean {
+    return S3_DOMAIN_PATTERN.test(domainName) || S3_GLOBAL_DOMAIN_PATTERN.test(domainName);
+  }
+
+  private referencesS3Bucket(domainName: string): boolean {
+    if (domainName.startsWith(S3_BUCKET_ADDRESS_PREFIX)) {
+      return this.findResourceByAddress(domainName)?.type === 'aws_s3_bucket';
     }
-    return identifiers;
+    return this.findBucketByLiteralName(domainName) !== undefined;
   }
 
-  private isUnprotectedS3Origin(origin: any, oacIdentifiers: Set<string>): boolean {
-    if (!origin || typeof origin !== 'object') return false;
-    const s3Config = this.firstOrSelf(origin.s3_origin_config);
-    if (!this.isS3Origin(origin, s3Config)) return false;
-    if (!isMissing(s3Config?.origin_access_identity)) return false;
-    return !this.hasResolvedOacReference(origin.origin_access_control_id, oacIdentifiers);
+  private findResourceByAddress(address: string): TerraformResource | undefined {
+    return this.ctx.allResources.find(r => r.address === address);
   }
 
-  private isUnprotectedNonS3OacEligibleOrigin(origin: any, oacIdentifiers: Set<string>): boolean {
-    if (!origin || typeof origin !== 'object') return false;
-    const s3Config = this.firstOrSelf(origin.s3_origin_config);
-    if (this.isS3Origin(origin, s3Config)) return false;
-    if (!isOacEligibleNonS3Domain(origin.domain_name)) return false;
-    return !this.hasResolvedOacReference(origin.origin_access_control_id, oacIdentifiers);
+  private findBucketByLiteralName(name: string): TerraformResource | undefined {
+    return this.ctx.allResources.find(r => {
+      if (r.type !== 'aws_s3_bucket') return false;
+      const bucketName = (r.values as Record<string, unknown> | undefined)?.['bucket'];
+      return typeof bucketName === 'string' && bucketName === name;
+    });
   }
 
-  private hasResolvedOacReference(value: unknown, oacIdentifiers: Set<string>): boolean {
-    if (isMissing(value)) return false;
-    if (typeof value !== 'string') return true;
-    return oacIdentifiers.has(value);
+  /**
+   * The plan reader records origin_access_control_id as null when the value
+   * is unknown at plan time (e.g. depends on a variable). Per resolved
+   * decision, we cannot assert non-compliance for an unresolvable value.
+   */
+  private hasUnresolvableOriginAccessControl(origin: Record<string, unknown>): boolean {
+    return origin['origin_access_control_id'] === null;
   }
 
-  private isS3Origin(origin: any, s3Config: any): boolean {
-    if (s3Config) return true;
-    return isS3OriginDomain(origin.domain_name);
+  /**
+   * The origin_access_control_id is considered to provide access control
+   * only when it resolves to an aws_cloudfront_origin_access_control
+   * resource managed in this plan — either via address reference or by
+   * matching a literal id attribute. A dangling reference (string that
+   * matches no OAC resource) is non-compliant per REQ-06.
+   */
+  private hasResolvedOriginAccessControl(origin: Record<string, unknown>): boolean {
+    const oacId = origin['origin_access_control_id'];
+    if (typeof oacId !== 'string' || oacId.trim().length === 0) return false;
+    return this.referencesOacResource(oacId);
   }
 
-  private firstOrSelf(value: any): any {
-    if (Array.isArray(value)) return value[0];
-    return value;
+  private referencesOacResource(oacId: string): boolean {
+    if (oacId.startsWith(OAC_ADDRESS_PREFIX)) {
+      return this.findResourceByAddress(oacId)?.type === OAC_RESOURCE_TYPE;
+    }
+    return this.findOacByLiteralId(oacId) !== undefined;
+  }
+
+  private findOacByLiteralId(id: string): TerraformResource | undefined {
+    return this.ctx.allResources.find(r => {
+      if (r.type !== OAC_RESOURCE_TYPE) return false;
+      const values = (r.values as Record<string, unknown> | undefined) ?? {};
+      const candidates = [values['id'], values['name']];
+      return candidates.some(c => typeof c === 'string' && c === id);
+    });
+  }
+
+  private hasLegacyOriginAccessIdentity(origin: Record<string, unknown>): boolean {
+    const s3Config = origin['s3_origin_config'];
+    if (!Array.isArray(s3Config) || s3Config.length === 0) return false;
+    return s3Config.some(block => {
+      if (typeof block !== 'object' || block === null) return false;
+      const oai = (block as Record<string, unknown>)['cloudfront_access_identity_path'];
+      return typeof oai === 'string' && oai.trim().length > 0;
+    });
+  }
+
+  private getOriginId(origin: Record<string, unknown>): string {
+    const id = origin['origin_id'];
+    return typeof id === 'string' ? id : '';
   }
 }

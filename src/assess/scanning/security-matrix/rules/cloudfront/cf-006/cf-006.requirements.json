@@ -38,13 +38,6 @@
       "rationale": "An empty identifier is equivalent to having no OAC attached; the S3 origin remains unrestricted."
     },
     {
-      "id": "REQ-05",
-      "description": "A CloudFront distribution has an S3 bucket origin whose origin access control identifier value cannot be resolved at analysis time because it depends on a parameter, variable, or condition.",
-      "category": "INTRINSIC_UNRESOLVABLE",
-      "expectedBehavior": "pass",
-      "rationale": "Per resolved decision, when the OAC identifier value is unresolvable, the rule cannot assert non-compliance for any origin type."
-    },
-    {
       "id": "REQ-06",
       "description": "A CloudFront distribution has an S3 bucket origin whose origin access control identifier does not resolve to any origin access control resource defined in the template.",
       "category": "WRONG_TARGET",

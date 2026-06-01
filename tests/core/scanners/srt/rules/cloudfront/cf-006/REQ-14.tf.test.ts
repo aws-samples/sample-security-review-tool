@@ -1,57 +1,121 @@
 import { describe, it, expect } from 'vitest';
 import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006TfAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.tf.js';
-import { TfContext, TerraformResource } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { TerraformResource, TfContext } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 Terraform - REQ-14: S3 origin with OAC having wildcard/generic signing config', () => {
-  it('passes when an S3 origin references an OAC resource that has a generic/wildcard signing+origin-type configuration', () => {
-    // The OAC has generic/wildcard-style internal config (no-override behavior, generic origin type).
-    // The rule should NOT inspect these internal fields; it only verifies that the
-    // origin_access_control_id resolves to a known aws_cloudfront_origin_access_control resource.
-    const oacResource = {
+describe('CF-006 / REQ-14 (Terraform): S3 origin with OAC having generic/wildcard signing config', () => {
+  it('passes (reference form) — rule checks OAC reference resolution, not OAC internal config granularity', () => {
+    const siteBucket: TerraformResource = {
+      type: 'aws_s3_bucket',
+      name: 'site',
+      address: 'aws_s3_bucket.site',
+      values: { bucket: 'my-site-bucket' },
+    } as TerraformResource;
+
+    // OAC with generic/wildcard-ish internal config — still a valid resolvable OAC.
+    const genericOac: TerraformResource = {
       type: 'aws_cloudfront_origin_access_control',
-      address: 'aws_cloudfront_origin_access_control.generic_oac',
-      name: 'generic_oac',
-      mode: 'managed',
+      name: 'generic',
+      address: 'aws_cloudfront_origin_access_control.generic',
       values: {
-        id: 'oac-generic-id-123',
         name: 'generic-oac',
+        origin_access_control_origin_type: 's3',
         signing_behavior: 'no-override',
         signing_protocol: 'sigv4',
-        origin_access_control_origin_type: 's3',
+        id: 'OACGENERICID123',
       },
-    } as unknown as TerraformResource;
+    } as TerraformResource;
 
-    const distributionResource = {
+    const distribution: TerraformResource = {
       type: 'aws_cloudfront_distribution',
-      address: 'aws_cloudfront_distribution.this',
-      name: 'this',
-      mode: 'managed',
+      name: 'site',
+      address: 'aws_cloudfront_distribution.site',
       values: {
         enabled: true,
         origin: [
           {
-            origin_id: 's3-origin',
-            domain_name: 'my-bucket.s3.us-east-1.amazonaws.com',
-            origin_access_control_id: 'oac-generic-id-123',
-            s3_origin_config: [{}],
+            origin_id: 's3-site-origin',
+            // Reference form: domain_name was `aws_s3_bucket.site.bucket_regional_domain_name`,
+            // collapsed to the bucket address.
+            domain_name: 'aws_s3_bucket.site',
+            // Reference form: origin_access_control_id was `aws_cloudfront_origin_access_control.generic.id`,
+            // collapsed to the OAC address.
+            origin_access_control_id: 'aws_cloudfront_origin_access_control.generic',
+            s3_origin_config: [],
           },
         ],
       },
-    } as unknown as TerraformResource;
+    } as TerraformResource;
+
+    const allResources = [siteBucket, genericOac, distribution];
 
     const factory = new Cf006TfAdapterFactory();
-    const context: TfContext = {
+    expect(factory.appliesTo(distribution.type)).toBe(true);
+
+    const ctx: TfContext = {
       projectName: 'test-project',
-      resource: distributionResource,
-      allResources: [distributionResource, oacResource],
+      resource: distribution,
+      allResources,
     };
 
-    const adapter = factory.bind(context);
-    const result = cf006Control.run(adapter, context);
+    const adapter = factory.bind(ctx);
 
-    expect(adapter.unprotectedS3Origins).toHaveLength(0);
-    expect(adapter.unprotectedOacEligibleOrigins).toHaveLength(0);
-    expect(result).toBeNull();
+    expect(adapter.findS3OriginsWithoutAccessControl()).toEqual([]);
+    expect(cf006Control.run(adapter, ctx)).toBeNull();
+  });
+
+  it('passes (literal form) — OAC referenced by literal id resolves regardless of generic config', () => {
+    const siteBucket: TerraformResource = {
+      type: 'aws_s3_bucket',
+      name: 'site',
+      address: 'aws_s3_bucket.site',
+      values: { bucket: 'my-site-bucket' },
+    } as TerraformResource;
+
+    const genericOac: TerraformResource = {
+      type: 'aws_cloudfront_origin_access_control',
+      name: 'generic',
+      address: 'aws_cloudfront_origin_access_control.generic',
+      values: {
+        name: 'generic-oac',
+        origin_access_control_origin_type: 's3',
+        signing_behavior: 'no-override',
+        signing_protocol: 'sigv4',
+        id: 'OACGENERICID123',
+      },
+    } as TerraformResource;
+
+    const distribution: TerraformResource = {
+      type: 'aws_cloudfront_distribution',
+      name: 'site',
+      address: 'aws_cloudfront_distribution.site',
+      values: {
+        enabled: true,
+        origin: [
+          {
+            origin_id: 's3-site-origin',
+            // Literal S3 regional domain — recognized as an S3 origin by pattern.
+            domain_name: 'my-site-bucket.s3.us-east-1.amazonaws.com',
+            // Literal OAC id matching the OAC resource's `id` attribute.
+            origin_access_control_id: 'OACGENERICID123',
+            s3_origin_config: [],
+          },
+        ],
+      },
+    } as TerraformResource;
+
+    const allResources = [siteBucket, genericOac, distribution];
+
+    const factory = new Cf006TfAdapterFactory();
+    const ctx: TfContext = {
+      projectName: 'test-project',
+      resource: distribution,
+      allResources,
+    };
+
+    const adapter = factory.bind(ctx);
+
+    expect(adapter.findS3OriginsWithoutAccessControl()).toEqual([]);
+    expect(cf006Control.run(adapter, ctx)).toBeNull();
   });
 });

@@ -1,35 +1,33 @@
 import { describe, it, expect } from 'vitest';
 import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
-import { CfnContext } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 CloudFormation - REQ-09: multiple origins where one S3 origin lacks OAC/OAI', () => {
-  it('flags the distribution when one of multiple S3 origins is unprotected while others are secured', () => {
-    const template: any = {
+describe('CF-006 REQ-09 CloudFormation: multiple S3 origins where at least one lacks OAC/OAI', () => {
+  it('flags when one S3 origin is unprotected even if the others are correctly secured', () => {
+    const template: Template = {
       Resources: {
-        SecureOac: {
+        SecuredBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        UnsecuredBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        LegacyBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        DistroOac: {
           Type: 'AWS::CloudFront::OriginAccessControl',
           Properties: {
             OriginAccessControlConfig: {
-              Name: 'secure-oac',
+              Name: 'distro-oac',
               OriginAccessControlOriginType: 's3',
               SigningBehavior: 'always',
               SigningProtocol: 'sigv4',
             },
-          },
-        },
-        SecureBucket: {
-          Type: 'AWS::S3::Bucket',
-          Properties: {},
-        },
-        UnprotectedBucket: {
-          Type: 'AWS::S3::Bucket',
-          Properties: {},
-        },
-        LegacyOai: {
-          Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity',
-          Properties: {
-            CloudFrontOriginAccessIdentityConfig: { Comment: 'legacy' },
           },
         },
         Distribution: {
@@ -38,26 +36,29 @@ describe('CF-006 CloudFormation - REQ-09: multiple origins where one S3 origin l
             DistributionConfig: {
               Enabled: true,
               DefaultCacheBehavior: {
-                TargetOriginId: 'unprotected-s3',
+                TargetOriginId: 'origin-secured-oac',
                 ViewerProtocolPolicy: 'redirect-to-https',
               },
               Origins: [
                 {
-                  Id: 'secured-by-oac',
-                  DomainName: 'secured-by-oac.s3.us-east-1.amazonaws.com',
+                  // Properly secured via OAC
+                  Id: 'origin-secured-oac',
+                  DomainName: 'SecuredBucket',
+                  OriginAccessControlId: 'DistroOac',
                   S3OriginConfig: {},
-                  OriginAccessControlId: 'SecureOac',
                 },
                 {
-                  Id: 'secured-by-oai',
-                  DomainName: 'secured-by-oai.s3.us-east-1.amazonaws.com',
+                  // Properly secured via legacy OAI
+                  Id: 'origin-secured-oai',
+                  DomainName: 'LegacyBucket',
                   S3OriginConfig: {
-                    OriginAccessIdentity: 'origin-access-identity/cloudfront/LegacyOai',
+                    OriginAccessIdentity: 'origin-access-identity/cloudfront/E127EXAMPLE51Z',
                   },
                 },
                 {
-                  Id: 'unprotected-s3',
-                  DomainName: 'unprotected-s3.s3.us-east-1.amazonaws.com',
+                  // UNPROTECTED — no OAC, no OAI
+                  Id: 'origin-unsecured',
+                  DomainName: 'UnsecuredBucket',
                   S3OriginConfig: {},
                 },
               ],
@@ -67,15 +68,13 @@ describe('CF-006 CloudFormation - REQ-09: multiple origins where one S3 origin l
       },
     };
 
+    const factory = new Cf006CfnAdapterFactory();
     const context: CfnContext = {
       stackName: 'test-stack',
       template,
-      resource: template.Resources.Distribution,
+      resource: template.Resources!['Distribution']!,
       logicalId: 'Distribution',
     };
-
-    const factory = new Cf006CfnAdapterFactory();
-    expect(factory.appliesTo('AWS::CloudFront::Distribution')).toBe(true);
 
     const adapter = factory.bind(context);
     const result = cf006Control.run(adapter, context);
@@ -85,8 +84,65 @@ describe('CF-006 CloudFormation - REQ-09: multiple origins where one S3 origin l
     expect(result?.status).toBe('Open');
     expect(result?.resourceType).toBe('AWS::CloudFront::Distribution');
     expect(result?.resourceName).toBe('Distribution');
-    expect(result?.issue).toContain('S3 bucket origin');
-    expect(adapter.unprotectedS3Origins).toHaveLength(1);
-    expect(adapter.unprotectedS3Origins[0].originId).toBe('unprotected-s3');
+    expect(result?.issue).toMatch(/S3 bucket origin/i);
+  });
+
+  it('exposes the unprotected origin id via the adapter while ignoring the secured ones', () => {
+    const template: Template = {
+      Resources: {
+        SecuredBucket: { Type: 'AWS::S3::Bucket', Properties: {} },
+        UnsecuredBucket: { Type: 'AWS::S3::Bucket', Properties: {} },
+        DistroOac: {
+          Type: 'AWS::CloudFront::OriginAccessControl',
+          Properties: {
+            OriginAccessControlConfig: {
+              Name: 'distro-oac',
+              OriginAccessControlOriginType: 's3',
+              SigningBehavior: 'always',
+              SigningProtocol: 'sigv4',
+            },
+          },
+        },
+        Distribution: {
+          Type: 'AWS::CloudFront::Distribution',
+          Properties: {
+            DistributionConfig: {
+              Enabled: true,
+              DefaultCacheBehavior: {
+                TargetOriginId: 'origin-secured',
+                ViewerProtocolPolicy: 'redirect-to-https',
+              },
+              Origins: [
+                {
+                  Id: 'origin-secured',
+                  DomainName: 'SecuredBucket',
+                  OriginAccessControlId: 'DistroOac',
+                  S3OriginConfig: {},
+                },
+                {
+                  Id: 'origin-unsecured',
+                  DomainName: 'UnsecuredBucket',
+                  S3OriginConfig: {},
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+
+    const factory = new Cf006CfnAdapterFactory();
+    const context: CfnContext = {
+      stackName: 'test-stack',
+      template,
+      resource: template.Resources!['Distribution']!,
+      logicalId: 'Distribution',
+    };
+
+    const adapter = factory.bind(context);
+    const unprotected = adapter.findS3OriginsWithoutAccessControl();
+
+    expect(unprotected).toHaveLength(1);
+    expect(unprotected[0]?.originId).toBe('origin-unsecured');
   });
 });

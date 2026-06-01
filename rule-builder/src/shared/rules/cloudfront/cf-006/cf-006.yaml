@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  CF-006 fixture: triggers both remediation scenarios for CloudFront
+  distributions that lack an origin access control on origins that support one.
+
+Resources:
+  # Scenario 1: s3-origin-without-access-control
+  # Distribution has an S3 bucket origin (domain matches *.s3.<region>.amazonaws.com)
+  # with no OriginAccessControlId and an empty S3OriginConfig (no legacy OAI).
+  UnprotectedS3OriginDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-006 unprotected S3 origin
+        DefaultCacheBehavior:
+          TargetOriginId: unprotected-s3-origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        Origins:
+          - Id: unprotected-s3-origin
+            DomainName: cf006-fixture-bucket.s3.us-east-1.amazonaws.com
+            S3OriginConfig: {}
+
+  # Scenario 2: non-s3-oac-eligible-origin-without-access-control
+  # Distribution has a Lambda Function URL origin (OAC-eligible non-S3 domain)
+  # with CustomOriginConfig and no OriginAccessControlId. There is no S3 origin
+  # so scenario 1 will not match first.
+  UnprotectedLambdaUrlOriginDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: CF-006 unprotected Lambda URL origin
+        DefaultCacheBehavior:
+          TargetOriginId: unprotected-lambda-url-origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        Origins:
+          - Id: unprotected-lambda-url-origin
+            DomainName: abcdef1234567890abcdef1234567890.lambda-url.us-east-1.on.aws
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginSSLProtocols:
+                - TLSv1.2

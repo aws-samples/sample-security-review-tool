@@ -3,48 +3,53 @@ import { cf006Control } from '../../../../../../../src/assess/scanning/security-
 import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
 import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 CloudFormation - REQ-06: dangling OAC reference', () => {
-  it('flags an S3 origin whose OriginAccessControlId does not resolve to any OAC resource in the template', () => {
-    // Template has a CloudFront distribution that references "NonExistentOAC"
-    // via OriginAccessControlId, but no AWS::CloudFront::OriginAccessControl
-    // resource with that logical ID exists in the template.
+describe('CF-006 / REQ-06 (CloudFormation): dangling OriginAccessControlId reference', () => {
+  it('flags an S3 origin whose OriginAccessControlId does not resolve to an OAC resource in the template', () => {
+    // The template contains an S3 bucket origin and an OriginAccessControlId
+    // that, after preprocessing, is the string "MissingOac". There is no
+    // resource with logical ID "MissingOac" in the template, so the
+    // identifier is a dangling reference. Per the resolved decision, this
+    // must be flagged as non-compliant.
     const template: Template = {
       Resources: {
-        MyDistribution: {
+        SiteBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        Distribution: {
           Type: 'AWS::CloudFront::Distribution',
           Properties: {
             DistributionConfig: {
               Enabled: true,
-              DefaultCacheBehavior: {
-                TargetOriginId: 'my-s3-origin',
-                ViewerProtocolPolicy: 'redirect-to-https',
-              },
               Origins: [
                 {
-                  Id: 'my-s3-origin',
-                  DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
-                  // After preprocessing, !Ref NonExistentOAC would resolve to
-                  // the literal string "NonExistentOAC". Since no resource
-                  // with that logical ID exists in the template, this is a
-                  // dangling reference.
-                  OriginAccessControlId: 'NonExistentOAC',
-                  S3OriginConfig: {},
+                  Id: 'site-s3-origin',
+                  // After preprocessing of !GetAtt SiteBucket.RegionalDomainName
+                  // this becomes the logical id string "SiteBucket".
+                  DomainName: 'SiteBucket',
+                  // After preprocessing of !Ref MissingOac this becomes the
+                  // string "MissingOac". No such resource exists in the
+                  // template — the reference dangles.
+                  OriginAccessControlId: 'MissingOac',
                 },
               ],
+              DefaultCacheBehavior: {
+                TargetOriginId: 'site-s3-origin',
+                ViewerProtocolPolicy: 'redirect-to-https',
+              },
             },
           },
         },
-        // Note: NO AWS::CloudFront::OriginAccessControl resource present.
       },
     } as unknown as Template;
 
     const factory = new Cf006CfnAdapterFactory();
-    const distributionResource = template.Resources!.MyDistribution;
+    const distribution = template.Resources!['Distribution']!;
     const context: CfnContext = {
       stackName: 'test-stack',
       template,
-      resource: distributionResource,
-      logicalId: 'MyDistribution',
+      resource: distribution,
+      logicalId: 'Distribution',
     };
 
     const adapter = factory.bind(context);
@@ -53,8 +58,7 @@ describe('CF-006 CloudFormation - REQ-06: dangling OAC reference', () => {
     expect(result).not.toBeNull();
     expect(result?.check_id).toBe('CF-006');
     expect(result?.resourceType).toBe('AWS::CloudFront::Distribution');
-    expect(result?.resourceName).toBe('MyDistribution');
+    expect(result?.resourceName).toBe('Distribution');
     expect(result?.status).toBe('Open');
-    expect(result?.priority).toBe('HIGH');
   });
 });

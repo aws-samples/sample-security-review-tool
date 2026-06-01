@@ -1,28 +1,36 @@
 import { describe, it, expect } from 'vitest';
 import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
-import type { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 CloudFormation - REQ-08: multi-origin distribution with all S3 origins protected by OAC and remaining origins non-OAC-eligible', () => {
-  it('passes when every S3 origin has a resolved OAC reference and other origins are custom HTTP origins', () => {
+describe('CF-006 REQ-08 CloudFormation: multiple origins, S3 origins have OAC, non-S3 origins are out of scope', () => {
+  it('passes when every S3 origin has a resolved OAC and other origins are custom HTTP origins', () => {
     const template: Template = {
       Resources: {
-        S3OacOne: {
+        AssetsBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        MediaBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        AssetsOac: {
           Type: 'AWS::CloudFront::OriginAccessControl',
           Properties: {
             OriginAccessControlConfig: {
-              Name: 'oac-one',
+              Name: 'assets-oac',
               OriginAccessControlOriginType: 's3',
               SigningBehavior: 'always',
               SigningProtocol: 'sigv4',
             },
           },
         },
-        S3OacTwo: {
+        MediaOac: {
           Type: 'AWS::CloudFront::OriginAccessControl',
           Properties: {
             OriginAccessControlConfig: {
-              Name: 'oac-two',
+              Name: 'media-oac',
               OriginAccessControlOriginType: 's3',
               SigningBehavior: 'always',
               SigningProtocol: 'sigv4',
@@ -35,34 +43,37 @@ describe('CF-006 CloudFormation - REQ-08: multi-origin distribution with all S3 
             DistributionConfig: {
               Enabled: true,
               DefaultCacheBehavior: {
-                TargetOriginId: 's3-origin-one',
+                TargetOriginId: 'assets-origin',
                 ViewerProtocolPolicy: 'redirect-to-https',
               },
               Origins: [
                 {
-                  Id: 's3-origin-one',
-                  DomainName: 'bucket-one.s3.us-east-1.amazonaws.com',
+                  Id: 'assets-origin',
+                  // Resource reference -> resolves to logical ID "AssetsBucket"
+                  DomainName: 'AssetsBucket',
                   S3OriginConfig: {},
-                  OriginAccessControlId: 'S3OacOne',
+                  // Resource reference -> resolves to logical ID "AssetsOac"
+                  OriginAccessControlId: 'AssetsOac',
                 },
                 {
-                  Id: 's3-origin-two',
-                  DomainName: 'bucket-two.s3.us-east-1.amazonaws.com',
+                  Id: 'media-origin',
+                  // Literal S3 regional domain
+                  DomainName: 'media-bucket.s3.us-east-1.amazonaws.com',
                   S3OriginConfig: {},
-                  OriginAccessControlId: 'S3OacTwo',
+                  OriginAccessControlId: 'MediaOac',
                 },
                 {
-                  Id: 'custom-http-origin',
+                  Id: 'api-origin',
+                  // Custom HTTP origin — not S3, not OAC-eligible
                   DomainName: 'api.example.com',
                   CustomOriginConfig: {
                     OriginProtocolPolicy: 'https-only',
-                    HTTPPort: 80,
-                    HTTPSPort: 443,
                   },
                 },
                 {
-                  Id: 'another-custom-http-origin',
-                  DomainName: 'legacy.example.org',
+                  Id: 'legacy-origin',
+                  // Another custom HTTP origin
+                  DomainName: 'legacy.example.com',
                   CustomOriginConfig: {
                     OriginProtocolPolicy: 'https-only',
                   },
@@ -72,12 +83,13 @@ describe('CF-006 CloudFormation - REQ-08: multi-origin distribution with all S3 
           },
         },
       },
-    } as unknown as Template;
+    };
 
+    const distribution = template.Resources!['Distribution']!;
     const context: CfnContext = {
       stackName: 'test-stack',
       template,
-      resource: template.Resources!.Distribution,
+      resource: distribution,
       logicalId: 'Distribution',
     };
 
@@ -87,7 +99,7 @@ describe('CF-006 CloudFormation - REQ-08: multi-origin distribution with all S3 
     const adapter = factory.bind(context);
     const result = cf006Control.run(adapter, context);
 
-    expect(adapter.unprotectedS3Origins).toEqual([]);
     expect(result).toBeNull();
+    expect(adapter.findS3OriginsWithoutAccessControl()).toEqual([]);
   });
 });

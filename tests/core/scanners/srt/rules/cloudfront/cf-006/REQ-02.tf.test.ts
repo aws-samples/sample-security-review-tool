@@ -1,56 +1,60 @@
 import { describe, it, expect } from 'vitest';
 import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006TfAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.tf.js';
-import { TfContext, TerraformResource } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { TerraformResource, TfContext } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 REQ-02 (Terraform): S3 origin references in-template OAC by identifier', () => {
-  it('passes when the S3 origin has origin_access_control_id resolved from an in-template OAC resource', () => {
-    const oacResource = {
-      address: 'aws_cloudfront_origin_access_control.example',
+describe('CF-006 REQ-02 Terraform: S3 origin with in-template OAC reference', () => {
+  it('passes when an S3 origin references an in-template aws_cloudfront_origin_access_control resource', () => {
+    // After plan reader collapse:
+    // - domain_name = aws_s3_bucket.my_bucket.bucket_regional_domain_name -> "aws_s3_bucket.my_bucket"
+    // - origin_access_control_id = aws_cloudfront_origin_access_control.my_oac.id -> "aws_cloudfront_origin_access_control.my_oac"
+    const bucket: TerraformResource = {
+      type: 'aws_s3_bucket',
+      name: 'my_bucket',
+      address: 'aws_s3_bucket.my_bucket',
+      values: { bucket: 'my-bucket-name' },
+    };
+
+    const oac: TerraformResource = {
       type: 'aws_cloudfront_origin_access_control',
-      name: 'example',
-      mode: 'managed',
+      name: 'my_oac',
+      address: 'aws_cloudfront_origin_access_control.my_oac',
       values: {
         name: 'my-oac',
         origin_access_control_origin_type: 's3',
         signing_behavior: 'always',
         signing_protocol: 'sigv4',
-        id: 'EXAMPLE_OAC_ID',
       },
-    } as unknown as TerraformResource;
+    };
 
-    const distributionResource = {
-      address: 'aws_cloudfront_distribution.example',
+    const distribution: TerraformResource = {
       type: 'aws_cloudfront_distribution',
-      name: 'example',
-      mode: 'managed',
+      name: 'my_distribution',
+      address: 'aws_cloudfront_distribution.my_distribution',
       values: {
         enabled: true,
         origin: [
           {
             origin_id: 's3-origin',
-            domain_name: 'my-bucket.s3.us-east-1.amazonaws.com',
-            // Reference to aws_cloudfront_origin_access_control.example.id resolved by Terraform plan
-            origin_access_control_id: 'EXAMPLE_OAC_ID',
-            s3_origin_config: [],
+            domain_name: 'aws_s3_bucket.my_bucket',
+            origin_access_control_id: 'aws_cloudfront_origin_access_control.my_oac',
           },
         ],
       },
-    } as unknown as TerraformResource;
+    };
 
+    const allResources = [bucket, oac, distribution];
     const context: TfContext = {
       projectName: 'test-project',
-      resource: distributionResource,
-      allResources: [distributionResource, oacResource],
+      resource: distribution,
+      allResources,
     };
 
     const factory = new Cf006TfAdapterFactory();
-    expect(factory.appliesTo('aws_cloudfront_distribution')).toBe(true);
-
+    expect(factory.appliesTo(distribution.type)).toBe(true);
     const adapter = factory.bind(context);
-    const result = cf006Control.run(adapter, context);
 
-    expect(adapter.unprotectedS3Origins).toEqual([]);
+    const result = cf006Control.run(adapter, context);
     expect(result).toBeNull();
   });
 });

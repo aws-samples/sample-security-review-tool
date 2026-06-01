@@ -3,15 +3,18 @@ import { cf006Control } from '../../../../../../../src/assess/scanning/security-
 import { Cf006CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.cfn.js';
 import { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 CloudFormation - REQ-14: S3 origin with OAC having wildcard/generic signing config', () => {
-  it('passes when an S3 origin references an OAC resource that has a generic/wildcard signing+origin-type configuration', () => {
-    // The OAC here uses generic/wildcard-style config:
-    //  - SigningBehavior: 'no-override' (generic, not strict 'always')
-    //  - SigningProtocol: 'sigv4' (only valid value, but treat as wildcard-equivalent default)
-    //  - OriginAccessControlOriginType: 's3' (generic; not pinned to specific bucket)
-    // The rule should NOT inspect these internal fields and should still pass.
+describe('CF-006 / REQ-14 (CloudFormation): S3 origin with OAC having generic/wildcard signing config', () => {
+  it('passes — rule checks OAC reference resolution, not OAC internal config granularity', () => {
     const template: Template = {
       Resources: {
+        SiteBucket: {
+          Type: 'AWS::S3::Bucket',
+          Properties: {},
+        },
+        // OAC resource configured with generic/wildcard-ish settings:
+        // - SigningBehavior: 'no-override' (generic — defers to viewer)
+        // - SigningProtocol: 'sigv4'
+        // - OriginAccessControlOriginType: 's3' (still a valid resolvable OAC)
         GenericOac: {
           Type: 'AWS::CloudFront::OriginAccessControl',
           Properties: {
@@ -23,22 +26,23 @@ describe('CF-006 CloudFormation - REQ-14: S3 origin with OAC having wildcard/gen
             },
           },
         },
-        MyDistribution: {
+        Distribution: {
           Type: 'AWS::CloudFront::Distribution',
           Properties: {
             DistributionConfig: {
               Enabled: true,
               DefaultCacheBehavior: {
-                TargetOriginId: 's3-origin',
+                TargetOriginId: 's3-site-origin',
                 ViewerProtocolPolicy: 'redirect-to-https',
               },
               Origins: [
                 {
-                  Id: 's3-origin',
-                  DomainName: 'my-bucket.s3.us-east-1.amazonaws.com',
-                  // After preprocessing, !Ref GenericOac resolves to the string "GenericOac"
-                  OriginAccessControlId: 'GenericOac',
+                  Id: 's3-site-origin',
+                  // !GetAtt SiteBucket.RegionalDomainName -> "SiteBucket" after preprocessing.
+                  DomainName: 'SiteBucket',
                   S3OriginConfig: {},
+                  // !Ref GenericOac -> "GenericOac" after preprocessing.
+                  OriginAccessControlId: 'GenericOac',
                 },
               ],
             },
@@ -48,18 +52,24 @@ describe('CF-006 CloudFormation - REQ-14: S3 origin with OAC having wildcard/gen
     } as unknown as Template;
 
     const factory = new Cf006CfnAdapterFactory();
-    const context: CfnContext = {
+    const distributionResource = template.Resources!['Distribution']!;
+
+    expect(factory.appliesTo(distributionResource.Type)).toBe(true);
+
+    const ctx: CfnContext = {
       stackName: 'test-stack',
       template,
-      resource: template.Resources!.MyDistribution,
-      logicalId: 'MyDistribution',
+      resource: distributionResource,
+      logicalId: 'Distribution',
     };
 
-    const adapter = factory.bind(context);
-    const result = cf006Control.run(adapter, context);
+    const adapter = factory.bind(ctx);
 
-    expect(adapter.unprotectedS3Origins).toHaveLength(0);
-    expect(adapter.unprotectedOacEligibleOrigins).toHaveLength(0);
+    // Adapter should report no unprotected origins — the OAC reference resolves.
+    expect(adapter.findS3OriginsWithoutAccessControl()).toEqual([]);
+
+    // Control should not produce a finding.
+    const result = cf006Control.run(adapter, ctx);
     expect(result).toBeNull();
   });
 });

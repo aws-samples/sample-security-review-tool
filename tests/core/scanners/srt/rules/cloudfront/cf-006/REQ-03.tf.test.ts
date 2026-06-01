@@ -1,36 +1,42 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006TfAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.tf.js';
-import { TfContext, TerraformResource } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { TerraformResource, TfContext } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
-describe('CF-006 REQ-03 (Terraform): S3 origin protected by legacy OAI (no OAC) should pass', () => {
-  it('does not produce a finding when origin uses origin_access_identity but no origin_access_control_id', () => {
-    const resource: TerraformResource = {
-      address: 'aws_cloudfront_distribution.my_distribution',
+describe('CF-006 REQ-03 (Terraform): S3 origin with legacy OAI but no OAC', () => {
+  it('passes when an S3 bucket origin uses legacy cloudfront_access_identity_path even though origin_access_control_id is not set', () => {
+    const bucket: TerraformResource = {
+      type: 'aws_s3_bucket',
+      name: 'site',
+      address: 'aws_s3_bucket.site',
+      values: { bucket: 'my-site-bucket' },
+    };
+
+    const distribution: TerraformResource = {
       type: 'aws_cloudfront_distribution',
-      name: 'my_distribution',
-      mode: 'managed',
-      provider_name: 'registry.terraform.io/hashicorp/aws',
+      name: 'cdn',
+      address: 'aws_cloudfront_distribution.cdn',
       values: {
         enabled: true,
         origin: [
           {
             origin_id: 's3-origin',
-            domain_name: 'my-bucket.s3.us-east-1.amazonaws.com',
+            // Reference form: domain_name = aws_s3_bucket.site.bucket_regional_domain_name
+            domain_name: 'aws_s3_bucket.site',
             s3_origin_config: [
               {
-                origin_access_identity: 'origin-access-identity/cloudfront/E1ABCDEF1234567',
+                cloudfront_access_identity_path: 'origin-access-identity/cloudfront/E1ABCDEFGHIJK',
               },
             ],
           },
         ],
       },
-    } as unknown as TerraformResource;
+    };
 
     const context: TfContext = {
       projectName: 'test-project',
-      resource,
-      allResources: [resource],
+      resource: distribution,
+      allResources: [bucket, distribution],
     };
 
     const factory = new Cf006TfAdapterFactory();
@@ -39,7 +45,6 @@ describe('CF-006 REQ-03 (Terraform): S3 origin protected by legacy OAI (no OAC) 
     const adapter = factory.bind(context);
     const result = cf006Control.run(adapter, context);
 
-    expect(adapter.unprotectedS3Origins).toEqual([]);
     expect(result).toBeNull();
   });
 });

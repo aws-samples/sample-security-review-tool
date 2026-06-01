@@ -1,91 +1,86 @@
 import { describe, it, expect } from 'vitest';
 import { cf006Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.control.js';
 import { Cf006TfAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/cloudfront/cf-006/cf-006.adapter.tf.js';
-import type { TfContext, TerraformResource } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import { TfContext, TerraformResource } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
 /**
  * REQ-11 (Terraform): A CloudFront distribution has an OAC-eligible non-S3 origin
- * (Lambda function URL, MediaStore, or MediaPackage v2) where the origin_access_control_id
- * value is provided via an unresolvable expression (e.g., a value that the Terraform plan
- * could not evaluate to a string — represented here as a non-string sentinel).
+ * (Lambda function URL, MediaStore, or MediaPackage v2) where origin_access_control_id
+ * is unknown at plan time. The plan reader records this as null.
  *
- * Per resolved decision, unresolvable values cannot be asserted as non-compliant on any
- * origin type. Expected behavior: PASS (no finding).
+ * Expected: pass (no finding) — per resolved decision, unresolvable values cannot be
+ * asserted as non-compliant on any origin type.
  */
-describe('CF-006 REQ-11 (TF): non-S3 OAC-eligible origin with unresolvable origin_access_control_id', () => {
+
+function runControl(distribution: TerraformResource, allResources: TerraformResource[]) {
   const factory = new Cf006TfAdapterFactory();
+  const context: TfContext = {
+    projectName: 'test-project',
+    resource: distribution,
+    allResources,
+  };
+  const adapter = factory.bind(context);
+  return cf006Control.run(adapter, context);
+}
 
-  function runRule(distribution: TerraformResource, allResources: TerraformResource[]) {
-    const context: TfContext = {
-      projectName: 'test-project',
-      resource: distribution,
-      allResources,
-    };
-    const adapter = factory.bind(context);
-    return cf006Control.run(adapter as any, context);
-  }
-
-  it('passes when a Lambda Function URL origin has an unresolvable origin_access_control_id', () => {
-    const distribution = {
-      address: 'aws_cloudfront_distribution.this',
+describe('CF-006 REQ-11 (TF): non-S3 OAC-eligible origin with unresolvable origin_access_control_id', () => {
+  it('passes when a Lambda function URL origin has origin_access_control_id resolved to null', () => {
+    const distribution: TerraformResource = {
       type: 'aws_cloudfront_distribution',
-      name: 'this',
+      name: 'cdn',
+      address: 'aws_cloudfront_distribution.cdn',
       values: {
-        enabled: true,
         origin: [
           {
             origin_id: 'lambda-origin',
-            domain_name: 'abc123.lambda-url.us-east-1.on.aws',
-            // Non-string represents an unresolvable expression in the parsed plan
-            origin_access_control_id: { __unresolved__: true },
+            domain_name: 'abcdef1234.lambda-url.us-east-1.on.aws',
+            origin_access_control_id: null,
           },
         ],
       },
-    } as unknown as TerraformResource;
+    } as TerraformResource;
 
-    const result = runRule(distribution, [distribution]);
+    const result = runControl(distribution, [distribution]);
     expect(result).toBeNull();
   });
 
-  it('passes when a MediaStore origin has an unresolvable origin_access_control_id', () => {
-    const distribution = {
-      address: 'aws_cloudfront_distribution.this',
+  it('passes when a MediaStore origin has origin_access_control_id resolved to null', () => {
+    const distribution: TerraformResource = {
       type: 'aws_cloudfront_distribution',
-      name: 'this',
+      name: 'cdn',
+      address: 'aws_cloudfront_distribution.cdn',
       values: {
-        enabled: true,
         origin: [
           {
             origin_id: 'mediastore-origin',
             domain_name: 'mycontainer.data.mediastore.us-east-1.amazonaws.com',
-            origin_access_control_id: { __unresolved__: true },
+            origin_access_control_id: null,
           },
         ],
       },
-    } as unknown as TerraformResource;
+    } as TerraformResource;
 
-    const result = runRule(distribution, [distribution]);
+    const result = runControl(distribution, [distribution]);
     expect(result).toBeNull();
   });
 
-  it('passes when a MediaPackage v2 origin has an unresolvable origin_access_control_id', () => {
-    const distribution = {
-      address: 'aws_cloudfront_distribution.this',
+  it('passes when a MediaPackage v2 origin has origin_access_control_id resolved to null', () => {
+    const distribution: TerraformResource = {
       type: 'aws_cloudfront_distribution',
-      name: 'this',
+      name: 'cdn',
+      address: 'aws_cloudfront_distribution.cdn',
       values: {
-        enabled: true,
         origin: [
           {
-            origin_id: 'mp2-origin',
-            domain_name: 'abcd1234.egress.mediapackagev2.us-east-1.amazonaws.com',
-            origin_access_control_id: { __unresolved__: true },
+            origin_id: 'mediapackagev2-origin',
+            domain_name: 'channel.egress.mediapackagev2.us-east-1.amazonaws.com',
+            origin_access_control_id: null,
           },
         ],
       },
-    } as unknown as TerraformResource;
+    } as TerraformResource;
 
-    const result = runRule(distribution, [distribution]);
+    const result = runControl(distribution, [distribution]);
     expect(result).toBeNull();
   });
 });
