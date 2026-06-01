@@ -2,15 +2,11 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { SrtLogger } from '../../src/shared/logging/srt-logger.js';
 import { BedrockConfig } from '../../src/config/aws/bedrock-config.js';
-import { RequirementsWorkflow } from './requirements/requirements-workflow.js';
-import { ScaffoldingWorkflow } from './scaffolding/scaffolding-workflow.js';
-import { ImplementationWorkflow } from './implementation/implementation-workflow.js';
-import { RemediationWorkflow } from './remediation/remediation-workflow.js';
 import { RuleContext } from './shared/rule-context.js';
-import { FixtureWorkflow } from './fixtures/fixture-workflow.js';
+import { RuleLocator } from './shared/rule-locator.js';
+import { BuildWorkflow } from './building/build-workflow.js';
+import { ExerciseWorkflow } from './exercise/exercise-workflow.js';
 import { RuleBuilderLogger } from './shared/logging/rule-builder-logger.js';
-
-const PHASE_COUNT = 5;
 
 const logsFolderPath = `${os.homedir()}/.srt/logs`;
 fs.mkdirSync(logsFolderPath, { recursive: true });
@@ -20,44 +16,32 @@ BedrockConfig.initialize('default', 'us-east-1');
 
 const logger = new RuleBuilderLogger();
 
+interface ParsedArgs { ruleId: string; service?: string; description?: string; regenerate: boolean; isFullBuild: boolean; }
+
 async function main(): Promise<void> {
-    const context = parseArgs(process.argv.slice(2));
+    const args = parseArgs(process.argv.slice(2));
+    if (args.isFullBuild) {
+        await build(args);
+    } else {
+        await exercise(args);
+    }
+}
 
+async function build(args: ParsedArgs): Promise<void> {
+    const context = new RuleContext(args.ruleId, args.service!, args.description!);
     logger.runStart(context.ruleId, context.description);
-
-    logger.phaseStart(1, PHASE_COUNT, 'Requirements');
-    const requirements = await new RequirementsWorkflow(context).run({ regenerate: false });
-    logger.phaseComplete(`${requirements.requirements.length} requirements generated`);
-
-    logger.phaseStart(2, PHASE_COUNT, 'Scaffolding');
-    new ScaffoldingWorkflow(context).run(requirements);
-    logger.phaseComplete('control file + adapters scaffolded');
-
-    logger.phaseStart(3, PHASE_COUNT, 'Implementation');
-    await new ImplementationWorkflow(context).run(requirements);
-    logger.phaseComplete(`${context.ruleId} implemented`);
-
-    logger.phaseStart(4, PHASE_COUNT, 'Fixtures');
-    await new FixtureWorkflow(context).run();
-    logger.phaseComplete('fixtures generated');
-
-    logger.phaseStart(5, PHASE_COUNT, 'Remediation');
-    await new RemediationWorkflow(context).run();
-    logger.phaseComplete('remediations tested');
-
+    await new BuildWorkflow(context).run({ regenerate: args.regenerate });
     logger.runComplete(context.ruleId);
 }
 
-function clearGeneratedArtifacts(context: RuleContext): void {
-    logger.info(`Regenerating ${context.ruleId}: clearing tests, control, and adapter files`);
-    fs.rmSync(context.testsFolderPath, { recursive: true, force: true });
-    fs.rmSync(context.ruleControlFilePath, { force: true });
-    fs.rmSync(context.ruleAdapterBaseFilePath, { force: true });
-    fs.rmSync(context.ruleAdapterCfnFilePath, { force: true });
-    fs.rmSync(context.ruleAdapterTfFilePath, { force: true });
+async function exercise(args: ParsedArgs): Promise<void> {
+    const context = new RuleLocator(args.ruleId).locate();
+    logger.runStart(context.ruleId, context.description);
+    await new ExerciseWorkflow(context).run();
+    logger.runComplete(context.ruleId);
 }
 
-function parseArgs(argv: string[]): RuleContext {
+function parseArgs(argv: string[]): ParsedArgs {
     let ruleId: string | undefined;
     let service: string | undefined;
     let description: string | undefined;
@@ -96,22 +80,34 @@ function parseArgs(argv: string[]): RuleContext {
     }
 
     if (!ruleId) throw new Error('--rule is required');
-    if (!service) throw new Error('--service is required');
-    if (!description) throw new Error('--description is required');
 
-    return new RuleContext(ruleId, service, description);
+    const hasService = !!service;
+    const hasDescription = !!description;
+    if (hasService !== hasDescription) throw new Error('--service and --description must be provided together to build a rule; pass only --rule to exercise an existing rule');
+
+    const isFullBuild = hasService && hasDescription;
+    if (regenerate && !isFullBuild) throw new Error('--regenerate only applies when building a rule (--service and --description)');
+
+    return { ruleId, service, description, regenerate, isFullBuild };
 }
 
 function printUsage(): void {
     console.log(`Usage:
-  bun src/index.ts --rule <checkId> --service <service> --description <description> [--regenerate]
+  Build a rule (full 5-phase pipeline):
+    bun src/index.ts --rule <checkId> --service <service> --description <description> [--regenerate]
+
+  Exercise an existing rule (run its unit tests + remediation against existing fixtures):
+    bun src/index.ts --rule <checkId>
 
 Options:
-  --rule <checkId>        Rule ID (e.g. S3-001, DDB-002)
-  --service <service>     Service folder name (e.g. s3, dynamodb, cloudfront)
-  --description <desc>    Description of the rule
-  --regenerate            Clear tests, control, and adapter files before running (keeps cached requirements)
+  --rule <checkId>        Rule ID (e.g. S3-001, DDB-002, LAMBDA-004)
+  --service <service>     Service folder name (e.g. s3, dynamodb, lambda). Required only when building.
+  --description <desc>    Description of the rule. Required only when building.
+  --regenerate            (Build only) Clear tests, control, and adapter files before running (keeps cached requirements)
   -h, --help              Show this help message
+
+With only --rule, service and description are recovered from the rule's
+requirements.json; fixtures are NOT regenerated.
 `);
 }
 

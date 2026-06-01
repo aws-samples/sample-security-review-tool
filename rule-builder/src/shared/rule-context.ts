@@ -57,7 +57,7 @@ export class RuleContext {
         this.ruleFixtureFilePath = this.getRuleFixtureFilePath();
     }
 
-    private getSrtRootFolderPath(): string {
+    public static srtRootFolderPath(): string {
         if (RuleContext.cachedSrtRoot) return RuleContext.cachedSrtRoot;
 
         let dir = path.dirname(url.fileURLToPath(import.meta.url));
@@ -72,6 +72,10 @@ export class RuleContext {
         }
 
         throw new Error('Could not find SRT root folder');
+    }
+
+    private getSrtRootFolderPath(): string {
+        return RuleContext.srtRootFolderPath();
     }
 
     private getRequirementsFilePath(): string {

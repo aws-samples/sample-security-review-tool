@@ -6,6 +6,7 @@ import z from 'zod';
 import { UvManager } from '../../../src/shared/scanner-tools/uv-manager.js';
 import { ScannerToolManager } from '../../../src/shared/scanner-tools/scanner-tool-manager.js';
 import { ScanTool } from '../../../src/shared/scanner-tools/types.js';
+import { UnitTestRunner } from '../shared/unit-test-runner.js';
 
 export class AgentToolFactory {
     public static createWriteFileTool(options: { ensureDir: boolean } = { ensureDir: false }) {
@@ -66,9 +67,8 @@ export class AgentToolFactory {
             name: 'run_vitest',
             description: 'Run unit tests. Returns the test output including pass/fail status and error messages.',
             callback: async () => {
-                const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', testsFolderPath], { cwd: srtRootPath, encoding: 'utf8', timeout: 60_000 });
-                const output = ((result.stdout ?? '') + (result.stderr ?? ''));
-                return { passed: result.status === 0, output };
+                const { passed, output } = new UnitTestRunner(srtRootPath, testsFolderPath).run();
+                return { passed, output };
             },
         });
     }
