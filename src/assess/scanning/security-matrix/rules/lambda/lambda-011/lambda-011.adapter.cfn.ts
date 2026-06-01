@@ -109,6 +109,7 @@ class Lambda011CfnAdapter implements Lambda011Adapter {
   }
 
   private matchesAssessedFunctionName(dimensionValue: string): boolean {
+    if (dimensionValue === this.ctx.logicalId) return true;
     const assessedFunctionName = this.getAssessedFunctionName();
     return assessedFunctionName !== undefined && dimensionValue === assessedFunctionName;
   }

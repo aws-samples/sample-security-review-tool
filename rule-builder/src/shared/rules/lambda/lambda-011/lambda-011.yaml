@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  LAMBDA-011 fixture: Lambda function without any CloudWatch alarm covering it.
+  Triggers the 'missing-monitoring-alarm' scenario because no AWS::CloudWatch::Alarm
+  resource exists in the template that monitors the AWS/Lambda namespace for this function.
+
+Resources:
+  UnmonitoredFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda-011-unmonitored-function
+      Runtime: nodejs24.x
+      Handler: index.handler
+      Role: arn:aws:iam::123456789012:role/lambda-011-fixture-role
+      Code:
+        ZipFile: |
+          exports.handler = async () => ({ statusCode: 200 });
