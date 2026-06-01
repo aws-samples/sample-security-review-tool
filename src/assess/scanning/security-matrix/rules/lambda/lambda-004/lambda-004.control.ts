@@ -1,6 +1,7 @@
 import { SecurityControl } from '../../../controls/security-control.js';
 import { ControlFinding } from '../../../controls/types.js';
 import { Lambda004Adapter } from './lambda-004.adapter.js';
+import { lambda012Control } from '../lambda-012/lambda-012.control.js';
 
 const MISSING_TRACING_SCENARIO = 'missing-tracing-configuration';
 
@@ -16,6 +17,7 @@ export class Lambda004Control extends SecurityControl<Lambda004Adapter> {
           intent: 'Enable AWS X-Ray active tracing on the Lambda function so that trace segments are recorded.',
         },
       ],
+      relatedRules: [lambda012Control],
     });
   }
 

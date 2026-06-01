@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Fixture for LAMBDA-004 - Lambda functions must have X-Ray tracing enabled.
+  Triggers the missing-tracing-configuration scenario for both supported
+  CloudFormation resource types (AWS::Lambda::Function and
+  AWS::Serverless::Function). Each function intentionally omits / disables
+  X-Ray active tracing so the rule will report a finding.
+
+Resources:
+  # Scenario: missing-tracing-configuration (AWS::Lambda::Function)
+  # TracingConfig.Mode is set to PassThrough (not "Active"), so the adapter's
+  # hasTracingConfigured() returns false and the rule fires.
+  LambdaFunctionWithoutActiveTracing:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda-004-fixture-cfn-function
+      Runtime: nodejs24.x
+      Handler: index.handler
+      Role: arn:aws:iam::123456789012:role/lambda-004-fixture-role
+      Code:
+        ZipFile: |
+          exports.handler = async () => ({ statusCode: 200, body: 'ok' });
+      TracingConfig:
+        Mode: PassThrough
+
+  # Scenario: missing-tracing-configuration (AWS::Serverless::Function)
+  # The Tracing property is set to "PassThrough" (not "Active"), so the
+  # adapter flags this resource as well.
+  ServerlessFunctionWithoutActiveTracing:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: lambda-004-fixture-sam-function
+      Runtime: nodejs24.x
+      Handler: index.handler
+      InlineCode: |
+        exports.handler = async () => ({ statusCode: 200, body: 'ok' });
+      Tracing: PassThrough

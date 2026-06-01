@@ -40,6 +40,8 @@ export class FixtureRemediator {
                 await this.updateFix(issue);
                 this.tryAgain();
             }
+
+            this.failIfUnresolved(issue);
         }
     }
 
@@ -190,5 +192,10 @@ export class FixtureRemediator {
 
     private tryAgain(): void {
         this.fixAttempt++;
+    }
+
+    private failIfUnresolved(issue: ScanResult): void {
+        if (this.fixWasSuccessful()) return;
+        throw new Error(`Could not validate remediation for ${issue.check_id} on the ${this.fixtureType.label} fixture after ${MAX_FIX_ATTEMPTS} attempts: ${this.validationResult!.failureDescription}`);
     }
 }
