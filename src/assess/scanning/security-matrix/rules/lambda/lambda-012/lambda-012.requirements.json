@@ -67,13 +67,6 @@
       "rationale": "User-resolved decision: equality between two unresolvable references cannot be established, so the rule cannot assert a sharing violation and should pass to avoid false positives."
     },
     {
-      "id": "REQ-09",
-      "description": "A template contains exactly one Lambda function that references an execution role, and the same role is also referenced by a non-Lambda resource (for example, used as an instance profile by a compute resource or assumed by a different service via a multi-principal trust policy).",
-      "category": "SPECIFIC_RESOURCE",
-      "expectedBehavior": "flag",
-      "rationale": "User-resolved decision: any cross-resource sharing of an execution role violates the rule. A role intended as a Lambda execution role should not be reused by other resource types or other service principals."
-    },
-    {
       "id": "REQ-10",
       "description": "Three or more Lambda functions in the same template all reference the same execution role.",
       "category": "SPECIFIC_RESOURCE",

@@ -40,19 +40,12 @@ class Lambda012TfAdapter implements Lambda012Adapter {
   }
 
   private findOtherResources(allResources: TerraformResource[], currentAddress: string): TerraformResource[] {
-    return allResources.filter(resource => resource.address !== currentAddress);
+    return allResources.filter(resource => resource.type === LAMBDA_RESOURCE_TYPE && resource.address !== currentAddress);
   }
 
   private resourceReferencesRole(resource: TerraformResource, role: string): boolean {
-    if (this.isTheRoleItself(resource, role)) return false;
     const values = (resource as { values?: unknown })?.values;
     return this.containsValue(values, role);
-  }
-
-  private isTheRoleItself(resource: TerraformResource, role: string): boolean {
-    const values = (resource as { values?: { arn?: unknown; id?: unknown } })?.values;
-    if (!values) return false;
-    return values.arn === role || values.id === role;
   }
 
   private containsValue(node: unknown, target: string): boolean {

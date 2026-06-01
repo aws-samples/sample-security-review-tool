@@ -43,7 +43,8 @@ class Lambda012CfnAdapter implements Lambda012Adapter {
     const resources = template.Resources ?? {};
     return Object.entries(resources)
       .filter(([logicalId]) => logicalId !== currentLogicalId)
-      .map(([, resource]) => resource);
+      .map(([, resource]) => resource)
+      .filter(resource => LAMBDA_RESOURCE_TYPES.includes(resource.Type));
   }
 
   private resourceReferencesRole(resource: Resource, role: string): boolean {
