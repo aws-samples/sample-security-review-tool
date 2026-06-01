@@ -157,6 +157,7 @@ export class FixtureRemediator {
 
     private async updateFix(issue: ScanResult): Promise<void> {
         if (this.fixIntroducedRegressions()) {
+            await this.snapshotRegression();
             await this.recordRelatedRules();
             await this.refreshFixGuidance(issue);
         } else {
@@ -168,6 +169,13 @@ export class FixtureRemediator {
         return !!this.validationResult?.fixedOriginalFinding && this.validationResult.introducedRegressions;
     }
 
+    private async snapshotRegression(): Promise<void> {
+        const issuesPath = path.join(this.fixtureType.outputFolderPath, '.srt', 'issues.json');
+        const snapshotPath = issuesPath.replace('.json', `.regression-attempt-${this.fixAttempt}.json`);
+        await fs.promises.copyFile(issuesPath, snapshotPath);
+        this.reporter.regressionSnapshotSaved(snapshotPath);
+    }
+
     private async recordRelatedRules(): Promise<void> {
         const triggeredCheckIds = this.validationResult!.introducedFindings.map(f => f.check_id!).filter(Boolean);
         await new RelatedRulesRecorder(this.context).record(triggeredCheckIds);
@@ -176,7 +184,6 @@ export class FixtureRemediator {
     private async refreshFixGuidance(issue: ScanResult): Promise<void> {
         this.prepareFixtures();
         this.runAssessment();
-        await this.backupIssuesFile();
         const refreshed = (await this.loadIssues()).find(i => i.check_id === issue.check_id && i.resourceName === issue.resourceName);
         if (refreshed) issue.fix = refreshed.fix;
     }

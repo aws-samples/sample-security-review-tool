@@ -30,6 +30,10 @@ export class RemediationReporter {
         this.logger.failure(`Fix introduced new HIGH priority issues: ${this.formatIntroducedIds(result)}`);
     }
 
+    public regressionSnapshotSaved(snapshotPath: string): void {
+        this.logger.info(`Saved regression snapshot to ${snapshotPath}`);
+    }
+
     private formatIntroducedIds(result: FixValidationResult): string {
         return result.introducedFindings.map(finding => finding.check_id).join(', ');
     }
