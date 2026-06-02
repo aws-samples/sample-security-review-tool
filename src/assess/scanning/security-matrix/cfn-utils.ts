@@ -186,6 +186,35 @@ export const parseCfnTemplate = (template: Template): Template => {
         return val;
     }
 
+    function filterJoin(val: any) {
+        if (val && val.hasOwnProperty("Fn::Join")) {
+            const joined = resolveJoin(val["Fn::Join"]);
+            if (joined !== undefined) return joined;
+        }
+
+        return val;
+    }
+
+    function resolveJoin(joinArgs: any): string | undefined {
+        if (!Array.isArray(joinArgs) || joinArgs.length !== 2) return undefined;
+
+        const [rawDelimiter, parts] = joinArgs;
+        const delimiter = resolveJoinPart(rawDelimiter);
+        if (delimiter === undefined || !Array.isArray(parts)) return undefined;
+
+        const resolvedParts = parts.map(resolveJoinPart);
+        if (resolvedParts.some((part) => part === undefined)) return undefined;
+
+        return resolvedParts.join(delimiter);
+    }
+
+    function resolveJoinPart(part: any): string | undefined {
+        const resolved = replaceRecursively(part);
+        if (typeof resolved === "string") return resolved;
+        if (typeof resolved === "number" || typeof resolved === "boolean") return String(resolved);
+        return undefined;
+    }
+
     function arrayProps(foundVal: any) {
         if (Array.isArray(foundVal)) {
             return foundVal.map((item) => replaceRecursively(item));
@@ -198,6 +227,7 @@ export const parseCfnTemplate = (template: Template): Template => {
         val = findAndReplaceIf(val, filterGetAtt);
         val = findAndReplaceIf(val, filterSub);
         val = findAndReplaceIf(val, filterFindInMap);
+        val = findAndReplaceIf(val, filterJoin);
         val = findAndReplaceIf(val, arrayProps);
         return val;
     }

@@ -1,6 +1,23 @@
 import { InvokableTool } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import { AgentToolFactory } from '../implementation/agent-tools.js';
+import { PREPROCESSING_BEHAVIOR } from '../implementation/preprocessing-behavior.js';
+import { TERRAFORM_PLAN_BEHAVIOR } from '../implementation/terraform-plan-behavior.js';
+
+const RESOLVABILITY_STEER = `## A triggering value must be statically resolvable
+
+The scanner evaluates the rule against the value left AFTER preprocessing — it never deploys the stack. A resource can only trigger the rule on a property whose value preprocessing reduces to a scalar. If the value reduces to an opaque object (an unresolved intrinsic), the rule sees "unknown" and does NOT fire, so the fixture fails to trigger.
+
+When you need a property to TRIGGER the rule, give it a statically resolvable value:
+- a literal string (always safe, and the simplest correct choice), or
+- an Fn::Sub/Fn::Join built only from literals, pseudo-parameters, and template parameters.
+
+Do NOT derive a triggering value from a CREATED resource's runtime attribute. In CDK, tokens like \`repository.repositoryUri\`, \`bucket.bucketArn\`, or any \`resource.someAttr\` synthesize to Fn::GetAtt/Fn::Select/Fn::Split, which preprocessing cannot resolve — the rule will never see the string and the fixture will silently fail to trigger. Hardcode the equivalent literal instead.
+
+If a rule genuinely cannot be triggered by any statically resolvable value, do not fabricate one — add a comment naming the scenario and explaining why it cannot be triggered.`;
+
+const CFN_PREPROCESSING_SECTION = `\n\n${RESOLVABILITY_STEER}\n\n## CloudFormation Template Preprocessing\n\n${PREPROCESSING_BEHAVIOR}`;
+const TERRAFORM_PLAN_SECTION = `\n\n## Terraform Plan Behavior\n\n${TERRAFORM_PLAN_BEHAVIOR}`;
 
 const CDK_SYSTEM_PROMPT = `You write CDK fixture stacks that trigger security rule scenarios for remediation testing.
 
@@ -62,14 +79,14 @@ export class FixtureType {
     constructor(public readonly label: string, public readonly outputFolderPath: string, public readonly templateFolderPath: string, public readonly resourceFilePath: string, public readonly resourceFileName: string, public readonly adapterFilePath: string, public readonly systemPrompt: string, public readonly createValidationTool: () => InvokableTool<unknown, any>) { }
 
     static cdk(context: RuleContext): FixtureType {
-        return new FixtureType('CDK', context.cdkFixtureOutputFolderPath, context.cdkFixtureTemplateFolderPath, context.cdkFixtureResourceFilePath, 'fixture-stack.ts', context.ruleAdapterCfnFilePath, CDK_SYSTEM_PROMPT, () => AgentToolFactory.createTscTool(context.cdkFixtureOutputFolderPath));
+        return new FixtureType('CDK', context.cdkFixtureOutputFolderPath, context.cdkFixtureTemplateFolderPath, context.cdkFixtureResourceFilePath, 'fixture-stack.ts', context.ruleAdapterCfnFilePath, CDK_SYSTEM_PROMPT + CFN_PREPROCESSING_SECTION, () => AgentToolFactory.createTscTool(context.cdkFixtureOutputFolderPath));
     }
 
     static terraform(context: RuleContext): FixtureType {
-        return new FixtureType('Terraform', context.terraformFixtureOutputFolderPath, context.terraformFixtureTemplateFolderPath, context.terraformFixtureResourceFilePath, 'main.tf', context.ruleAdapterTfFilePath, TERRAFORM_SYSTEM_PROMPT, () => AgentToolFactory.createTerraformValidateTool(context.terraformFixtureOutputFolderPath));
+        return new FixtureType('Terraform', context.terraformFixtureOutputFolderPath, context.terraformFixtureTemplateFolderPath, context.terraformFixtureResourceFilePath, 'main.tf', context.ruleAdapterTfFilePath, TERRAFORM_SYSTEM_PROMPT + TERRAFORM_PLAN_SECTION, () => AgentToolFactory.createTerraformValidateTool(context.terraformFixtureOutputFolderPath));
     }
 
     static cloudFormation(context: RuleContext): FixtureType {
-        return new FixtureType('CloudFormation', context.cloudFormationFixtureOutputFolderPath, context.cloudFormationFixtureTemplateFolderPath, context.cloudFormationFixtureResourceFilePath, 'template.yaml', context.ruleAdapterCfnFilePath, CFN_SYSTEM_PROMPT, () => AgentToolFactory.createCfnLintTool(context.cloudFormationFixtureOutputFolderPath));
+        return new FixtureType('CloudFormation', context.cloudFormationFixtureOutputFolderPath, context.cloudFormationFixtureTemplateFolderPath, context.cloudFormationFixtureResourceFilePath, 'template.yaml', context.ruleAdapterCfnFilePath, CFN_SYSTEM_PROMPT + CFN_PREPROCESSING_SECTION, () => AgentToolFactory.createCfnLintTool(context.cloudFormationFixtureOutputFolderPath));
     }
 }

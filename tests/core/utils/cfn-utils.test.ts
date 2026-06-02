@@ -288,6 +288,105 @@ describe('parseCfnTemplate', () => {
     });
   });
 
+  describe('filterJoin - Fn::Join', () => {
+    it('should collapse a join of literal parts into a single string', () => {
+      const template: Template = {
+        Resources: {
+          MyFunction: {
+            Type: 'AWS::Lambda::Function',
+            Properties: {
+              Code: { ImageUri: { 'Fn::Join': ['', ['my-repo', ':', 'latest']] } }
+            }
+          }
+        }
+      };
+
+      const result = parseCfnTemplate(template);
+      expect(result.Resources?.MyFunction?.Properties?.Code.ImageUri).toBe('my-repo:latest');
+    });
+
+    it('should resolve Ref parts before collapsing the join (CDK ECR image URI shape)', () => {
+      const template: Template = {
+        Resources: {
+          MyFunction: {
+            Type: 'AWS::Lambda::Function',
+            Properties: {
+              Code: {
+                ImageUri: {
+                  'Fn::Join': ['', [
+                    { Ref: 'AWS::AccountId' },
+                    '.dkr.ecr.',
+                    { Ref: 'AWS::Region' },
+                    '.',
+                    { Ref: 'AWS::URLSuffix' },
+                    '/my-repo:latest'
+                  ]]
+                }
+              }
+            }
+          }
+        }
+      };
+
+      const result = parseCfnTemplate(template);
+      expect(result.Resources?.MyFunction?.Properties?.Code.ImageUri).toBe(
+        '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest'
+      );
+    });
+
+    it('should resolve a non-empty delimiter', () => {
+      const template: Template = {
+        Resources: {
+          MyBucket: {
+            Type: 'AWS::S3::Bucket',
+            Properties: {
+              BucketName: { 'Fn::Join': ['-', ['cdk', 'assets', { Ref: 'AWS::AccountId' }]] }
+            }
+          }
+        }
+      };
+
+      const result = parseCfnTemplate(template);
+      expect(result.Resources?.MyBucket?.Properties?.BucketName).toBe('cdk-assets-123456789012');
+    });
+
+    it('should collapse a nested Fn::Join', () => {
+      const template: Template = {
+        Resources: {
+          MyBucket: {
+            Type: 'AWS::S3::Bucket',
+            Properties: {
+              BucketName: { 'Fn::Join': ['/', ['prefix', { 'Fn::Join': ['-', ['a', 'b']] }]] }
+            }
+          }
+        }
+      };
+
+      const result = parseCfnTemplate(template);
+      expect(result.Resources?.MyBucket?.Properties?.BucketName).toBe('prefix/a-b');
+    });
+
+    it('should leave the Fn::Join intact when a part is unresolvable', () => {
+      const template: Template = {
+        Resources: {
+          MyFunction: {
+            Type: 'AWS::Lambda::Function',
+            Properties: {
+              Code: {
+                ImageUri: { 'Fn::Join': ['', [{ 'Fn::ImportValue': 'SharedRepo' }, ':latest']] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = parseCfnTemplate(template);
+      expect(result.Resources?.MyFunction?.Properties?.Code.ImageUri).toEqual({
+        'Fn::Join': ['', [{ 'Fn::ImportValue': 'SharedRepo' }, ':latest']]
+      });
+    });
+  });
+
   describe('Complex scenarios', () => {
     it('should handle templates without Parameters section', () => {
       const template: Template = {

@@ -118,12 +118,59 @@ Resources:
       ImageId: "ami-12345"
 \`\`\`
 
+## Fn::Join
+
+\`{ "Fn::Join": [delimiter, [part1, part2, ...]] }\` is collapsed into a single string when — and only when — every part resolves to a scalar. Each part is resolved recursively first (so \`Ref\` to a pseudo-parameter/parameter, \`Fn::Sub\`, \`Fn::FindInMap\`, and nested \`Fn::Join\` parts are substituted using the same rules above), then the resolved parts are concatenated with the delimiter.
+
+If ANY part stays an object after resolution, the whole \`Fn::Join\` is left intact as an opaque object — it is NOT partially collapsed. The common culprits are parts that preprocessing does not resolve to a scalar: \`Fn::ImportValue\`, \`Fn::If\`, \`Fn::Select\`, \`Fn::Split\`, \`Fn::GetAZs\`, and \`Fn::GetAtt\`. Note \`Fn::GetAtt\` is especially treacherous: it "resolves" to the referenced resource's logical ID string (see the Fn::GetAtt section above), so a join containing one technically collapses — but to a string built from a meaningless logical ID, not the real attribute value. Treat a \`Fn::GetAtt\`-derived join as unusable, not as a real value.
+
+### Examples
+
+\`\`\`yaml
+# Before preprocessing
+ImageUri:
+  Fn::Join:
+    - ""
+    - - !Ref AWS::AccountId
+      - .dkr.ecr.
+      - !Ref AWS::Region
+      - .amazonaws.com/my-repo:latest
+
+# After preprocessing
+ImageUri: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-repo:latest"
+\`\`\`
+
+\`\`\`yaml
+# Before preprocessing (one part is an unresolvable import)
+Endpoint:
+  Fn::Join:
+    - ""
+    - - !ImportValue SharedHost
+      - "/path"
+
+# After preprocessing (UNCHANGED — still an object)
+Endpoint:
+  Fn::Join:
+    - ""
+    - - Fn::ImportValue: SharedHost
+      - "/path"
+\`\`\`
+
+This distinction is what determines whether a rule can see a value at all. CDK rarely emits a literal string for a property built from other inputs — it synthesizes an \`Fn::Join\`. Whether that join collapses depends ENTIRELY on what the parts are:
+
+- Built from account id, region, partition, URL suffix, or template parameters (\`Ref\` to a pseudo-parameter/parameter) → every part resolves → the join COLLAPSES to a usable string the rule can inspect.
+- Built from a CREATED resource's runtime attribute — e.g. \`repository.repositoryUri\`, \`bucket.bucketArn\`, \`table.tableArn\`, or any \`resource.someAttr\` token — synthesizes to a join over \`Fn::GetAtt\`/\`Fn::Select\`/\`Fn::Split\` → does NOT resolve to a usable scalar → the join stays an opaque object and the rule sees "unknown".
+
+So an adapter must NOT assume the property is only ever a literal a human typed — it must handle both the collapsed-string case and the opaque-object case (treating the latter as unknown and not flagging).
+
 ## What Remains Unresolved
 
 These intrinsic functions are NOT resolved by preprocessing. They remain as opaque objects in the template:
 
 - \`Fn::If\` — conditional logic stays as \`{ "Fn::If": ["ConditionName", valueIfTrue, valueIfFalse] }\`
 - \`Fn::ImportValue\` — cross-stack references stay as \`{ "Fn::ImportValue": "..." }\`
+- \`Fn::Select\`, \`Fn::Split\`, \`Fn::GetAZs\`, \`Fn::Base64\`, \`Fn::Cidr\` — preprocessing has no filter for these; they stay as objects
+- \`Fn::Join\` — left intact when ANY part stays an object after resolution (see above); otherwise it is collapsed to a string
 
 Rules that encounter these must handle them as objects, not as resolved values. A common pattern is to treat unresolved intrinsics as "unknown" and not flag them (since the actual value depends on runtime conditions).
 
@@ -181,4 +228,5 @@ When writing a fixture template:
 1. If you want the rule to see a specific resource reference, use \`!Ref ResourceId\` or \`!GetAtt ResourceId.Attr\` — both will resolve to the string \`"ResourceId"\` after preprocessing.
 2. If you want the rule to see a literal string value, just use the string directly — don't wrap it in an intrinsic.
 3. If you want to test how the rule handles unresolvable values, use \`Fn::If\` or \`Fn::ImportValue\` — these stay as objects.
-4. Pseudo-parameters always resolve to their fixed values. Don't use them expecting runtime variation.`;
+4. Pseudo-parameters always resolve to their fixed values. Don't use them expecting runtime variation.
+5. A value built from \`Fn::Join\` over resolvable parts collapses to the concatenated string. When authoring a CDK fixture you usually do not control this directly — constructs that derive a value from account id, region, or another resource's attribute synthesize to \`Fn::Join\`, which the rule will see as the collapsed literal. Verify the rule and its adapter read that collapsed string, not just a hand-typed literal.`;
