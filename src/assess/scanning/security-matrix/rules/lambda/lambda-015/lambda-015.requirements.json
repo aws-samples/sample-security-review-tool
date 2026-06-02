@@ -1,0 +1,103 @@
+{
+  "ruleId": "LAMBDA-015",
+  "generatedAt": "2026-06-01T19:38:18.493Z",
+  "description": "Lambda container images must use a specific version tag instead of latest",
+  "cfnResources": [
+    "AWS::Lambda::Function",
+    "AWS::Serverless::Function"
+  ],
+  "tfResources": [
+    "aws_lambda_function"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Lambda function uses a container image whose reference uses the tag 'latest' (exact, lowercase)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "The 'latest' tag is mutable: the underlying image content can change at any time without the function definition changing. This breaks reproducibility, hampers rollback, and creates a supply-chain risk where unreviewed image content can be silently deployed on the next pull. The rule explicitly requires a specific version tag."
+    },
+    {
+      "id": "REQ-02",
+      "description": "Lambda function uses a container image whose tag equals 'latest' under a case-insensitive comparison (e.g. 'Latest', 'LATEST')",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "Container registries treat tag matching in a way where casing variations of 'latest' carry the same semantic meaning of 'most recent build', and authors using mixed casing are still violating the intent of pinning to a specific version. Resolved decision: case-insensitive match of 'latest' must flag."
+    },
+    {
+      "id": "REQ-03",
+      "description": "Lambda function uses a container image reference that includes a repository but no tag and no digest, so the registry resolves it to 'latest' at pull time",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "When a container image reference omits both tag and digest, the OCI/Docker convention is to default to 'latest'. This defaulting hides the violation in the source but produces the same mutable, unpinned behavior the rule forbids. Resolved decision: untagged references are flagged as implicit 'latest'."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Lambda function uses a container image reference with a specific non-'latest' version tag (e.g. a semantic version, build number, or commit SHA tag)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A specific version tag satisfies the rule's requirement to pin the image to an identifiable version, supporting reproducible deployments and reviewable changes."
+    },
+    {
+      "id": "REQ-05",
+      "description": "Lambda function uses a container image reference that pins to an immutable content digest with no tag",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A content digest cryptographically pins the exact image bytes and is even stronger than a version tag. Pinning by digest fully satisfies the rule's intent of avoiding 'latest'."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Lambda function uses a container image reference that includes both the tag 'latest' and an immutable content digest in the same URI",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "When a digest is present, the registry resolves the image by digest and the tag portion is cosmetic — the deployed image is immutably pinned regardless of the tag value. Resolved decision: digest pins the image and the rule passes."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Lambda function uses a container image reference whose tag merely contains the substring 'latest' but is not exactly 'latest' under case-insensitive comparison (e.g. 'latest-stable', 'v1-latest', 'mylatest')",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "Such tags are distinct, named tags chosen by the author and are not the registry's mutable default. Resolved decision: only an exact (case-insensitive) match of the tag to 'latest' should flag."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Resource is a Lambda function whose deployment package type is a zip archive rather than a container image",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "The rule applies only to Lambda functions deployed as container images. Zip-package functions have no image URI to evaluate and are out of scope."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Lambda function's container image reference is gated by a conditional where at least one branch yields a 'latest' tag and another branch yields a specific version tag",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "Resolved decision: any branch that can produce a 'latest' image reference is treated as a violation, because that branch can be selected at deploy time and result in a non-pinned deployment."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Lambda function's container image reference is entirely supplied by an unresolvable value (e.g. an external parameter or variable whose value is unknown at analysis time)",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule cannot assert that the image tag is 'latest' when the entire reference is unresolvable. Following the principle of avoiding false positives on unknowable inputs, the rule should not flag."
+    },
+    {
+      "id": "REQ-11",
+      "description": "Lambda function's container image reference has a known repository but the tag/digest portion is supplied by an unresolvable value",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When only the tag portion is unresolvable, the rule cannot determine whether the resolved tag will be 'latest' or a specific version. Without evidence of non-compliance, the rule should not flag."
+    },
+    {
+      "id": "REQ-12",
+      "description": "Lambda function is configured for container image deployment but has no image reference at all",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "Such a configuration is structurally invalid and would be rejected by the deployment service before reaching production. The rule's scope is detecting use of 'latest', not validating the presence of an image reference; another rule should cover this misconfiguration."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/lambda/latest/dg/images-create.html",
+    "https://aws.amazon.com/blogs/compute/optimizing-lambda-functions-packaged-as-container-images/",
+    "https://docs.aws.amazon.com/lambda/latest/dg/java-image.html"
+  ]
+}

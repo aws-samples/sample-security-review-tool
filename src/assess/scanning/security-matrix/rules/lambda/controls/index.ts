@@ -8,9 +8,13 @@ import { Lambda011TfAdapterFactory } from '../lambda-011/lambda-011.adapter.tf.j
 import { lambda012Control } from '../lambda-012/lambda-012.control.js';
 import { Lambda012CfnAdapterFactory } from '../lambda-012/lambda-012.adapter.cfn.js';
 import { Lambda012TfAdapterFactory } from '../lambda-012/lambda-012.adapter.tf.js';
+import { lambda015Control } from '../lambda-015/lambda-015.control.js';
+import { Lambda015CfnAdapterFactory } from '../lambda-015/lambda-015.adapter.cfn.js';
+import { Lambda015TfAdapterFactory } from '../lambda-015/lambda-015.adapter.tf.js';
 
 export const lambdaControls: RegisteredControl[] = [
   { control: lambda004Control, cfnAdapter: new Lambda004CfnAdapterFactory(), tfAdapter: new Lambda004TfAdapterFactory() },
   { control: lambda011Control, cfnAdapter: new Lambda011CfnAdapterFactory(), tfAdapter: new Lambda011TfAdapterFactory() },
   { control: lambda012Control, cfnAdapter: new Lambda012CfnAdapterFactory(), tfAdapter: new Lambda012TfAdapterFactory() },
+  { control: lambda015Control, cfnAdapter: new Lambda015CfnAdapterFactory(), tfAdapter: new Lambda015TfAdapterFactory() },
 ];

@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  LAMBDA-015 fixture: Lambda container images must use a specific version tag
+  instead of latest. Triggers the 'use-specific-version-tag' scenario via two
+  detection paths (explicit :latest tag and missing tag/digest) across both
+  applicable resource types.
+
+Resources:
+  # AWS::Lambda::Function with Code.ImageUri using the explicit :latest tag.
+  # Triggers usesExplicitLatestTag() branch of evaluate().
+  LambdaFunctionExplicitLatest:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda-015-explicit-latest
+      PackageType: Image
+      Role: arn:aws:iam::123456789012:role/lambda-exec-role
+      Code:
+        ImageUri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app:latest
+
+  # AWS::Lambda::Function with Code.ImageUri that has no tag and no digest.
+  # Triggers hasNoTagOrDigest() branch of evaluate() (resolves to :latest at pull time).
+  LambdaFunctionNoTagOrDigest:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda-015-no-tag-or-digest
+      PackageType: Image
+      Role: arn:aws:iam::123456789012:role/lambda-exec-role
+      Code:
+        ImageUri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app
+
+  # AWS::Serverless::Function with ImageUri using the explicit :latest tag.
+  # Triggers usesExplicitLatestTag() branch via the SAM resource type.
+  ServerlessFunctionExplicitLatest:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: lambda-015-sam-explicit-latest
+      PackageType: Image
+      Role: arn:aws:iam::123456789012:role/lambda-exec-role
+      ImageUri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/sam-app:latest
+
+  # AWS::Serverless::Function with ImageUri that has no tag and no digest.
+  # Triggers hasNoTagOrDigest() branch via the SAM resource type.
+  ServerlessFunctionNoTagOrDigest:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: lambda-015-sam-no-tag-or-digest
+      PackageType: Image
+      Role: arn:aws:iam::123456789012:role/lambda-exec-role
+      ImageUri: 123456789012.dkr.ecr.us-east-1.amazonaws.com/sam-app
