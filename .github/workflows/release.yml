@@ -55,8 +55,9 @@ jobs:
           chmod +x build/osx-arm64/srt
 
       - name: Create archives
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           tar -czf "srt-cli-${VERSION}-linux-x64.tar.gz" -C build/linux-x64 srt
           tar -czf "srt-cli-${VERSION}-linux-arm64.tar.gz" -C build/linux-arm64 srt
           tar -czf "srt-cli-${VERSION}-macos-x64.tar.gz" -C build/osx-x64 srt
@@ -66,13 +67,16 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "${{ steps.version.outputs.version }}" \
-            --title "SRT ${{ steps.version.outputs.version }}" \
+          gh release create "${VERSION}" \
+            --title "SRT ${VERSION}" \
             srt-cli-*.tar.gz \
             srt-cli-*.zip
 
       - name: Delete release branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh api -X DELETE repos/${{ github.repository }}/git/refs/heads/${{ github.event.pull_request.head.ref }}
+          REPO: ${{ github.repository }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: gh api -X DELETE "repos/${REPO}/git/refs/heads/${HEAD_REF}"
