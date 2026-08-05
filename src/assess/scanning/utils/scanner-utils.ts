@@ -7,7 +7,7 @@ export class ScannerUtils {
         return results.filter((result: ScanResult) => {
             if (!result.path) return true;
 
-            const pathSegments = result.path.toLowerCase().split('/');
+            const pathSegments = result.path.toLowerCase().split(/[\\/]+/);
             return !ignoredDirectoryNames.some(dir => pathSegments.includes(dir.toLowerCase()));
         });
     }
