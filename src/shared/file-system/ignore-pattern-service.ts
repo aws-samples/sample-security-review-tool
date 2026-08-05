@@ -15,7 +15,6 @@ const STANDARD_IGNORE_DIRS = [
   '.svn',
   '.hg',
   '.vscode',
-  '.github',
   'cdk.out',
   '.env',
 ];
