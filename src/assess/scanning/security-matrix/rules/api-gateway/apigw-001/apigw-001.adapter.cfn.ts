@@ -51,7 +51,29 @@ class Apigw001CfnAdapter implements Apigw001Adapter {
     const propertyName = ACCESS_LOG_PROPERTY_BY_TYPE[this.resourceType];
     if (!propertyName) return undefined;
     const properties = (this.ctx.resource.Properties ?? {}) as Record<string, unknown>;
-    return properties[propertyName];
+    return this.resolveConditionalSettings(properties[propertyName]);
+  }
+
+  /**
+   * Templates commonly wrap the whole access-log block in a condition rather
+   * than the destination value, e.g.
+   * `AccessLogSetting: {Fn::If: [Cond, {DestinationArn, Format}, {Ref: AWS::NoValue}]}`.
+   * Whether the condition holds is unknowable here, so any branch that
+   * configures logging is treated as the effective configuration; flagging
+   * would contradict REQ-08.
+   */
+  private resolveConditionalSettings(settings: unknown): unknown {
+    if (!this.isNonEmptyObject(settings)) return settings;
+
+    const branches = (settings as Record<string, unknown>)['Fn::If'];
+    if (!Array.isArray(branches)) return settings;
+
+    const configured = branches
+      .slice(1)
+      .map(branch => this.resolveConditionalSettings(branch))
+      .find(branch => this.isNonEmptyObject(branch) && this.hasValidDestination(branch as Record<string, unknown>));
+
+    return configured ?? settings;
   }
 
   private hasValidDestination(settings: Record<string, unknown>): boolean {

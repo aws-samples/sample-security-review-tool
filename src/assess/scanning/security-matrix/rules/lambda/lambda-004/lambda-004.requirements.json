@@ -81,6 +81,15 @@
       "rationale": "Per resolved decision, the rule applies uniformly to all Lambda functions regardless of whether their event sources support X-Ray tracing (e.g., MSK, self-managed Kafka, Amazon MQ, DocumentDB) or their packaging format. The rule does not exclude functions based on event source compatibility.",
       "implemented": false,
       "tested": false
+    },
+    {
+      "id": "REQ-09",
+      "description": "AWS::Serverless::Function inherits Tracing from the template's Globals.Function section",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "SAM applies Globals.Function.Tracing to every AWS::Serverless::Function in the template, and a value on the function itself takes precedence. A function with no Tracing property of its own is still compliant when Globals.Function.Tracing is Active, so evaluating only the resource properties produces false positives.",
+      "implemented": true,
+      "tested": true
     }
   ],
   "awsDocReferences": [

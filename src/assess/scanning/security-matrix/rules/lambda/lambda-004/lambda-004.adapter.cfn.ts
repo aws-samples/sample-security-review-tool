@@ -25,14 +25,25 @@ class Lambda004CfnAdapter implements Lambda004Adapter {
   }
 
   hasTracingConfigured(): boolean {
+    if (this.resourceType === 'AWS::Serverless::Function') {
+      return this.isTracingModeActiveOrUnresolved(this.serverlessTracingMode());
+    }
+
     const properties = this.ctx.resource.Properties as Record<string, unknown> | undefined;
     if (!properties) return false;
 
-    if (this.resourceType === 'AWS::Serverless::Function') {
-      return this.isTracingModeActiveOrUnresolved(properties.Tracing);
-    }
-
     return this.isCfnTracingConfigActive(properties.TracingConfig);
+  }
+
+  /**
+   * SAM applies `Globals.Function.Tracing` to every AWS::Serverless::Function in
+   * the template, and a value on the function itself overrides it. Reading only
+   * the resource would flag functions whose tracing is enabled template-wide.
+   */
+  private serverlessTracingMode(): unknown {
+    const properties = this.ctx.resource.Properties as Record<string, unknown> | undefined;
+    const globals = (this.ctx.template as { Globals?: { Function?: Record<string, unknown> } }).Globals;
+    return properties?.Tracing ?? globals?.Function?.Tracing;
   }
 
   private isCfnTracingConfigActive(tracingConfig: unknown): boolean {
