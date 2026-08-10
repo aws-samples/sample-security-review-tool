@@ -6,6 +6,7 @@ import { ScaffoldingWorkflow } from '../scaffolding/scaffolding-workflow.js';
 import { ImplementationWorkflow } from '../implementation/implementation-workflow.js';
 import { FixtureWorkflow } from '../fixtures/fixture-workflow.js';
 import { RemediationWorkflow } from '../remediation/remediation-workflow.js';
+import { UnitTestRunner } from '../shared/unit-test-runner.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 const BUILD_PHASE_COUNT = 5;
@@ -30,6 +31,7 @@ export class BuildWorkflow {
 
         this.logger.phaseStart(3, BUILD_PHASE_COUNT, 'Implementation');
         await this.runImplementation(requirements);
+        this.verifyUnitTests('implementation');
         this.logger.phaseComplete(`${this.context.ruleId} implemented`);
 
         this.logger.phaseStart(4, BUILD_PHASE_COUNT, 'Fixtures');
@@ -38,7 +40,15 @@ export class BuildWorkflow {
 
         this.logger.phaseStart(5, BUILD_PHASE_COUNT, 'Remediation');
         await this.runRemediation();
+        this.verifyUnitTests('remediation');
         this.logger.phaseComplete('remediations tested');
+    }
+
+    private verifyUnitTests(phase: string): void {
+        const result = new UnitTestRunner(this.context.srtRootFolderPath, this.context.testsFolderPath).run();
+        if (result.passed) return;
+        this.logger.info(result.output);
+        throw new Error(`Unit tests for ${this.context.ruleId} fail after ${phase}.`);
     }
 
     private clearArtifactsIfRegenerating(options: BuildOptions): void {

@@ -6,8 +6,7 @@ export class FixtureWorkflow {
     constructor(private readonly context: RuleContext) { }
 
     public async run(): Promise<void> {
-        await new FixtureGenerator(this.context, FixtureType.cdk(this.context)).generate();
-        await new FixtureGenerator(this.context, FixtureType.terraform(this.context)).generate();
-        await new FixtureGenerator(this.context, FixtureType.cloudFormation(this.context)).generate();
+        const fixtureTypes = [FixtureType.cdk(this.context), FixtureType.terraform(this.context), FixtureType.cloudFormation(this.context)];
+        await Promise.all(fixtureTypes.map(fixtureType => new FixtureGenerator(this.context, fixtureType).generate()));
     }
 }

@@ -35,13 +35,22 @@ export class RemediationUpdaterAgent {
         const result = await agent.invoke(userPrompt);
         const structuredOutput = result.structuredOutput as z.infer<typeof RemediationSchema>;
 
-        const controlContent = await fs.readFile(this.context.ruleControlFilePath, 'utf8');
-        const escapedInstructions = this.escapeForStringLiteral(structuredOutput.remediationInstructions);
-        const escapedOriginalFix = this.escapeForStringLiteral(details.targetIssue.fix || '');
-        const updatedControlContent = controlContent.replace(escapedOriginalFix, escapedInstructions);
-        await fs.writeFile(this.context.ruleControlFilePath, updatedControlContent, 'utf8');
+        await this.replaceRemediationInControl(details.targetIssue.fix, structuredOutput.remediationInstructions);
 
         return structuredOutput.remediationInstructions;
+    }
+
+    private async replaceRemediationInControl(originalFix: string | undefined, newInstructions: string): Promise<void> {
+        if (!originalFix) throw new Error(`Cannot update remediation for ${this.context.ruleId}: the failing finding has no fix text to replace.`);
+
+        const controlContent = await fs.readFile(this.context.ruleControlFilePath, 'utf8');
+        const needle = this.escapeForStringLiteral(originalFix);
+        if (!controlContent.includes(needle)) {
+            throw new Error(`Cannot update remediation for ${this.context.ruleId}: the current fix text was not found in ${this.context.ruleControlFilePath}. The control may have been edited independently.`);
+        }
+
+        const replacement = this.escapeForStringLiteral(newInstructions);
+        await fs.writeFile(this.context.ruleControlFilePath, controlContent.replaceAll(needle, () => replacement), 'utf8');
     }
 
     private async readAdapterSource(): Promise<string> {

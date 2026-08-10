@@ -22,19 +22,34 @@ export class ImplementationWorkflow {
     }
 
     public async run(spec: RequirementsSpec): Promise<void> {
-        let i = 0;
-        while (i < spec.requirements.length) {
-            const requirement = spec.requirements[i];
-            if (this.isAlreadyImplemented(requirement)) { i++; continue; }
+        const attempted = new Set<string>();
 
+        let requirement = this.nextUnimplemented(spec, attempted);
+        while (requirement) {
+            attempted.add(requirement.id);
             await this.testCreationAgent.create(spec, requirement);
-            const wasRemoved = await this.implementWithConflictResolution(spec, requirement);
-            if (!wasRemoved) i++;
+            await this.implementWithConflictResolution(spec, requirement);
+            this.warnIfTestsMissing(requirement);
+            requirement = this.nextUnimplemented(spec, attempted);
         }
     }
 
+    private nextUnimplemented(spec: RequirementsSpec, attempted: Set<string>): RuleRequirement | undefined {
+        return spec.requirements.find(requirement => !attempted.has(requirement.id) && !this.isAlreadyImplemented(requirement));
+    }
+
+    private warnIfTestsMissing(requirement: RuleRequirement): void {
+        if (this.isAlreadyImplemented(requirement)) return;
+        const missing = this.testFileNames(requirement).filter(name => !fs.existsSync(path.join(this.context.testsFolderPath, name)));
+        this.logger.warning(`${requirement.id} did not produce ${missing.join(' and ')}. The requirement is not covered.`);
+    }
+
     private isAlreadyImplemented(requirement: RuleRequirement): boolean {
-        return fs.existsSync(path.join(this.context.testsFolderPath, `${requirement.id}.cfn.test.ts`));
+        return this.testFileNames(requirement).every(name => fs.existsSync(path.join(this.context.testsFolderPath, name)));
+    }
+
+    private testFileNames(requirement: RuleRequirement): string[] {
+        return [`${requirement.id}.cfn.test.ts`, `${requirement.id}.tf.test.ts`];
     }
 
     private async implementWithConflictResolution(spec: RequirementsSpec, requirement: RuleRequirement): Promise<boolean> {
