@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  DDB-002 fixture. Triggers scenario `no-trail-captures-dynamodb-data-events`
+  by defining DynamoDB tables without any CloudTrail trail in the template
+  that captures DynamoDB data plane (item-level) events.
+
+Resources:
+  # Scenario: no-trail-captures-dynamodb-data-events (AWS::DynamoDB::Table)
+  # The table exists but no AWS::CloudTrail::Trail resource is present in
+  # the template, so hasTrailCapturingDynamoDbDataEvents() returns false.
+  UncoveredTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: uncovered-table
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  # Scenario: no-trail-captures-dynamodb-data-events (AWS::DynamoDB::GlobalTable)
+  # Same scenario, but exercised against the GlobalTable resource type
+  # which is also in the adapter's applicableResourceTypes list.
+  UncoveredGlobalTable:
+    Type: AWS::DynamoDB::GlobalTable
+    Properties:
+      TableName: uncovered-global-table
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Replicas:
+        - Region: us-east-1

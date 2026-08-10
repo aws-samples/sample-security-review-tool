@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  APIGW-001 fixture: triggers both remediation scenarios.
+  - StageMissingLogging triggers `missing-access-logging` (no AccessLogSetting at all).
+  - StageMissingRetention triggers `missing-log-retention` (valid access log destination
+    pointing to an in-template Log Group that has no RetentionInDays).
+
+Resources:
+  # Scenario 1: missing-access-logging
+  # AWS::ApiGateway::Stage with no AccessLogSetting property at all.
+  # adapter.hasAccessLogging() => false on the first check, finding fires.
+  StageMissingLogging:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: no-logging
+      RestApiId: dummy-rest-api-id
+      DeploymentId: dummy-deployment-id
+
+  # Scenario 2: missing-log-retention
+  # AWS::ApiGatewayV2::Stage with valid AccessLogSettings.DestinationArn that
+  # references the in-template log group by its logical ID. The referenced
+  # AWS::Logs::LogGroup is intentionally created without RetentionInDays, so
+  # adapter.hasProperLogRetention() => false and the finding fires.
+  #
+  # Note: DestinationArn is a literal string equal to the log group's logical id
+  # ("NoRetentionLogGroup"). The adapter's referencesLogGroup() compares the
+  # destination string to the log group's logical id directly, which matches.
+  StageMissingRetention:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: no-retention
+      ApiId: dummy-api-id
+      AccessLogSettings:
+        DestinationArn: NoRetentionLogGroup
+        Format: '$context.requestId $context.identity.sourceIp $context.httpMethod $context.path $context.status'
+
+  # Supporting resource for scenario 2: the log group whose logical id the
+  # stage's DestinationArn matches. Intentionally omits RetentionInDays so the
+  # rule detects indefinite retention.
+  NoRetentionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/apigateway/no-retention

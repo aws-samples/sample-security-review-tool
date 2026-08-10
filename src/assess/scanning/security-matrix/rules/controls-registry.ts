@@ -1,10 +1,12 @@
 import { RegisteredControl } from '../controls/types.js';
 import { lambdaControls } from './lambda/controls/index.js';
-import { dynamodbControls } from './dynamodb/controls/index.js';
+import { dynamodbControls } from './dynamodb/index.js';
 import { s3Controls } from './s3/controls/index.js';
 import { cloudfrontControls } from './cloudfront/index.js';
+import { apiGatewayControls } from './api-gateway/controls/index.js';
 
 export const allRegisteredControls: RegisteredControl[] = [
+  ...apiGatewayControls,
   ...cloudfrontControls,
   ...s3Controls,
   ...dynamodbControls,

@@ -1,0 +1,105 @@
+{
+  "ruleId": "APIGW-001",
+  "generatedAt": "2026-06-02T15:48:10.202Z",
+  "description": "API Gateways must enable access logging with proper retention",
+  "cfnResources": [
+    "AWS::ApiGateway::Stage",
+    "AWS::ApiGatewayV2::Stage"
+  ],
+  "tfResources": [
+    "aws_api_gateway_stage",
+    "aws_apigatewayv2_stage"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "API Gateway stage has no access logging configuration at all",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires access logging to be enabled. A stage with no access log settings violates this requirement. AWS docs identify access logging as the mechanism for capturing per-request data on API Gateway stages."
+    },
+    {
+      "id": "REQ-02",
+      "description": "API Gateway stage has access logging configured with a destination pointing to a CloudWatch log group declared in the same template, and that log group has an explicit non-zero retention period",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Access logging is enabled with a valid in-template destination, and the user resolved that any explicit non-zero retention is acceptable for 'proper retention'."
+    },
+    {
+      "id": "REQ-03",
+      "description": "API Gateway stage has access logging configured pointing to a CloudWatch log group declared in the same template, but that log group has no retention configured (logs retained indefinitely)",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires 'proper retention'. When retention is not specified on a CloudWatch log group, logs never expire, which fails the retention portion of the requirement. AWS docs (AWS::Logs::LogGroup RetentionInDays) state that omitting RetentionInDays causes log events not to expire."
+    },
+    {
+      "id": "REQ-04",
+      "description": "API Gateway stage has access logging configured pointing to a CloudWatch log group declared in the same template, but that log group has retention explicitly set to zero or a non-positive value",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "A zero or non-positive retention is not a valid 'explicit non-zero retention' and effectively disables proper retention enforcement. The user resolution requires explicit non-zero retention."
+    },
+    {
+      "id": "REQ-05",
+      "description": "API Gateway stage references an access log destination by ARN or name that is not declared anywhere in the template (external/pre-existing resource)",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: external resources are out of scope for IaC analysis. Access logging is enabled and the destination is managed elsewhere."
+    },
+    {
+      "id": "REQ-06",
+      "description": "API Gateway stage has access logging configured with a destination that is a Kinesis Data Firehose delivery stream rather than a CloudWatch log group",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "User-resolved decision: Firehose is a valid access log destination. AWS docs confirm DestinationArn may reference a CloudWatch Logs log group or a Kinesis Data Firehose delivery stream."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Access logging configuration block is present on the stage but contains no destination value (empty/missing destination)",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "Without a destination, no logs are actually delivered. AWS docs require both DestinationArn and Format to enable access logging."
+    },
+    {
+      "id": "REQ-08",
+      "description": "API Gateway stage's access log destination value depends on a condition or input that cannot be resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule cannot assert non-compliance when critical configuration values are unknown at analysis time; flagging would produce false positives."
+    },
+    {
+      "id": "REQ-09",
+      "description": "API Gateway V2 (HTTP or WebSocket) stage has no access log settings configured",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "User-resolved decision: the rule applies to both REST and V2 stages. V2 stages without access log settings violate the same requirement."
+    },
+    {
+      "id": "REQ-10",
+      "description": "API Gateway V2 stage has access logging enabled pointing to an in-template CloudWatch log group with explicit non-zero retention",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "V2 stages are in scope per user resolution; this configuration satisfies both the logging and retention requirements."
+    },
+    {
+      "id": "REQ-11",
+      "description": "API Gateway stage has access logging enabled, but the referenced in-template log group's retention value cannot be resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule cannot definitively assert that retention is missing or invalid when the value is unresolvable; flagging would risk false positives."
+    },
+    {
+      "id": "REQ-12",
+      "description": "API Gateway stage has access logging enabled and points to an in-template log group, but the log group's retention is set to a value the rule does not recognize as a valid CloudWatch retention period (e.g., a non-numeric or otherwise invalid value)",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "An invalid retention value will not produce the intended retention behavior. Per the user resolution, an explicit non-zero, valid retention is required."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-apigateway-stage-accesslogsetting.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-logs-loggroup.html",
+    "https://docs.aws.amazon.com/cdk/api/v2/dotnet/api/Amazon.CDK.AWS.Apigatewayv2.CfnStage.IAccessLogSettingsProperty.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html"
+  ]
+}

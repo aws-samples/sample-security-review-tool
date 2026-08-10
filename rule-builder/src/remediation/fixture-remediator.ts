@@ -53,6 +53,10 @@ export class FixtureRemediator {
 
     private prepareFixtures(): void {
         fs.rmSync(this.fixtureType.outputFolderPath, { recursive: true, force: true });
+        this.restoreFixtureInputs();
+    }
+
+    private restoreFixtureInputs(): void {
         fs.cpSync(this.fixtureType.templateFolderPath, this.fixtureType.outputFolderPath, { recursive: true });
         fs.cpSync(this.fixtureType.resourceFilePath, path.join(this.fixtureType.outputFolderPath, this.fixtureType.resourceFileName));
     }
@@ -184,7 +188,7 @@ export class FixtureRemediator {
     }
 
     private async refreshFixGuidance(issue: ScanResult): Promise<void> {
-        this.prepareFixtures();
+        this.restoreFixtureInputs();
         this.runAssessment();
         const refreshed = (await this.loadIssues()).find(i => i.check_id === issue.check_id && i.resourceName === issue.resourceName);
         if (refreshed) issue.fix = refreshed.fix;

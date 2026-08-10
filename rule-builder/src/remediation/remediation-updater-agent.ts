@@ -28,7 +28,9 @@ export class RemediationUpdaterAgent {
         });
 
         const fixtureContent = await fs.readFile(path.join(this.fixtureType.outputFolderPath, this.fixtureType.resourceFileName), 'utf8');
-        const userPrompt = this.promptBuilder.buildUserPrompt(details, fixtureContent);
+        const controlSource = await fs.readFile(this.context.ruleControlFilePath, 'utf8');
+        const adapterSource = await this.readAdapterSource();
+        const userPrompt = this.promptBuilder.buildUserPrompt(details, fixtureContent, controlSource, adapterSource);
 
         const result = await agent.invoke(userPrompt);
         const structuredOutput = result.structuredOutput as z.infer<typeof RemediationSchema>;
@@ -40,6 +42,12 @@ export class RemediationUpdaterAgent {
         await fs.writeFile(this.context.ruleControlFilePath, updatedControlContent, 'utf8');
 
         return structuredOutput.remediationInstructions;
+    }
+
+    private async readAdapterSource(): Promise<string> {
+        const baseSource = await fs.readFile(this.context.ruleAdapterBaseFilePath, 'utf8');
+        const flavorSource = await fs.readFile(this.fixtureType.adapterFilePath, 'utf8');
+        return `${baseSource}\n\n${flavorSource}`;
     }
 
     private escapeForStringLiteral(value: string): string {
