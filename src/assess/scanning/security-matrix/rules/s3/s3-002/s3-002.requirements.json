@@ -1,0 +1,149 @@
+{
+  "ruleId": "S3-002",
+  "generatedAt": "2026-08-11T15:21:47.975Z",
+  "description": "S3 bucket policies must not grant access to untrusted principals",
+  "cfnResources": [
+    "AWS::S3::BucketPolicy",
+    "AWS::S3::Bucket"
+  ],
+  "tfResources": [
+    "aws_s3_bucket_policy",
+    "aws_s3_bucket"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Bucket has no attached resource policy at all",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "With no policy present there are no allow statements, so no untrusted principal can be granted access via a bucket policy. The rule has nothing to evaluate."
+    },
+    {
+      "id": "REQ-02",
+      "description": "Bucket policy contains only deny statements",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "Deny statements cannot grant access to any principal, trusted or otherwise. The rule targets allow grants to untrusted principals."
+    },
+    {
+      "id": "REQ-03",
+      "description": "Bucket policy allow statement uses a wildcard principal with no conditions constraining who may assume that wildcard",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "A wildcard principal in an Allow statement grants access to anyone (including anonymous callers), which is the canonical untrusted-principal scenario per AWS S3 security guidance."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Bucket policy allow statement uses a wildcard principal but a condition narrows the effective identity to a trusted set (e.g., an organization ID, an explicit principal ARN allow-list, a specific VPC endpoint, or a specific source IP range)",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "Per the resolved decision, a restrictive condition that constrains the effective principal set to identifiable/trusted callers makes the grant auditable and specific, not open to untrusted parties. The condition must narrow identity; see REQ-18 for a condition that merely constrains the request."
+    },
+    {
+      "id": "REQ-18",
+      "description": "Bucket policy allow statement uses a wildcard principal with a condition present, but that condition constrains a property of the request rather than which identities may use the grant (e.g., requiring encrypted transport or a particular canned ACL)",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "This is the complement of REQ-04, which passes only because the condition narrows the effective principal set. A condition on a request property leaves the grant reachable by every caller in the world, so treating the mere presence of a condition as sufficient would pass a world-readable bucket. Recording the near-miss explicitly keeps an implementation from satisfying REQ-04 by checking only that some condition exists."
+    },
+    {
+      "id": "REQ-05",
+      "description": "Bucket policy allow statement grants access to a specific IAM principal identified by an ARN in a named AWS account (same-account or cross-account)",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Per the resolved decision, a principal identified by an explicit ARN (and thus an explicit account) is a deliberate, auditable grant. The rule targets non-identifiable principals, not named ones."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Bucket policy allow statement grants access to an entire AWS account (account ID or root ARN) rather than an individual principal",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "An account-scoped grant names a specific, identifiable account. Per the resolved decision there is no trust list; explicit account identifiers are treated as intentional, auditable grants."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Bucket policy allow statement grants access to an AWS service principal with no condition restricting the source account or source ARN",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Per the resolved decision, unrestricted service-principal grants can be invoked on behalf of any account's resources and constitute an untrusted grant unless narrowed by aws:SourceAccount or aws:SourceArn."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Bucket policy allow statement grants access to an AWS service principal and a condition restricts the source account or the source ARN to a specific value",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A source-account or source-ARN condition binds the service invocation to a specific caller resource, satisfying the confused-deputy mitigation and making the grant trusted."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Bucket policy allow statement grants access to a federated identity provider (SAML/OIDC) identified by a specific provider ARN",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A federated principal identified by a specific provider ARN is an explicit, named trust relationship, analogous to naming an IAM principal."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Bucket policy allow statement omits any principal element",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "Per the resolved decision, an allow statement without a principal is not a valid IAM grant and would be rejected at deploy time, so it does not grant access to any principal."
+    },
+    {
+      "id": "REQ-11",
+      "description": "Bucket policy contains multiple allow statements where at least one uses an unconstrained wildcard principal and others name specific principals",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "A single overly broad statement grants access to untrusted principals regardless of other well-scoped statements; the presence of specific grants elsewhere does not neutralize the wildcard grant."
+    },
+    {
+      "id": "REQ-12",
+      "description": "Bucket policy allow statement principal value is a wildcard and the statement's Effect is unresolvable at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the effect cannot be determined, the rule cannot assert that a wildcard-principal grant is actually an Allow. Passing avoids false positives on values not resolvable at analysis time."
+    },
+    {
+      "id": "REQ-13",
+      "description": "Bucket policy allow statement grants access to a principal ARN whose account attribution cannot be resolved (e.g., dynamic or parameterized ARN without a determinable account segment)",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "Per the resolved decision, principals whose identity cannot be resolved at analysis time are not flagged, to avoid false positives on unresolvable values."
+    },
+    {
+      "id": "REQ-14",
+      "description": "Bucket policy statements collection is present but empty",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "An empty statement list grants no access, so no untrusted-principal grant exists."
+    },
+    {
+      "id": "REQ-15",
+      "description": "Bucket policy allow statement principal is expressed as a list that includes both a wildcard entry and specific principal identifiers, with no condition narrowing the wildcard",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The wildcard entry within the principal list expands the grant to anyone regardless of the co-listed specific principals; the effective grant still reaches untrusted callers."
+    },
+    {
+      "id": "REQ-16",
+      "description": "Bucket policy allow statement uses a wildcard principal combined with a Deny-style NotPrincipal exclusion of a specific identity",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "Excluding one identity from a wildcard Allow still leaves the grant open to essentially every other principal in the world, which is not a trusted-principal grant."
+    },
+    {
+      "id": "REQ-17",
+      "description": "Bucket policy allow statement grants access to a canonical user identifier (e.g., an S3 CanonicalUser value) explicitly listed",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A canonical user ID names a specific AWS account holder, so the grant is auditable and directed at a named principal rather than an untrusted wildcard."
+    }
+  ],
+  "awsDocReferences": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/security_iam_service-with-iam.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html",
+    "https://repost.aws/knowledge-center/s3-invalid-principal-in-policy-error",
+    "https://aws.amazon.com/blogs/security/top-10-security-best-practices-for-securing-data-in-amazon-s3/",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_iam-s3.html"
+  ]
+}

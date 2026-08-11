@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for S3-002 - S3 bucket policies must not grant access to untrusted principals.
+  Triggers both remediation scenarios:
+    1. wildcard-principal-without-condition
+    2. service-principal-without-source-scope
+
+Resources:
+  # Plain bucket included because AWS::S3::Bucket is listed in the adapter's
+  # applicableResourceTypes. A bare bucket has no PolicyDocument property, so
+  # the adapter's getPolicyStatements() returns an empty array for it and it
+  # never produces a finding on its own - it exists here purely as the target
+  # for the bucket policies below, and to satisfy the resource-type coverage
+  # requirement.
+  WildcardPrincipalBucket:
+    Type: AWS::S3::Bucket
+
+  ServicePrincipalBucket:
+    Type: AWS::S3::Bucket
+
+  # Scenario: wildcard-principal-without-condition
+  # Allow statement grants access to Principal "*" with no Condition block.
+  WildcardPrincipalBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WildcardPrincipalBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowWildcardPrincipal
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: 'arn:aws:s3:::wildcard-principal-bucket/*'
+
+  # Scenario: service-principal-without-source-scope
+  # Allow statement grants access to an AWS service principal with no
+  # aws:SourceAccount / aws:SourceArn / aws:SourceOwner condition scoping it.
+  ServicePrincipalBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ServicePrincipalBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowUnscopedServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: 's3:GetObject'
+            Resource: 'arn:aws:s3:::service-principal-bucket/*'
