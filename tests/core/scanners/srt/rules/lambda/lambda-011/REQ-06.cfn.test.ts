@@ -29,6 +29,7 @@ describe('LAMBDA-011 REQ-06 (CloudFormation)', () => {
           Type: 'AWS::CloudWatch::Alarm',
           Properties: {
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             ActionsEnabled: true,
             Dimensions: [

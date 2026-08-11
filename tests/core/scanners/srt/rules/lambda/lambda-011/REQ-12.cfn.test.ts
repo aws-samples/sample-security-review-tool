@@ -32,6 +32,7 @@ describe('LAMBDA-011 (CFN) REQ-12: alarm on a non-recommended Lambda metric stil
           Properties: {
             AlarmName: 'my-assessed-function-invocations',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             // Not one of the commonly recommended reliability metrics:
             MetricName: 'Invocations',
             Statistic: 'Sum',

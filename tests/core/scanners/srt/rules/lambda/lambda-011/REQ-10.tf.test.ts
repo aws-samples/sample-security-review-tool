@@ -35,6 +35,7 @@ describe('LAMBDA-011 TF - REQ-10: Multiple alarms, at least one matches assessed
       values: {
         alarm_name: 'other-fn-errors',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,
@@ -71,6 +72,7 @@ describe('LAMBDA-011 TF - REQ-10: Multiple alarms, at least one matches assessed
       values: {
         alarm_name: 'assessed-fn-errors',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,

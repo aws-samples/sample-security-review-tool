@@ -3,7 +3,8 @@
   "generatedAt": "2026-05-20T12:49:23.915Z",
   "description": "Lambda functions must have CloudWatch alarms for monitoring",
   "cfnResources": [
-    "AWS::Lambda::Function"
+    "AWS::Lambda::Function",
+    "AWS::Serverless::Function"
   ],
   "tfResources": [
     "aws_lambda_function"
@@ -120,11 +121,11 @@
     {
       "id": "REQ-13",
       "description": "An alarm targets the assessed Lambda function on a Lambda metric but has no alarm actions configured (no notification target attached for any alarm state transition)",
-      "category": "SPECIFIC_RESOURCE",
-      "expectedBehavior": "pass",
-      "rationale": "The rule validates the structural existence of monitoring coverage rather than the operational completeness of notification routing. An alarm without actions still records state and history, satisfying the monitoring requirement at the IaC scanning level.",
-      "implemented": false,
-      "tested": false
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "An alarm with no actions notifies nobody when it breaches, so it provides no operational monitoring regardless of the state history it records. AWS treats this as non-compliant via the managed Config rule cloudwatch-alarm-action-check (\"NON_COMPLIANT if there is no action specified for the alarm\", with alarmActionRequired defaulting to true), cited under PCI DSS 4.0. This is the same defect as REQ-05 reached by a different route, so it receives the same verdict: REQ-05 covers actions present but disabled, this covers no actions at all.",
+      "implemented": true,
+      "tested": true
     },
     {
       "id": "REQ-14",
@@ -143,6 +144,24 @@
       "rationale": "Composite alarms aggregate the state of underlying metric alarms; when those underlying alarms cover the assessed function, the composite alarm provides effective monitoring. Coverage via composite-alarm membership is therefore acceptable.",
       "implemented": false,
       "tested": false
+    },
+    {
+      "id": "REQ-16",
+      "description": "An alarm targets the assessed Lambda function on a Lambda metric and has at least one alarm action configured",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "An alarm that targets the function, has actions enabled, and routes at least one AlarmActions notification target is complete monitoring coverage. This is the positive counterpart to REQ-05 and REQ-13. An AlarmActions value that is an unresolvable intrinsic is accepted, consistent with REQ-09's treatment of unresolvable values.",
+      "implemented": true,
+      "tested": true
+    },
+    {
+      "id": "REQ-17",
+      "description": "An AWS::Serverless::Function (SAM) is assessed for monitoring alarm coverage on the same terms as AWS::Lambda::Function",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "SAM's AWS::Serverless::Function transforms into an AWS::Lambda::Function and emits the same AWS/Lambda CloudWatch metrics, so it carries the identical monitoring requirement. Evaluating only AWS::Lambda::Function leaves every SAM-defined function unassessed, which is a false negative rather than an exemption. A SAM function with no effective alarm is therefore flagged, and one covered by an alarm with an action passes.",
+      "implemented": true,
+      "tested": true
     }
   ],
   "awsDocReferences": [

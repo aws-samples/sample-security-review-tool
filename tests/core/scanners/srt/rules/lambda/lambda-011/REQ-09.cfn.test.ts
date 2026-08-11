@@ -47,6 +47,7 @@ describe('LAMBDA-011 CFN - REQ-09: Alarm FunctionName dimension is unresolvable'
           Type: 'AWS::CloudWatch::Alarm',
           Properties: {
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,
@@ -85,6 +86,7 @@ describe('LAMBDA-011 CFN - REQ-09: Alarm FunctionName dimension is unresolvable'
           Type: 'AWS::CloudWatch::Alarm',
           Properties: {
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,
@@ -123,6 +125,7 @@ describe('LAMBDA-011 CFN - REQ-09: Alarm FunctionName dimension is unresolvable'
           Type: 'AWS::CloudWatch::Alarm',
           Properties: {
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,
@@ -166,6 +169,7 @@ describe('LAMBDA-011 CFN - REQ-09: Alarm FunctionName dimension is unresolvable'
           Type: 'AWS::CloudWatch::Alarm',
           Properties: {
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,

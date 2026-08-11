@@ -24,6 +24,7 @@ describe('LAMBDA-011 REQ-07 (Terraform): Alarm with Lambda namespace but no dime
       values: {
         alarm_name: 'account-wide-lambda-errors',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,

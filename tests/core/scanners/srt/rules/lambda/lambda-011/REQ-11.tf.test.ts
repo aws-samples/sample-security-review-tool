@@ -41,6 +41,7 @@ describe('LAMBDA-011 - REQ-11 (TF): alarm scoped to a specific version/alias via
       values: {
         alarm_name: 'lambda-errors-version-1',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,

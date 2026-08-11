@@ -1,42 +1,42 @@
 import { describe, it, expect } from 'vitest';
 import { lambda011Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/lambda/lambda-011/lambda-011.control.js';
 import { Lambda011TfAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/lambda/lambda-011/lambda-011.adapter.tf.js';
-import { TfContext, TerraformResource } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import type { TfContext, TerraformResource } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
 /**
  * REQ-13 (LAMBDA-011) — Terraform
  *
- * Scenario: An aws_cloudwatch_metric_alarm targets the assessed aws_lambda_function on
- * a Lambda metric, but the alarm has NO alarm actions configured (alarm_actions /
- * ok_actions / insufficient_data_actions are absent, and no notification target is
- * attached for any alarm state transition).
+ * Scenario: An aws_cloudwatch_metric_alarm targets the assessed aws_lambda_function on a
+ * Lambda metric, but the alarm has NO alarm actions configured.
  *
- * Expected behavior: PASS (control returns null / no finding).
+ * Expected behavior: FLAG.
  *
- * Rationale: The rule validates the structural existence of monitoring coverage — not
- * the operational completeness of notification routing. An alarm without actions still
- * records state and history, which satisfies the IaC-level monitoring requirement.
+ * An alarm with no actions notifies nobody when it breaches, so it is not monitoring
+ * coverage. AWS treats it as non-compliant via the managed Config rule
+ * cloudwatch-alarm-action-check. This is REQ-05's defect reached another way — actions
+ * present but disabled there, no actions at all here — so the verdict matches.
  */
-describe('LAMBDA-011 [TF] — alarm targeting the function with no alarm actions configured', () => {
-  it('passes (no finding) when an alarm covers the Lambda but has no action targets', () => {
-    const lambdaResource: TerraformResource = {
-      address: 'aws_lambda_function.assessed',
-      type: 'aws_lambda_function',
-      name: 'assessed',
-      values: {
-        function_name: 'my-monitored-function',
-        runtime: 'nodejs20.x',
-        handler: 'index.handler',
-        role: 'arn:aws:iam::123456789012:role/lambda-role',
-      },
-    } as unknown as TerraformResource;
+describe('LAMBDA-011 [TF] — REQ-13: alarm targeting the function with no alarm actions', () => {
+  const factory = new Lambda011TfAdapterFactory();
 
-    const alarmWithoutActions: TerraformResource = {
-      address: 'aws_cloudwatch_metric_alarm.errors_no_actions',
+  const lambdaResource = {
+    address: 'aws_lambda_function.assessed',
+    type: 'aws_lambda_function',
+    name: 'assessed',
+    values: {
+      function_name: 'my-monitored-function',
+      runtime: 'nodejs20.x',
+      handler: 'index.handler',
+      role: 'arn:aws:iam::123456789012:role/lambda-role',
+    },
+  } as unknown as TerraformResource;
+
+  const evaluate = (alarmValues: Record<string, unknown>) => {
+    const alarmResource = {
+      address: 'aws_cloudwatch_metric_alarm.errors',
       type: 'aws_cloudwatch_metric_alarm',
-      name: 'errors_no_actions',
+      name: 'errors',
       values: {
-        // Lambda metric → alarm is in the Lambda namespace
         namespace: 'AWS/Lambda',
         metric_name: 'Errors',
         statistic: 'Sum',
@@ -44,31 +44,33 @@ describe('LAMBDA-011 [TF] — alarm targeting the function with no alarm actions
         evaluation_periods: 1,
         threshold: 1,
         comparison_operator: 'GreaterThanOrEqualToThreshold',
-        // Targets the assessed function specifically.
-        dimensions: {
-          FunctionName: 'my-monitored-function',
-        },
-        // Intentionally NO alarm_actions, NO ok_actions, NO insufficient_data_actions.
-        // actions_enabled is omitted (defaults to true), but there are no action targets.
+        dimensions: { FunctionName: 'my-monitored-function' },
+        ...alarmValues,
       },
     } as unknown as TerraformResource;
-
-    const allResources = [lambdaResource, alarmWithoutActions];
-
-    const factory = new Lambda011TfAdapterFactory();
-    expect(factory.appliesTo(lambdaResource.type)).toBe(true);
 
     const context: TfContext = {
       projectName: 'test-project',
       resource: lambdaResource,
-      allResources,
+      allResources: [lambdaResource, alarmResource],
     };
 
-    const adapter = factory.bind(context);
-    const result = lambda011Control.run(adapter, context);
+    return lambda011Control.run(factory.bind(context), context);
+  };
 
-    // Expected: PASS — the structural existence of the alarm satisfies the requirement,
-    // even though no notification actions are wired up.
-    expect(result).toBeNull();
+  it('flags when the alarm has no alarm_actions at all', () => {
+    expect(evaluate({})?.check_id).toBe('LAMBDA-011');
+  });
+
+  it('flags when alarm_actions is present but empty', () => {
+    expect(evaluate({ alarm_actions: [] })?.check_id).toBe('LAMBDA-011');
+  });
+
+  it('flags when only ok_actions is configured, since no alarm-state action exists', () => {
+    expect(evaluate({ ok_actions: ['arn:aws:sns:us-east-1:123456789012:recovered'] })?.check_id).toBe('LAMBDA-011');
+  });
+
+  it('does NOT flag once an alarm_actions target is configured (REQ-16)', () => {
+    expect(evaluate({ alarm_actions: ['arn:aws:sns:us-east-1:123456789012:alerts'] })).toBeNull();
   });
 });

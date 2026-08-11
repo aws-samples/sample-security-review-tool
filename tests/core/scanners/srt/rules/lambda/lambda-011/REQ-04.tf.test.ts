@@ -44,6 +44,7 @@ describe('LAMBDA-011 REQ-04 (Terraform): Alarm referencing a different Lambda fu
       values: {
         alarm_name: 'OtherFunctionErrors',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,

@@ -24,6 +24,7 @@ describe('LAMBDA-011 REQ-05 (Terraform): Alarm targets the assessed Lambda but h
       values: {
         alarm_name: 'my-function-errors',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,

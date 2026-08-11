@@ -33,7 +33,19 @@ class Lambda011TfAdapter implements Lambda011Adapter {
 
   private isEffectiveAlarmForAssessedFunction(resource: TerraformResource): boolean {
     if (!this.isAlarmForAssessedFunction(resource)) return false;
-    return this.hasActionsEnabled(resource);
+    if (!this.hasActionsEnabled(resource)) return false;
+    return this.hasAlarmAction(resource);
+  }
+
+  /**
+   * An alarm that notifies nobody is not monitoring coverage. AWS treats the two
+   * ways of achieving that as separate Config rules — cloudwatch-alarm-action-check
+   * (no action configured) and cloudwatch-alarm-action-enabled-check
+   * (actions_enabled false) — and both are non-compliant, so both fail here.
+   */
+  private hasAlarmAction(alarm: TerraformResource): boolean {
+    const alarmActions = alarm.values?.alarm_actions;
+    return Array.isArray(alarmActions) && alarmActions.length > 0;
   }
 
   private isAlarmForAssessedFunction(resource: TerraformResource): boolean {

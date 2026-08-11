@@ -2,7 +2,7 @@ import { AdapterFactory, CfnContext, Resource, Template } from '../../../control
 import { Lambda011Adapter } from './lambda-011.adapter.js';
 
 const CLOUDWATCH_ALARM_RESOURCE_TYPE = 'AWS::CloudWatch::Alarm';
-const LAMBDA_FUNCTION_RESOURCE_TYPE = 'AWS::Lambda::Function';
+const LAMBDA_FUNCTION_RESOURCE_TYPES = ['AWS::Lambda::Function', 'AWS::Serverless::Function'];
 const LAMBDA_METRIC_NAMESPACE = 'AWS/Lambda';
 const FUNCTION_NAME_DIMENSION = 'FunctionName';
 const RESOURCE_QUALIFIER_DIMENSION = 'Resource';
@@ -13,7 +13,7 @@ interface AlarmDimension {
 }
 
 export class Lambda011CfnAdapterFactory implements AdapterFactory<CfnContext> {
-  readonly applicableResourceTypes = ['AWS::Lambda::Function'];
+  readonly applicableResourceTypes = LAMBDA_FUNCTION_RESOURCE_TYPES;
 
   appliesTo(resourceType: string): boolean {
     return this.applicableResourceTypes.includes(resourceType);
@@ -40,7 +40,21 @@ class Lambda011CfnAdapter implements Lambda011Adapter {
 
   private isEffectiveAlarmForAssessedFunction(resource: Resource): boolean {
     if (!this.isAlarmForAssessedFunction(resource)) return false;
-    return this.hasActionsEnabled(resource);
+    if (!this.hasActionsEnabled(resource)) return false;
+    return this.hasAlarmAction(resource);
+  }
+
+  /**
+   * An alarm that notifies nobody is not monitoring coverage. AWS treats the two
+   * ways of achieving that as separate Config rules — cloudwatch-alarm-action-check
+   * (no action configured) and cloudwatch-alarm-action-enabled-check
+   * (ActionsEnabled false) — and both are non-compliant, so both fail here.
+   * An unresolvable actions value is accepted, as elsewhere in this rule.
+   */
+  private hasAlarmAction(alarm: Resource): boolean {
+    const alarmActions = alarm.Properties?.AlarmActions;
+    if (Array.isArray(alarmActions)) return alarmActions.length > 0;
+    return this.isIntrinsic(alarmActions);
   }
 
   private isAlarmForAssessedFunction(resource: Resource): boolean {
@@ -144,7 +158,7 @@ class Lambda011CfnAdapter implements Lambda011Adapter {
   private isLambdaInTemplate(logicalId: string): boolean {
     const resources: NonNullable<Template['Resources']> = this.ctx.template.Resources ?? {};
     const resource = resources[logicalId];
-    return resource?.Type === LAMBDA_FUNCTION_RESOURCE_TYPE;
+    return resource !== undefined && LAMBDA_FUNCTION_RESOURCE_TYPES.includes(resource.Type);
   }
 
   private isIntrinsic(value: unknown): boolean {

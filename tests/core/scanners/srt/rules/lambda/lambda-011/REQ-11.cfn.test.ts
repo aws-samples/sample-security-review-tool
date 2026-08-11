@@ -34,6 +34,7 @@ describe('LAMBDA-011 - REQ-11 (CFN): alarm scoped to a specific version/alias vi
           Properties: {
             AlarmName: 'lambda-errors-version-1',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,

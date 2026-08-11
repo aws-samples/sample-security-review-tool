@@ -1,75 +1,78 @@
 import { describe, it, expect } from 'vitest';
 import { lambda011Control } from '../../../../../../../src/assess/scanning/security-matrix/rules/lambda/lambda-011/lambda-011.control.js';
 import { Lambda011CfnAdapterFactory } from '../../../../../../../src/assess/scanning/security-matrix/rules/lambda/lambda-011/lambda-011.adapter.cfn.js';
-import { CfnContext } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
+import type { CfnContext, Template } from '../../../../../../../src/assess/scanning/security-matrix/controls/types.js';
 
 /**
  * REQ-13 (LAMBDA-011) — CloudFormation
  *
  * Scenario: A CloudWatch alarm targets the assessed Lambda function on a Lambda metric,
- * but the alarm has NO alarm actions configured (no AlarmActions / OKActions /
- * InsufficientDataActions and no notification target attached for any state transition).
+ * but the alarm has NO alarm actions configured.
  *
- * Expected behavior: PASS (control returns null / no finding).
+ * Expected behavior: FLAG.
  *
- * Rationale: The rule validates the structural existence of monitoring coverage — not
- * the operational completeness of notification routing. An alarm without actions still
- * records state and history, which satisfies the IaC-level monitoring requirement.
+ * An alarm with no actions notifies nobody when it breaches, so it is not monitoring
+ * coverage. AWS treats it as non-compliant via the managed Config rule
+ * cloudwatch-alarm-action-check. This is REQ-05's defect reached another way — actions
+ * present but disabled there, no actions at all here — so the verdict matches.
  */
-describe('LAMBDA-011 [CFN] — alarm targeting the function with no alarm actions configured', () => {
-  it('passes (no finding) when an alarm covers the Lambda but has no action targets', () => {
+describe('LAMBDA-011 [CFN] — REQ-13: alarm targeting the function with no alarm actions', () => {
+  const factory = new Lambda011CfnAdapterFactory();
+
+  const lambdaFunction = {
+    Type: 'AWS::Lambda::Function',
+    Properties: {
+      FunctionName: 'my-monitored-function',
+      Runtime: 'nodejs20.x',
+      Handler: 'index.handler',
+      Role: 'arn:aws:iam::123456789012:role/lambda-role',
+      Code: { ZipFile: 'exports.handler = async () => {};' },
+    },
+  };
+
+  const alarm = (properties: Record<string, unknown>) => ({
+    Type: 'AWS::CloudWatch::Alarm',
+    Properties: {
+      Namespace: 'AWS/Lambda',
+      MetricName: 'Errors',
+      Statistic: 'Sum',
+      Period: 60,
+      EvaluationPeriods: 1,
+      Threshold: 1,
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold',
+      Dimensions: [{ Name: 'FunctionName', Value: 'my-monitored-function' }],
+      ...properties,
+    },
+  });
+
+  const evaluate = (alarmProperties: Record<string, unknown>) => {
     const template = {
-      Resources: {
-        AssessedFunction: {
-          Type: 'AWS::Lambda::Function',
-          Properties: {
-            FunctionName: 'my-monitored-function',
-            Runtime: 'nodejs20.x',
-            Handler: 'index.handler',
-            Role: 'arn:aws:iam::123456789012:role/lambda-role',
-            Code: { ZipFile: 'exports.handler = async () => {};' },
-          },
-        },
-        ErrorsAlarmWithoutActions: {
-          Type: 'AWS::CloudWatch::Alarm',
-          Properties: {
-            // Lambda metric → alarm is in the Lambda namespace
-            Namespace: 'AWS/Lambda',
-            MetricName: 'Errors',
-            Statistic: 'Sum',
-            Period: 60,
-            EvaluationPeriods: 1,
-            Threshold: 1,
-            ComparisonOperator: 'GreaterThanOrEqualToThreshold',
-            // Targets the assessed function specifically.
-            Dimensions: [
-              { Name: 'FunctionName', Value: 'my-monitored-function' },
-            ],
-            // Intentionally NO AlarmActions, NO OKActions, NO InsufficientDataActions.
-            // ActionsEnabled is omitted (defaults to true), but there are no action targets.
-          },
-        },
-      },
-    } as const;
+      Resources: { AssessedFunction: lambdaFunction, ErrorsAlarm: alarm(alarmProperties) },
+    } as unknown as Template;
 
-    const factory = new Lambda011CfnAdapterFactory();
-    const logicalId = 'AssessedFunction';
-    const resource = template.Resources[logicalId];
+    const resource = template.Resources!['AssessedFunction'];
+    const context: CfnContext = { stackName: 'test-stack', template, resource, logicalId: 'AssessedFunction' };
 
-    expect(factory.appliesTo(resource.Type)).toBe(true);
+    return lambda011Control.run(factory.bind(context), context);
+  };
 
-    const context: CfnContext = {
-      stackName: 'test-stack',
-      template: template as unknown as CfnContext['template'],
-      resource,
-      logicalId,
-    };
+  it('flags when the alarm has no AlarmActions property at all', () => {
+    expect(evaluate({})?.check_id).toBe('LAMBDA-011');
+  });
 
-    const adapter = factory.bind(context);
-    const result = lambda011Control.run(adapter, context);
+  it('flags when AlarmActions is present but empty', () => {
+    expect(evaluate({ AlarmActions: [] })?.check_id).toBe('LAMBDA-011');
+  });
 
-    // Expected: PASS — the structural existence of the alarm satisfies the requirement,
-    // even though no notification actions are wired up.
-    expect(result).toBeNull();
+  it('flags when only OKActions is configured, since no alarm-state action exists', () => {
+    expect(evaluate({ OKActions: ['arn:aws:sns:us-east-1:123456789012:recovered'] })?.check_id).toBe('LAMBDA-011');
+  });
+
+  it('does NOT flag once an AlarmActions target is configured (REQ-16)', () => {
+    expect(evaluate({ AlarmActions: ['arn:aws:sns:us-east-1:123456789012:alerts'] })).toBeNull();
+  });
+
+  it('does NOT flag when AlarmActions is an unresolvable intrinsic', () => {
+    expect(evaluate({ AlarmActions: { Ref: 'AlertTopicArnParameter' } })).toBeNull();
   });
 });

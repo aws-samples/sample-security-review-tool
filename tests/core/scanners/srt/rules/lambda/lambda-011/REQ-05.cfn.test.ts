@@ -22,6 +22,7 @@ describe('LAMBDA-011 REQ-05 (CloudFormation): Alarm targets the assessed Lambda 
           Properties: {
             AlarmName: 'my-function-errors',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,

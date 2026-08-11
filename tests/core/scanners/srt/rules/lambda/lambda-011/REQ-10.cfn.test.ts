@@ -33,6 +33,7 @@ describe('LAMBDA-011 CFN - REQ-10: Multiple alarms, at least one matches assesse
           Properties: {
             AlarmName: 'other-fn-errors',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,
@@ -63,6 +64,7 @@ describe('LAMBDA-011 CFN - REQ-10: Multiple alarms, at least one matches assesse
           Properties: {
             AlarmName: 'assessed-fn-errors',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,

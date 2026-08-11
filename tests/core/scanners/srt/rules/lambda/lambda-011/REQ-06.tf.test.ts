@@ -33,6 +33,7 @@ describe('LAMBDA-011 REQ-06 (Terraform)', () => {
       name: 'covered_errors',
       values: {
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         actions_enabled: true,
         dimensions: {

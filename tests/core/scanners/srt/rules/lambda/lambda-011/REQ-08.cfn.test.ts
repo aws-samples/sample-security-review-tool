@@ -22,6 +22,7 @@ describe('LAMBDA-011 CFN - REQ-08: Alarm targeting Lambda function with empty di
           Properties: {
             AlarmName: 'lambda-errors-aggregate',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,

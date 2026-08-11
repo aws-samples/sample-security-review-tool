@@ -30,6 +30,7 @@ describe('LAMBDA-011 REQ-02 (Terraform): Lambda with monitoring CloudWatch alarm
       values: {
         alarm_name: 'my-lambda-errors-alarm',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         dimensions: {
           FunctionName: functionName,

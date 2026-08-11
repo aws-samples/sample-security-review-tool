@@ -36,6 +36,7 @@ describe('LAMBDA-011 REQ-14 (Terraform): alarm with impractical threshold/statis
       values: {
         alarm_name: 'my-function-errors',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,
@@ -77,6 +78,7 @@ describe('LAMBDA-011 REQ-14 (Terraform): alarm with impractical threshold/statis
       values: {
         alarm_name: 'my-function-errors-min',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         // Minimum of error counts is essentially always 0 -> alarm
         // with LessThanThreshold below 0 would never fire in practice.

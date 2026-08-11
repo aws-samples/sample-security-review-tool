@@ -34,6 +34,7 @@ describe('LAMBDA-011 (TF) REQ-12: alarm on a non-recommended Lambda metric still
       values: {
         alarm_name: 'my-assessed-function-invocations',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         // Not one of the commonly recommended reliability metrics:
         metric_name: 'Invocations',
         statistic: 'Sum',

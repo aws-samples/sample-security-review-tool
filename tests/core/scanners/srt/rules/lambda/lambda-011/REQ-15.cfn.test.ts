@@ -40,6 +40,7 @@ describe('LAMBDA-011 REQ-15 (CFN): composite alarm aggregating coverage of the a
           Properties: {
             AlarmName: 'assessed-fn-errors',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,
@@ -57,6 +58,7 @@ describe('LAMBDA-011 REQ-15 (CFN): composite alarm aggregating coverage of the a
           Properties: {
             AlarmName: 'assessed-fn-throttles',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Throttles',
             Statistic: 'Sum',
             Period: 60,

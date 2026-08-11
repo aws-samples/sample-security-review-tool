@@ -33,6 +33,7 @@ describe('LAMBDA-011 REQ-04 (CloudFormation): Alarm referencing a different Lamb
           Properties: {
             AlarmName: 'OtherFunctionErrors',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,

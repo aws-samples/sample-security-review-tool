@@ -26,6 +26,7 @@ describe('LAMBDA-011 TF - REQ-08: Alarm targeting Lambda function with empty dim
       values: {
         alarm_name: 'lambda-errors-aggregate',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,

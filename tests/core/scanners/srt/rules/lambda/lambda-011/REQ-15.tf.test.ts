@@ -45,6 +45,7 @@ describe('LAMBDA-011 REQ-15 (TF): composite alarm aggregating coverage of the as
       values: {
         alarm_name: 'assessed-fn-errors',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Errors',
         statistic: 'Sum',
         period: 60,
@@ -65,6 +66,7 @@ describe('LAMBDA-011 REQ-15 (TF): composite alarm aggregating coverage of the as
       values: {
         alarm_name: 'assessed-fn-throttles',
         namespace: 'AWS/Lambda',
+        alarm_actions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
         metric_name: 'Throttles',
         statistic: 'Sum',
         period: 60,

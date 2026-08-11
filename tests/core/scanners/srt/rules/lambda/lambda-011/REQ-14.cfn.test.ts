@@ -36,6 +36,7 @@ describe('LAMBDA-011 REQ-14 (CloudFormation): alarm with impractical threshold/s
           Properties: {
             AlarmName: 'my-function-errors',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,
@@ -77,6 +78,7 @@ describe('LAMBDA-011 REQ-14 (CloudFormation): alarm with impractical threshold/s
           Properties: {
             AlarmName: 'my-function-errors-min',
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             // Minimum of error counts is essentially always 0 -> alarm
             // with LessThanThreshold below 0 would never fire in practice.

@@ -21,6 +21,7 @@ describe('LAMBDA-011 REQ-07 (CloudFormation): Alarm with Lambda namespace but no
           Type: 'AWS::CloudWatch::Alarm',
           Properties: {
             Namespace: 'AWS/Lambda',
+            AlarmActions: ['arn:aws:sns:us-east-1:123456789012:lambda-alerts'],
             MetricName: 'Errors',
             Statistic: 'Sum',
             Period: 60,
