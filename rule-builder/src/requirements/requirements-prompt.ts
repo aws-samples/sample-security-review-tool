@@ -30,8 +30,13 @@ BAD requirement descriptions (format-specific):
 Each requirement must include:
 1. Description — the security scenario, format-agnostic
 2. Category — from the list below
-3. Expected behavior — 'flag' (produce a finding) or 'pass' (return null)
-4. Rationale — why, referencing AWS docs or rule semantics
+3. Expected behavior — 'flag' (produce a finding) or 'pass' (return null), or null when you cannot decide
+4. Rationale — why, referencing AWS docs or rule semantics, or null when you cannot decide
+5. Ambiguity — the question blocking the decision, or null when you have decided
+
+Every requirement carries either a decision or a question. Never both, and never neither.
+
+The rationale has to stand on its own. Later phases generate this requirement's tests and implementation from it and see nothing else, so state the reason itself rather than gesturing at one.
 
 ## Evaluation Model
 
@@ -81,36 +86,20 @@ Example: a rule about granting access to untrusted callers.
 
 Without the second requirement, an implementation that accepts the mere presence of a restriction satisfies the specification, and the qualifier goes unenforced. This is the most common way a rule ships permissive: the passing case is described, the near-miss is not.
 
-These two requirements are not a conflict. Their preconditions are mutually exclusive — a value either meets the qualifier or it does not — so do not surface them as an ambiguity. If which values meet the qualifier is itself unclear, that IS an ambiguity: ask it.
+These two requirements do not contradict each other. A value either meets the qualifier or it does not, so both can stand. If which values meet the qualifier is itself unclear, that is the question to raise on the requirement.
 
-## Ambiguity Detection
+## When You Cannot Decide
 
-If you are uncertain whether a scenario should 'flag' or 'pass', include it in the ambiguities array. Do not guess. A separate resolution pass settles each one against the AWS documentation and hands the decision back to you; a scenario you guess at instead of surfacing never gets that scrutiny.
+If you are uncertain whether a scenario should 'flag' or 'pass', still write the requirement — the scenario is worth covering either way. Leave expectedBehavior and rationale null, and put the blocking question in ambiguity. Do not guess.
 
-Raise an ambiguity only when both hold: the answer changes the expected behavior, and a real template would plausibly contain the configuration. A handful of load-bearing questions is the target — not a catalogue of every conceivable variant.
+Each question you raise is then researched against the AWS documentation, and the answer is written back onto that requirement as its expected behavior and rationale. A scenario you guess at never gets that scrutiny.
 
-Do not mine your own resolved decisions for further questions. If a decision you were given already implies the answer for a narrower or adjacent case, apply it and move on. Successive rounds that each split a settled distinction one level finer produce no better specification, and every question costs a documentation search.
+Raise a question only when both hold: the answer changes the expected behavior, and a real template would plausibly contain the configuration. A handful of load-bearing questions is the target — not a catalogue of every conceivable variant.
 
-Common ambiguities:
+One requirement, one question. If a scenario raises two genuinely separate questions, it is two scenarios.
+
+Questions that recur:
 - Coverage mode: does the rule require all event types or is a subset sufficient?
 - Partial coverage: is some coverage acceptable or must it be exhaustive?
 - Feature disabled vs. not configured: should these be treated differently?
-
-## Self-Check for Conflicts
-
-After generating your requirements, verify internal consistency. If any pair of requirements would prescribe opposite outcomes (one 'flag', one 'pass') for an overlapping input scenario, surface this as an ambiguity.
-
-A conflict exists when:
-- Two requirements have preconditions that can be simultaneously true for a single input
-- They prescribe different expectedBehavior values
-
-NOT a conflict:
-- Requirements whose preconditions are mutually exclusive (cannot both be true)
-- Requirements with the same expectedBehavior
-- A more specific scenario that explicitly narrows a broader one (specificity, not contradiction)
-
-When you detect a conflict, add it to the ambiguities array with:
-- scenario: describe the overlapping input where both requirements fire
-- question: ask which behavior should prevail
-- options: one option per conflicting requirement's position
 `;

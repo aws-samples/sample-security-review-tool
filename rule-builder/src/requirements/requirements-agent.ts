@@ -22,23 +22,4 @@ export class RequirementsAgent {
             await mcpClient.disconnect().catch(() => {});
         }
     }
-
-    public async invokeWithResolutions(description: string, resolvedDecisions: string[]): Promise<z.infer<typeof RequirementsOutputSchema>> {
-        const promptBuilder = new RequirementsPromptBuilder();
-        const mcpClient = createAwsKnowledgeMcpClient();
-
-        try {
-            const agent = new OpusAgent({
-                tools: [mcpClient],
-                systemPrompt: promptBuilder.buildSystemPrompt(),
-                structuredOutputSchema: RequirementsOutputSchema,
-            });
-
-            const userPrompt = promptBuilder.buildUserPrompt(description) + '\n\n## Resolved Decisions\n\nThe following ambiguities have already been settled. Treat each as decided, and do not raise it again:\n' + resolvedDecisions.join('\n');
-            const result = await agent.invoke(userPrompt);
-            return result.structuredOutput as z.infer<typeof RequirementsOutputSchema>;
-        } finally {
-            await mcpClient.disconnect().catch(() => {});
-        }
-    }
 }

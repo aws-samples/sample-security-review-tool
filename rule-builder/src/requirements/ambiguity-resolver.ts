@@ -1,15 +1,14 @@
 import z from 'zod';
-import { AmbiguityResolutionSchema, AmbiguitySchema } from './requirements-schema.js';
+import { AmbiguityResolutionSchema } from './requirements-schema.js';
 import { createAwsKnowledgeMcpClient } from '../shared/aws-knowledge-mcp-client.js';
 import { OpusAgent } from '../shared/agents/opus-agent.js';
 
-type Ambiguity = z.infer<typeof AmbiguitySchema>;
 type Resolution = z.infer<typeof AmbiguityResolutionSchema>;
 
 export class AmbiguityResolver {
     // Resolutions run concurrently, so this deliberately does not stream to the console — interleaved
     // agent output from a dozen resolutions in flight is unreadable. The caller logs each decision.
-    public async resolve(ruleDescription: string, ambiguity: Ambiguity): Promise<Resolution> {
+    public async resolve(ruleDescription: string, scenario: string, question: string): Promise<Resolution> {
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {
@@ -19,17 +18,15 @@ export class AmbiguityResolver {
                 structuredOutputSchema: AmbiguityResolutionSchema,
             });
 
-            const result = await agent.invoke(this.buildUserPrompt(ruleDescription, ambiguity));
+            const result = await agent.invoke(this.buildUserPrompt(ruleDescription, scenario, question));
             return result.structuredOutput as Resolution;
         } finally {
             await mcpClient.disconnect().catch(() => {});
         }
     }
 
-    private buildUserPrompt(ruleDescription: string, ambiguity: Ambiguity): string {
-        const options = ambiguity.options.map(option => `- ${option.label} → ${option.expectedBehavior}`).join('\n');
-
-        return `## Rule\n\n${ruleDescription}\n\n## Ambiguous Scenario\n\n${ambiguity.scenario}\n\n## Question\n\n${ambiguity.question}\n\n## Interpretations Considered\n\n${options}\n\nSettle this question.`;
+    private buildUserPrompt(ruleDescription: string, scenario: string, question: string): string {
+        return `## Rule\n\n${ruleDescription}\n\n## Scenario\n\n${scenario}\n\n## Question\n\n${question}\n\nSettle this question.`;
     }
 }
 
@@ -55,6 +52,14 @@ Applied to the questions that recur:
 ## The Exception: Unresolvable Values
 
 When the deciding value depends on a condition that cannot be resolved at analysis time, the scanner does not know the configuration and therefore cannot assert non-compliance. Choose pass and set settledBy to 'intrinsic-exception'. This is the one case where the default inverts, and it applies only to genuine analysis-time unknowns — not to values that are merely absent, empty, or awkward to read.
+
+## Two Sizes of Reason
+
+Give the reason twice, because the two go to different readers.
+
+The rationale is the full account — what you searched, what it said, why it decides this. It is filed as the evidence behind the decision, for a human reviewing the specification later.
+
+The summary is one sentence stating the reason itself, readable without the rationale. It becomes the requirement's rationale, which is the only justification the later test-generation and implementation phases ever see. Write it as a reason ("parameter validation only checks parameters marked required, so this configuration enforces nothing"), never as a reference to a decision having been made ("settled by documentation").
 
 ## Do Not Manufacture Evidence
 

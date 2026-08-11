@@ -82,10 +82,18 @@ export class ImplementationConflictResolver {
         ].join('\n\n');
     }
 
+    // Carries the removed requirement's ambiguity across with it. It is the only record of how that
+    // question was decided, and deleting the requirement would otherwise delete it too.
     private recordRemoval(spec: RequirementsSpec, removed: RuleRequirement, kept: RuleRequirement, reason: string): void {
         spec.removedRequirements = [
             ...(spec.removedRequirements ?? []),
-            { id: removed.id, description: removed.description, conflictedWith: kept.id, reason },
+            {
+                id: removed.id,
+                description: removed.description,
+                conflictedWith: kept.id,
+                reason,
+                ...(removed.ambiguity && { ambiguity: removed.ambiguity }),
+            },
         ];
     }
 

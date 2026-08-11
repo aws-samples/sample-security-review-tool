@@ -10,26 +10,22 @@ export type RequirementCategory =
     | 'WILDCARD_MATCH'
     | 'SPECIFIC_RESOURCE';
 
+// The requirement's own expectedBehavior and rationale are this question's answer, so neither is
+// repeated here. What remains is where the answer came from and the long-form evidence for it.
+export interface Ambiguity {
+    question: string;
+    settledBy: 'documentation' | 'strict-default' | 'intrinsic-exception';
+    docReference: string | null;
+    evidence: string;
+}
+
 export interface RuleRequirement {
     id: string;
     description: string;
     category: RequirementCategory;
     expectedBehavior: 'flag' | 'pass';
     rationale: string;
-}
-
-export interface AmbiguityResolution {
-    scenario: string;
-    question: string;
-    chosenBehavior: 'flag' | 'pass';
-    rationale: string;
-    docReference: string | null;
-    settledBy: 'documentation' | 'strict-default' | 'intrinsic-exception';
-}
-
-export interface UnresolvedAmbiguity {
-    scenario: string;
-    question: string;
+    ambiguity?: Ambiguity;
 }
 
 export interface RemovedRequirement {
@@ -37,6 +33,7 @@ export interface RemovedRequirement {
     description: string;
     conflictedWith: string;
     reason: string;
+    ambiguity?: Ambiguity;
 }
 
 export interface RequirementsSpec {
@@ -46,8 +43,5 @@ export interface RequirementsSpec {
     cfnResources: string[];
     tfResources: string[];
     requirements: RuleRequirement[];
-    awsDocReferences: string[];
-    resolutions?: AmbiguityResolution[];
-    unresolvedAmbiguities?: UnresolvedAmbiguity[];
     removedRequirements?: RemovedRequirement[];
 }

@@ -6,36 +6,40 @@ export const RequirementCategorySchema = z.enum([
     'EMPTY_COLLECTION', 'WILDCARD_MATCH', 'SPECIFIC_RESOURCE',
 ]);
 
-export const RuleRequirementSchema = z.object({
+const REQUIREMENT_FIELDS = {
     id: z.string().describe('Requirement identifier (e.g., REQ-01)'),
     description: z.string().describe('Format-agnostic scenario description — no IaC property names, resource types, or intrinsic functions'),
     category: RequirementCategorySchema.describe('Scenario category from the mandatory list'),
+};
+
+const DecidedRequirementSchema = z.object({
+    ...REQUIREMENT_FIELDS,
     expectedBehavior: z.enum(['flag', 'pass']).describe('Whether the rule should fire (flag) or not (pass)'),
-    rationale: z.string().describe('Why this expected behavior is correct, referencing AWS docs or rule semantics')
+    rationale: z.string().describe('Why this expected behavior is correct, referencing AWS docs or rule semantics'),
+    ambiguity: z.null().describe('Null, because this requirement is decided'),
 });
 
-const AmbiguityOptionSchema = z.object({
-    label: z.string().describe('Short description of this interpretation'),
-    expectedBehavior: z.enum(['flag', 'pass']).describe('What the rule should do under this interpretation'),
+const OpenRequirementSchema = z.object({
+    ...REQUIREMENT_FIELDS,
+    expectedBehavior: z.null().describe('Null, because you could not decide — the question goes in ambiguity'),
+    rationale: z.null().describe('Null, because the reason comes from settling the ambiguity'),
+    ambiguity: z.string().describe('The one question that must be answered before this scenario has an expected behavior'),
 });
 
-export const AmbiguitySchema = z.object({
-    scenario: z.string().describe('The ambiguous scenario'),
-    question: z.string().describe('Question to present to a human for resolution'),
-    options: z.array(AmbiguityOptionSchema).min(2).describe('Possible interpretations'),
-});
+// The union is the constraint: a requirement carries a decision or a question, never both and never
+// neither. It reaches the model as the two permitted shapes, so nothing downstream has to re-check it.
+export const DraftRequirementSchema = z.union([DecidedRequirementSchema, OpenRequirementSchema]);
 
 export const AmbiguityResolutionSchema = z.object({
     chosenBehavior: z.enum(['flag', 'pass']).describe('The resolved expected behavior for the ambiguous scenario'),
+    summary: z.string().describe('The reason for the decision in one sentence, readable on its own'),
     rationale: z.string().describe('Why this behavior is correct — cite what the documentation says, or state that none was found and the default applies'),
     docReference: z.string().nullable().describe('URL of the AWS documentation that settles the question, or null when none was found'),
     settledBy: z.enum(['documentation', 'strict-default', 'intrinsic-exception']).describe('documentation when a cited doc decides it, strict-default when no doc settles it, intrinsic-exception when the value is unresolvable at analysis time'),
 });
 
 export const RequirementsOutputSchema = z.object({
-    requirements: z.array(RuleRequirementSchema).min(1).describe('Complete requirements specification'),
+    requirements: z.array(DraftRequirementSchema).min(1).describe('Complete requirements specification, one entry per scenario'),
     cfnResources: z.array(z.string()).describe('List of CloudFormation resource types that trigger the rule'),
     tfResources: z.array(z.string()).describe('List of Terraform resource types that trigger the rule'),
-    ambiguities: z.array(AmbiguitySchema).describe('Scenarios where the expected behavior is genuinely ambiguous and must be settled by the resolution pass'),
-    awsDocReferences: z.array(z.string()).describe('AWS documentation URLs consulted'),
 });
