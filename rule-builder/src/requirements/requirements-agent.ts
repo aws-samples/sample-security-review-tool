@@ -34,7 +34,7 @@ export class RequirementsAgent {
                 structuredOutputSchema: RequirementsOutputSchema,
             });
 
-            const userPrompt = promptBuilder.buildUserPrompt(description) + '\n\n## Resolved Decisions\n\nThe following ambiguities have been resolved by the user:\n' + resolvedDecisions.join('\n');
+            const userPrompt = promptBuilder.buildUserPrompt(description) + '\n\n## Resolved Decisions\n\nThe following ambiguities have already been settled. Treat each as decided, and do not raise it again:\n' + resolvedDecisions.join('\n');
             const result = await agent.invoke(userPrompt);
             return result.structuredOutput as z.infer<typeof RequirementsOutputSchema>;
         } finally {

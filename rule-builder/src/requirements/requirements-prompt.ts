@@ -85,7 +85,7 @@ These two requirements are not a conflict. Their preconditions are mutually excl
 
 ## Ambiguity Detection
 
-If you are uncertain whether a scenario should 'flag' or 'pass', include it in the ambiguities array for human resolution. Do not guess.
+If you are uncertain whether a scenario should 'flag' or 'pass', include it in the ambiguities array. Do not guess. A separate resolution pass settles each one against the AWS documentation and hands the decision back to you; a scenario you guess at instead of surfacing never gets that scrutiny.
 
 Common ambiguities:
 - Coverage mode: does the rule require all event types or is a subset sufficient?

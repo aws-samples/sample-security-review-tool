@@ -9,7 +9,6 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@inquirer/prompts": "^7.10.1",
     "aws-cdk-lib": "^2.200.0",
     "constructs": "^10.4.2"
   },

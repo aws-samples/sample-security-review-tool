@@ -1,17 +1,21 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { select, input } from '@inquirer/prompts';
 import z from 'zod';
 import { RuleContext } from '../shared/rule-context.js';
-import type { RequirementsSpec } from '../shared/types/requirements.js';
+import type { AmbiguityResolution, RequirementsSpec } from '../shared/types/requirements.js';
 import { RequirementsAgent } from './requirements-agent.js';
+import { AmbiguityResolver } from './ambiguity-resolver.js';
 import { AmbiguitySchema, RequirementsOutputSchema } from './requirements-schema.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
-const CUSTOM_INTERPRETATION = -1;
 const MAX_RESOLUTION_ITERATIONS = 5;
 
 type RequirementsOutput = z.infer<typeof RequirementsOutputSchema>;
+
+interface ResolvedRequirements {
+    output: RequirementsOutput;
+    resolutions: AmbiguityResolution[];
+}
 
 export interface RequirementsWorkflowOptions {
     regenerate?: boolean;
@@ -26,8 +30,8 @@ export class RequirementsWorkflow {
         if (this.hasCachedSpec(options)) return this.loadCachedSpec();
 
         const agent = new RequirementsAgent();
-        const output = await this.generateResolvedRequirements(agent);
-        const spec = this.buildSpec(output);
+        const resolved = await this.generateResolvedRequirements(agent);
+        const spec = this.buildSpec(resolved);
         this.persist(spec);
         return spec;
     }
@@ -40,78 +44,60 @@ export class RequirementsWorkflow {
         return JSON.parse(fs.readFileSync(this.context.requirementsFilePath, 'utf8'));
     }
 
-    private async generateResolvedRequirements(agent: RequirementsAgent): Promise<RequirementsOutput> {
+    private async generateResolvedRequirements(agent: RequirementsAgent): Promise<ResolvedRequirements> {
         let output = await agent.invoke(this.context.description);
-        const resolvedDecisions: string[] = [];
+        const resolutions: AmbiguityResolution[] = [];
 
         for (let i = 0; i < MAX_RESOLUTION_ITERATIONS && this.hasUnresolvedAmbiguities(output); i++) {
-            resolvedDecisions.push(...await this.resolveAmbiguities(output.ambiguities));
-            output = await agent.invokeWithResolutions(this.context.description, resolvedDecisions);
+            resolutions.push(...await this.resolveAmbiguities(output.ambiguities));
+            output = await agent.invokeWithResolutions(this.context.description, resolutions.map(resolution => this.formatDecision(resolution)));
         }
 
-        this.warnIfUnresolved(output);
-        return output;
+        this.failIfUnresolved(output);
+        return { output, resolutions };
     }
 
     private hasUnresolvedAmbiguities(output: RequirementsOutput): boolean {
         return output.ambiguities.length > 0;
     }
 
-    private warnIfUnresolved(output: RequirementsOutput): void {
-        if (this.hasUnresolvedAmbiguities(output)) {
-            this.logger.warning(`${output.ambiguities.length} unresolved ambiguities remain after ${MAX_RESOLUTION_ITERATIONS} iterations.`);
-        }
+    // The build runs unattended, so an ambiguity that survives every round has nobody to notice a warning.
+    private failIfUnresolved(output: RequirementsOutput): void {
+        if (!this.hasUnresolvedAmbiguities(output)) return;
+
+        const scenarios = output.ambiguities.map(ambiguity => `  - ${ambiguity.scenario}: ${ambiguity.question}`).join('\n');
+        throw new Error(`${output.ambiguities.length} ambiguities remain unresolved after ${MAX_RESOLUTION_ITERATIONS} rounds. The rule description is too vague to specify:\n${scenarios}`);
     }
 
-    private buildSpec(output: RequirementsOutput): RequirementsSpec {
+    private buildSpec(resolved: ResolvedRequirements): RequirementsSpec {
         return {
             ruleId: this.context.ruleId,
             generatedAt: new Date().toISOString(),
             description: this.context.description,
-            cfnResources: output.cfnResources,
-            tfResources: output.tfResources,
-            requirements: output.requirements,
-            awsDocReferences: output.awsDocReferences,
+            cfnResources: resolved.output.cfnResources,
+            tfResources: resolved.output.tfResources,
+            requirements: resolved.output.requirements,
+            awsDocReferences: resolved.output.awsDocReferences,
+            resolutions: resolved.resolutions,
         };
     }
 
-    private async resolveAmbiguities(ambiguities: z.infer<typeof AmbiguitySchema>[]): Promise<string[]> {
-        const decisions: string[] = [];
+    private async resolveAmbiguities(ambiguities: z.infer<typeof AmbiguitySchema>[]): Promise<AmbiguityResolution[]> {
+        const resolver = new AmbiguityResolver();
+        const resolutions: AmbiguityResolution[] = [];
 
         for (const ambiguity of ambiguities) {
-            this.logger.step(`Ambiguity: ${ambiguity.scenario}`);
-
-            const choices = [
-                ...ambiguity.options.map((opt, i) => ({ value: i, name: `${opt.label} (→ ${opt.expectedBehavior})` })),
-                { value: CUSTOM_INTERPRETATION, name: 'None of these — provide your own interpretation' },
-            ];
-
-            const answer = await select({ message: ambiguity.question, choices });
-
-            if (answer === CUSTOM_INTERPRETATION) {
-                decisions.push(await this.collectCustomInterpretation(ambiguity.scenario));
-            } else {
-                const chosen = ambiguity.options[answer];
-                decisions.push(`- ${ambiguity.scenario}: should ${chosen.expectedBehavior}. Rationale: user chose "${chosen.label}".`);
-            }
+            const resolution = await resolver.resolve(this.context.description, ambiguity);
+            this.logger.step(`${ambiguity.scenario} → ${resolution.chosenBehavior} (${resolution.settledBy})`);
+            if (resolution.docReference) this.logger.substep(resolution.docReference);
+            resolutions.push({ scenario: ambiguity.scenario, question: ambiguity.question, ...resolution });
         }
 
-        return decisions;
+        return resolutions;
     }
 
-    private async collectCustomInterpretation(scenario: string): Promise<string> {
-        const description = await input({ message: 'Describe the correct interpretation:', validate: (v) => v.trim().length > 0 || 'Cannot be empty' });
-
-        const behavior = await select<string | null>({ message: 'What should the expected behavior be?', choices: [
-            { value: 'flag', name: 'Flag (rule should produce a finding)' },
-            { value: 'pass', name: 'Pass (rule should return null)' },
-            { value: null, name: 'Let Claude decide based on my description' },
-        ]});
-
-        if (behavior) {
-            return `- ${scenario}: should ${behavior}. Rationale: user provided custom interpretation: "${description.trim()}".`;
-        }
-        return `- ${scenario}: user's interpretation: "${description.trim()}". Determine the correct expected behavior based on this description.`;
+    private formatDecision(resolution: AmbiguityResolution): string {
+        return `- ${resolution.scenario}: should ${resolution.chosenBehavior}. Rationale: ${resolution.rationale}`;
     }
 
     private persist(spec: RequirementsSpec): void {

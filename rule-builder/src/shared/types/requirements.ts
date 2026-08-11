@@ -18,6 +18,22 @@ export interface RuleRequirement {
     rationale: string;
 }
 
+export interface AmbiguityResolution {
+    scenario: string;
+    question: string;
+    chosenBehavior: 'flag' | 'pass';
+    rationale: string;
+    docReference: string | null;
+    settledBy: 'documentation' | 'strict-default' | 'intrinsic-exception';
+}
+
+export interface RemovedRequirement {
+    id: string;
+    description: string;
+    conflictedWith: string;
+    reason: string;
+}
+
 export interface RequirementsSpec {
     ruleId: string;
     generatedAt: string;
@@ -26,4 +42,6 @@ export interface RequirementsSpec {
     tfResources: string[];
     requirements: RuleRequirement[];
     awsDocReferences: string[];
+    resolutions?: AmbiguityResolution[];
+    removedRequirements?: RemovedRequirement[];
 }
