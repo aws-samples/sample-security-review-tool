@@ -11,6 +11,7 @@ import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 const MAX_RESOLUTION_ITERATIONS = 5;
 
 type RequirementsOutput = z.infer<typeof RequirementsOutputSchema>;
+type Ambiguity = z.infer<typeof AmbiguitySchema>;
 
 interface ResolvedRequirements {
     output: RequirementsOutput;
@@ -48,12 +49,16 @@ export class RequirementsWorkflow {
         let output = await agent.invoke(this.context.description);
         const resolutions: AmbiguityResolution[] = [];
 
-        for (let i = 0; i < MAX_RESOLUTION_ITERATIONS && this.hasUnresolvedAmbiguities(output); i++) {
-            resolutions.push(...await this.resolveAmbiguities(output.ambiguities));
+        for (let round = 0; round < MAX_RESOLUTION_ITERATIONS && this.hasUnresolvedAmbiguities(output); round++) {
+            const pending = this.notYetResolved(output.ambiguities, resolutions);
+            if (pending.length === 0) break;
+
+            resolutions.push(...await this.resolveAmbiguities(pending));
             output = await agent.invokeWithResolutions(this.context.description, resolutions.map(resolution => this.formatDecision(resolution)));
+            this.persist(this.buildSpec({ output, resolutions }));
         }
 
-        this.failIfUnresolved(output);
+        this.warnIfUnresolved(output);
         return { output, resolutions };
     }
 
@@ -61,15 +66,22 @@ export class RequirementsWorkflow {
         return output.ambiguities.length > 0;
     }
 
-    // The build runs unattended, so an ambiguity that survives every round has nobody to notice a warning.
-    private failIfUnresolved(output: RequirementsOutput): void {
+    // Matched on the scenario text, so a re-raised question that has been reworded still costs a
+    // resolution. It stops the identical repeats, which are the ones that never converge.
+    private notYetResolved(ambiguities: Ambiguity[], resolutions: AmbiguityResolution[]): Ambiguity[] {
+        const settled = new Set(resolutions.map(resolution => resolution.scenario));
+        return ambiguities.filter(ambiguity => !settled.has(ambiguity.scenario));
+    }
+
+    private warnIfUnresolved(output: RequirementsOutput): void {
         if (!this.hasUnresolvedAmbiguities(output)) return;
 
-        const scenarios = output.ambiguities.map(ambiguity => `  - ${ambiguity.scenario}: ${ambiguity.question}`).join('\n');
-        throw new Error(`${output.ambiguities.length} ambiguities remain unresolved after ${MAX_RESOLUTION_ITERATIONS} rounds. The rule description is too vague to specify:\n${scenarios}`);
+        this.logger.warning(`${output.ambiguities.length} ambiguities still open after ${MAX_RESOLUTION_ITERATIONS} rounds. Their requirements reflect the agent's own reading; the questions are recorded in ${this.context.requirementsFilePath} for review.`);
     }
 
     private buildSpec(resolved: ResolvedRequirements): RequirementsSpec {
+        const stillOpen = resolved.output.ambiguities.map(ambiguity => ({ scenario: ambiguity.scenario, question: ambiguity.question }));
+
         return {
             ruleId: this.context.ruleId,
             generatedAt: new Date().toISOString(),
@@ -79,25 +91,31 @@ export class RequirementsWorkflow {
             requirements: resolved.output.requirements,
             awsDocReferences: resolved.output.awsDocReferences,
             resolutions: resolved.resolutions,
+            ...(stillOpen.length > 0 && { unresolvedAmbiguities: stillOpen }),
         };
     }
 
-    private async resolveAmbiguities(ambiguities: z.infer<typeof AmbiguitySchema>[]): Promise<AmbiguityResolution[]> {
+    private async resolveAmbiguities(ambiguities: Ambiguity[]): Promise<AmbiguityResolution[]> {
         const resolver = new AmbiguityResolver();
-        const resolutions: AmbiguityResolution[] = [];
+        this.logger.group(`resolving ${ambiguities.length} ${ambiguities.length === 1 ? 'ambiguity' : 'ambiguities'}`);
 
-        for (const ambiguity of ambiguities) {
+        const resolutions = await Promise.all(ambiguities.map(async (ambiguity) => {
             const resolution = await resolver.resolve(this.context.description, ambiguity);
-            this.logger.step(`${ambiguity.scenario} → ${resolution.chosenBehavior} (${resolution.settledBy})`);
+            return { scenario: ambiguity.scenario, question: ambiguity.question, ...resolution };
+        }));
+
+        for (const resolution of resolutions) {
+            this.logger.step(`${resolution.scenario} → ${resolution.chosenBehavior} (${resolution.settledBy})`);
             if (resolution.docReference) this.logger.substep(resolution.docReference);
-            resolutions.push({ scenario: ambiguity.scenario, question: ambiguity.question, ...resolution });
         }
 
         return resolutions;
     }
 
+    // Only the decision goes back to the requirements agent. Feeding the resolver's full rationale in
+    // gave it fresh distinctions to question, so each round invented finer edge cases instead of settling.
     private formatDecision(resolution: AmbiguityResolution): string {
-        return `- ${resolution.scenario}: should ${resolution.chosenBehavior}. Rationale: ${resolution.rationale}`;
+        return `- ${resolution.scenario}: ${resolution.chosenBehavior}`;
     }
 
     private persist(spec: RequirementsSpec): void {

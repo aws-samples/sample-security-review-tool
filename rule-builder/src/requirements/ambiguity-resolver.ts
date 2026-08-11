@@ -2,14 +2,13 @@ import z from 'zod';
 import { AmbiguityResolutionSchema, AmbiguitySchema } from './requirements-schema.js';
 import { createAwsKnowledgeMcpClient } from '../shared/aws-knowledge-mcp-client.js';
 import { OpusAgent } from '../shared/agents/opus-agent.js';
-import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 type Ambiguity = z.infer<typeof AmbiguitySchema>;
 type Resolution = z.infer<typeof AmbiguityResolutionSchema>;
 
 export class AmbiguityResolver {
-    private readonly logger = new RuleBuilderLogger();
-
+    // Resolutions run concurrently, so this deliberately does not stream to the console — interleaved
+    // agent output from a dozen resolutions in flight is unreadable. The caller logs each decision.
     public async resolve(ruleDescription: string, ambiguity: Ambiguity): Promise<Resolution> {
         const mcpClient = createAwsKnowledgeMcpClient();
 
@@ -20,7 +19,7 @@ export class AmbiguityResolver {
                 structuredOutputSchema: AmbiguityResolutionSchema,
             });
 
-            const result = await this.logger.agentBlock(`resolving ambiguity: ${ambiguity.scenario}`, () => agent.invoke(this.buildUserPrompt(ruleDescription, ambiguity)));
+            const result = await agent.invoke(this.buildUserPrompt(ruleDescription, ambiguity));
             return result.structuredOutput as Resolution;
         } finally {
             await mcpClient.disconnect().catch(() => {});

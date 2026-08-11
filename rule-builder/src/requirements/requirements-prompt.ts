@@ -87,6 +87,10 @@ These two requirements are not a conflict. Their preconditions are mutually excl
 
 If you are uncertain whether a scenario should 'flag' or 'pass', include it in the ambiguities array. Do not guess. A separate resolution pass settles each one against the AWS documentation and hands the decision back to you; a scenario you guess at instead of surfacing never gets that scrutiny.
 
+Raise an ambiguity only when both hold: the answer changes the expected behavior, and a real template would plausibly contain the configuration. A handful of load-bearing questions is the target — not a catalogue of every conceivable variant.
+
+Do not mine your own resolved decisions for further questions. If a decision you were given already implies the answer for a narrower or adjacent case, apply it and move on. Successive rounds that each split a settled distinction one level finer produce no better specification, and every question costs a documentation search.
+
 Common ambiguities:
 - Coverage mode: does the rule require all event types or is a subset sufficient?
 - Partial coverage: is some coverage acceptable or must it be exhaustive?

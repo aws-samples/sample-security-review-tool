@@ -27,6 +27,11 @@ export interface AmbiguityResolution {
     settledBy: 'documentation' | 'strict-default' | 'intrinsic-exception';
 }
 
+export interface UnresolvedAmbiguity {
+    scenario: string;
+    question: string;
+}
+
 export interface RemovedRequirement {
     id: string;
     description: string;
@@ -43,5 +48,6 @@ export interface RequirementsSpec {
     requirements: RuleRequirement[];
     awsDocReferences: string[];
     resolutions?: AmbiguityResolution[];
+    unresolvedAmbiguities?: UnresolvedAmbiguity[];
     removedRequirements?: RemovedRequirement[];
 }
