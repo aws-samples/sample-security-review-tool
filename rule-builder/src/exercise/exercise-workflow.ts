@@ -16,8 +16,7 @@ export class ExerciseWorkflow {
         this.logger.phaseComplete('unit tests passed');
 
         this.logger.phaseStart(2, EXERCISE_PHASE_COUNT, 'Remediation');
-        await this.runRemediation();
-        this.logger.phaseComplete('remediations tested');
+        this.logger.phaseComplete(await this.runRemediation());
     }
 
     private runUnitTests(): void {
@@ -26,7 +25,7 @@ export class ExerciseWorkflow {
         if (!result.passed) throw new Error(`Unit tests failed for ${this.context.ruleId}`);
     }
 
-    private async runRemediation(): Promise<void> {
-        await new RemediationWorkflow(this.context).run();
+    private async runRemediation(): Promise<string> {
+        return new RemediationWorkflow(this.context).run();
     }
 }

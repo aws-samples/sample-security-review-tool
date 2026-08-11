@@ -39,9 +39,9 @@ export class BuildWorkflow {
         this.logger.phaseComplete('fixtures generated');
 
         this.logger.phaseStart(5, BUILD_PHASE_COUNT, 'Remediation');
-        await this.runRemediation();
+        const remediationSummary = await this.runRemediation();
         this.verifyUnitTests('remediation');
-        this.logger.phaseComplete('remediations tested');
+        this.logger.phaseComplete(remediationSummary);
     }
 
     private verifyUnitTests(phase: string): void {
@@ -77,7 +77,7 @@ export class BuildWorkflow {
         await new FixtureWorkflow(this.context).run();
     }
 
-    private async runRemediation(): Promise<void> {
-        await new RemediationWorkflow(this.context).run();
+    private async runRemediation(): Promise<string> {
+        return new RemediationWorkflow(this.context).run();
     }
 }

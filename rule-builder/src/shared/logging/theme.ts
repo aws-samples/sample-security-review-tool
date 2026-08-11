@@ -61,6 +61,11 @@ export interface Theme {
     phaseComplete(summary: string, elapsedMs: number): string;
     agentBegin(title: string): string;
     agentEnd(succeeded: boolean, elapsedMs: number): string;
+    group(label: string): string;
+    itemPending(name: string): string;
+    itemContinuation(): string;
+    itemOutcome(succeeded: boolean, status: string, elapsedMs?: number): string;
+    itemNote(message: string): string;
     step(message: string): string;
     substep(message: string): string;
     success(message: string): string;
@@ -86,6 +91,9 @@ const UNICODE_GLYPHS: Glyphs = { success: '✔', failure: '✗', warning: '!', i
 const ASCII_GLYPHS: Glyphs = { success: '*', failure: 'x', warning: '!', info: '-', arrow: '>', separator: '-', bannerRule: '=', blockTop: '+-', blockBottom: '+-' };
 
 const AGENT_INDENT = '   ';
+const ITEM_INDENT = '    ';
+const STATUS_COLUMN = 58;
+const MIN_STATUS_COLUMN = 24;
 
 // The "banner rules" aesthetic: bold phase rules, begin/end-framed agent blocks, trailing dim durations.
 export class BannerTheme implements Theme {
@@ -121,6 +129,32 @@ export class BannerTheme implements Theme {
     public agentEnd(succeeded: boolean, elapsedMs: number): string {
         const outcome = succeeded ? `done ${this.glyphs.separator} ${this.duration(elapsedMs)}` : this.chalk.red(`failed ${this.glyphs.separator} ${this.duration(elapsedMs)}`);
         return `${this.chalk.dim(this.block(this.glyphs.blockBottom, outcome))}\n`;
+    }
+
+    public group(label: string): string {
+        return `  ${this.chalk.bold(label)}`;
+    }
+
+    // Opens a line and parks the cursor at the status column; itemOutcome closes it. Nothing may print in between.
+    public itemPending(name: string): string {
+        const prefix = `${ITEM_INDENT}${name} `;
+        const leader = this.glyphs.separator.repeat(Math.max(1, this.statusColumn() - this.visibleLength(prefix)));
+        return `${prefix}${this.chalk.dim(leader)} `;
+    }
+
+    public itemContinuation(): string {
+        return ' '.repeat(this.statusColumn() + 1);
+    }
+
+    public itemOutcome(succeeded: boolean, status: string, elapsedMs?: number): string {
+        const glyph = succeeded ? this.chalk.green(this.glyphs.success) : this.chalk.red(this.glyphs.failure);
+        const text = succeeded ? status : this.chalk.red(status);
+        const elapsed = elapsedMs === undefined ? '' : this.chalk.dim(` ${this.glyphs.separator} ${this.duration(elapsedMs)}`);
+        return `${glyph} ${text}${elapsed}`;
+    }
+
+    public itemNote(message: string): string {
+        return `${ITEM_INDENT}  ${this.chalk.dim(message)}`;
     }
 
     public step(message: string): string {
@@ -161,6 +195,10 @@ export class BannerTheme implements Theme {
     private block(corner: string, label: string): string {
         const prefix = `${AGENT_INDENT}${corner} ${label} `;
         return prefix + this.glyphs.bannerRule.repeat(Math.max(0, this.capabilities.width - this.visibleLength(prefix)));
+    }
+
+    private statusColumn(): number {
+        return Math.max(MIN_STATUS_COLUMN, Math.min(STATUS_COLUMN, this.capabilities.width - MIN_STATUS_COLUMN));
     }
 
     private visibleLength(text: string): number {

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as url from 'node:url';
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { RuleContext } from '../shared/rule-context.js';
 import { FixtureDependencyInstaller } from '../shared/fixture-dependency-installer.js';
 import { RemediationUpdaterAgent } from './remediation-updater-agent.js';
@@ -20,14 +20,15 @@ export class FixtureRemediator {
 
     constructor(private readonly context: RuleContext, private readonly fixtureType: FixtureType, private readonly reporter: RemediationReporter) { }
 
-    public async run(): Promise<void> {
+    public async run(): Promise<number> {
         this.resetWorkflow();
+        this.reporter.fixtureStart(this.fixtureType);
         this.prepareFixtures();
-        this.reportTestingFixture();
 
+        this.reporter.triggerCheckStart(this.context.ruleId);
         await this.testRule();
         await this.backupIssuesFile();
-        this.reportRuleTriggeredSuccessfully();
+        this.reporter.triggerCheckPassed(this.issues.length);
 
         for (const issue of this.issues) {
             this.resetFixAttempts();
@@ -44,6 +45,8 @@ export class FixtureRemediator {
 
             this.failIfUnresolved(issue);
         }
+
+        return this.issues.length;
     }
 
     private resetWorkflow(): void {
@@ -63,10 +66,6 @@ export class FixtureRemediator {
         fs.cpSync(this.fixtureType.resourceFilePath, path.join(this.fixtureType.outputFolderPath, this.fixtureType.resourceFileName));
     }
 
-    private reportTestingFixture(): void {
-        this.reporter.testingFixture(this.fixtureType);
-    }
-
     private async testRule(): Promise<void> {
         this.runAssessment();
         const issues = await this.loadIssues();
@@ -77,9 +76,13 @@ export class FixtureRemediator {
         }
     }
 
+    // Output is captured, not inherited: the assess CLI narrates five phases per run, and remediation runs it repeatedly.
     private runAssessment(): void {
         const runnerPath = url.fileURLToPath(new URL('./assess-runner.ts', import.meta.url));
-        execFileSync(process.execPath, [runnerPath, this.fixtureType.outputFolderPath], { stdio: 'inherit' });
+        const result = spawnSync(process.execPath, [runnerPath, this.fixtureType.outputFolderPath], { encoding: 'utf8' });
+        if (result.status === 0) return;
+        const output = (result.stdout ?? '') + (result.stderr ?? '');
+        throw new Error(`Assessment of the ${this.fixtureType.label} fixture failed.\n${output}`);
     }
 
     private async loadIssues() {
@@ -94,10 +97,6 @@ export class FixtureRemediator {
         await fs.promises.copyFile(issuesPath, issuesPath.replace('.json', '.original.json'));
     }
 
-    private reportRuleTriggeredSuccessfully(): void {
-        this.reporter.ruleTriggered(this.issues.length, this.context.ruleId);
-    }
-
     private resetFixAttempts(): void {
         this.fixAttempt = 1;
     }
@@ -107,7 +106,8 @@ export class FixtureRemediator {
     }
 
     private reportFixAttempt(issue: ScanResult): void {
-        this.reporter.attemptingFix(issue, this.fixAttempt, MAX_FIX_ATTEMPTS);
+        if (this.fixAttempt === 1) return this.reporter.fixStart(issue);
+        this.reporter.fixRetryStart();
     }
 
     private async applyFix(issue: ScanResult): Promise<void> {
@@ -154,9 +154,9 @@ export class FixtureRemediator {
 
     private reportValidationOutcome(): void {
         const result = this.validationResult!;
-        if (result.isSuccessful) return this.reporter.fixSucceeded(result);
-        if (result.introducedRegressions) return this.reporter.fixIntroducedRegressions(result);
-        this.reporter.fixNotResolved(result);
+        if (result.isSuccessful) return this.reporter.fixResolved();
+        if (this.fixAttempt < MAX_FIX_ATTEMPTS) return this.reporter.fixRetrying(result, this.fixAttempt + 1, MAX_FIX_ATTEMPTS);
+        this.reporter.fixFailed(result);
     }
 
     private fixWasSuccessful(): boolean {

@@ -40,6 +40,27 @@ export class RuleBuilderLogger {
         }
     }
 
+    public group(label: string): void {
+        this.write(this.theme.group(label));
+    }
+
+    // itemStart/itemContinue leave the line open — only itemEnd may write next.
+    public itemStart(name: string): void {
+        this.writeInline(this.theme.itemPending(name));
+    }
+
+    public itemContinue(): void {
+        this.writeInline(this.theme.itemContinuation());
+    }
+
+    public itemEnd(succeeded: boolean, status: string, elapsedMs?: number): void {
+        this.write(this.theme.itemOutcome(succeeded, status, elapsedMs));
+    }
+
+    public itemNote(message: string): void {
+        this.write(this.theme.itemNote(message));
+    }
+
     public step(message: string): void {
         this.write(this.theme.step(message));
     }
@@ -74,5 +95,9 @@ export class RuleBuilderLogger {
 
     private write(line: string): void {
         console.log(line);
+    }
+
+    private writeInline(text: string): void {
+        process.stdout.write(text);
     }
 }

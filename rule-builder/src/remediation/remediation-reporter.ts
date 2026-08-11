@@ -5,33 +5,62 @@ import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 export class RemediationReporter {
     private readonly logger = new RuleBuilderLogger();
+    private itemStartedAt = 0;
+    private attempts = 0;
 
-    public testingFixture(fixtureType: FixtureType): void {
-        this.logger.info(`Testing ${fixtureType.label} fixture`);
+    public fixtureStart(fixtureType: FixtureType): void {
+        this.logger.group(fixtureType.label);
     }
 
-    public ruleTriggered(count: number, ruleId: string): void {
-        this.logger.success(`Successfully triggered ${ruleId}`);
+    public triggerCheckStart(ruleId: string): void {
+        this.openItem(`verifying ${ruleId} triggers`);
     }
 
-    public attemptingFix(issue: ScanResult, attempt: number, maxAttempts: number): void {
-        this.logger.info(`Fixing ${issue.check_id} on ${issue.resourceName} (attempt ${attempt}/${maxAttempts})`);
+    public triggerCheckPassed(count: number): void {
+        this.logger.itemEnd(true, `${count} ${count === 1 ? 'finding' : 'findings'}`, this.elapsed());
     }
 
-    public fixSucceeded(result: FixValidationResult): void {
-        this.logger.success(`Fix resolved ${result.targetIssue.check_id} without introducing new HIGH priority issues`);
+    public fixStart(issue: ScanResult): void {
+        this.attempts = 1;
+        this.openItem(issue.resourceName ?? 'unnamed resource');
     }
 
-    public fixNotResolved(result: FixValidationResult): void {
-        this.logger.failure(`Fix did not resolve ${result.targetIssue.check_id}`);
+    public fixRetryStart(): void {
+        this.attempts++;
+        this.itemStartedAt = performance.now();
+        this.logger.itemContinue();
     }
 
-    public fixIntroducedRegressions(result: FixValidationResult): void {
-        this.logger.failure(`Fix introduced new HIGH priority issues: ${this.formatIntroducedIds(result)}`);
+    public fixResolved(): void {
+        const status = this.attempts === 1 ? 'fixed' : `fixed in ${this.attempts} attempts`;
+        this.logger.itemEnd(true, status, this.elapsed());
+    }
+
+    public fixRetrying(result: FixValidationResult, nextAttempt: number, maxAttempts: number): void {
+        this.logger.itemEnd(false, `${this.describeFailure(result)}, retrying ${nextAttempt}/${maxAttempts}`, this.elapsed());
+    }
+
+    public fixFailed(result: FixValidationResult): void {
+        this.logger.itemEnd(false, `${this.describeFailure(result)}, gave up after ${this.attempts} attempts`, this.elapsed());
     }
 
     public regressionSnapshotSaved(snapshotPath: string): void {
-        this.logger.info(`Saved regression snapshot to ${snapshotPath}`);
+        this.logger.itemNote(`regression snapshot: ${snapshotPath}`);
+    }
+
+    private openItem(name: string): void {
+        this.itemStartedAt = performance.now();
+        this.logger.itemStart(name);
+    }
+
+    private elapsed(): number {
+        return performance.now() - this.itemStartedAt;
+    }
+
+    private describeFailure(result: FixValidationResult): string {
+        const unresolved = result.fixedOriginalFinding ? [] : ['not resolved'];
+        const regressions = result.introducedRegressions ? [`new HIGH ${this.formatIntroducedIds(result)}`] : [];
+        return [...unresolved, ...regressions].join(', ');
     }
 
     private formatIntroducedIds(result: FixValidationResult): string {

@@ -8,9 +8,14 @@ export class RemediationWorkflow {
 
     constructor(private readonly context: RuleContext) { }
 
-    public async run(): Promise<void> {
-        await new FixtureRemediator(this.context, FixtureType.cdk(this.context), this.reporter).run();
-        await new FixtureRemediator(this.context, FixtureType.terraform(this.context), this.reporter).run();
-        await new FixtureRemediator(this.context, FixtureType.cloudFormation(this.context), this.reporter).run();
+    public async run(): Promise<string> {
+        const fixtureTypes = [FixtureType.cdk(this.context), FixtureType.terraform(this.context), FixtureType.cloudFormation(this.context)];
+
+        let remediated = 0;
+        for (const fixtureType of fixtureTypes) {
+            remediated += await new FixtureRemediator(this.context, fixtureType, this.reporter).run();
+        }
+
+        return `${remediated} findings remediated across ${fixtureTypes.length} fixtures`;
     }
 }
