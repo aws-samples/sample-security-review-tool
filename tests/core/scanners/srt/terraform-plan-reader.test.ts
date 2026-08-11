@@ -257,4 +257,86 @@ describe('TerraformPlanReader', () => {
     const planPath = await writePlan({ format_version: '1.2' });
     expect(await readTerraformPlan(planPath)).toEqual([]);
   });
+
+  /**
+   * Terraform renders a function-call argument such as `jsonencode(...)` as an
+   * expression with neither constant_value nor references — structurally identical
+   * to a nested block. Merging it over the resolved string replaced an IAM policy
+   * document with an object, so rules that JSON.parse the policy saw no statements.
+   */
+  it('preserves a resolved scalar whose configuration expression is an opaque function call', async () => {
+    const policy = JSON.stringify({ Statement: [{ Effect: 'Allow', Principal: '*', Action: 's3:GetObject' }] });
+    const planPath = await writePlan({
+      planned_values: {
+        root_module: {
+          resources: [
+            { type: 'aws_s3_bucket_policy', name: 'p', address: 'aws_s3_bucket_policy.p', values: { bucket: 'b', policy } },
+          ],
+        },
+      },
+      configuration: {
+        root_module: {
+          resources: [
+            { address: 'aws_s3_bucket_policy.p', type: 'aws_s3_bucket_policy', name: 'p', expressions: { policy: {} } },
+          ],
+        },
+      },
+    });
+
+    const resources = await readTerraformPlan(planPath);
+
+    expect(resources[0].values.policy).toBe(policy);
+    expect(JSON.parse(resources[0].values.policy).Statement).toHaveLength(1);
+  });
+
+  it('does not replace a resolved array value with a nested block expression', async () => {
+    const planPath = await writePlan({
+      planned_values: {
+        root_module: {
+          resources: [
+            { type: 'aws_s3_bucket', name: 'b', address: 'aws_s3_bucket.b', values: { tags: ['a', 'b'] } },
+          ],
+        },
+      },
+      configuration: {
+        root_module: {
+          resources: [
+            { address: 'aws_s3_bucket.b', type: 'aws_s3_bucket', name: 'b', expressions: { tags: {} } },
+          ],
+        },
+      },
+    });
+
+    const resources = await readTerraformPlan(planPath);
+
+    expect(resources[0].values.tags).toEqual(['a', 'b']);
+  });
+
+  it('still merges a nested block expression when the planned value is absent', async () => {
+    const planPath = await writePlan({
+      planned_values: {
+        root_module: {
+          resources: [
+            { type: 'aws_cloudtrail', name: 'ct', address: 'aws_cloudtrail.ct', values: {} },
+          ],
+        },
+      },
+      configuration: {
+        root_module: {
+          resources: [
+            {
+              address: 'aws_cloudtrail.ct',
+              type: 'aws_cloudtrail',
+              name: 'ct',
+              expressions: { event_selector: { s3_bucket: { references: ['aws_s3_bucket.logs.id', 'aws_s3_bucket.logs'] } } },
+            },
+          ],
+        },
+      },
+    });
+
+    const resources = await readTerraformPlan(planPath);
+
+    expect(resources[0].values.event_selector.s3_bucket).toBe('aws_s3_bucket.logs');
+  });
 });

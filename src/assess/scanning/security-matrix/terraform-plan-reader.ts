@@ -112,8 +112,20 @@ export class TerraformPlanReader {
   private mergeExpression(value: any, expression: any): any {
     if (this.isReferenceExpression(expression)) return this.resolveReference(value, expression.references);
     if (Array.isArray(expression)) return this.mergeExpressionArray(value, expression);
-    if (this.isNestedBlock(expression)) return this.mergeNestedBlock(value, expression);
+    if (this.isNestedBlock(expression) && this.isMergeableBlockValue(value)) return this.mergeNestedBlock(value, expression);
     return value;
+  }
+
+  /**
+   * A planned value that is already a scalar is fully resolved and carries more
+   * information than the configuration expression, so it must survive the merge.
+   * Terraform renders a function-call argument such as `jsonencode(...)` as an
+   * expression with no constant_value and no references, which is structurally
+   * indistinguishable from a nested block; merging that over a JSON policy string
+   * replaced it with an object and rules parsing the string saw nothing.
+   */
+  private isMergeableBlockValue(value: any): boolean {
+    return value == null || (typeof value === 'object' && !Array.isArray(value));
   }
 
   private resolveReference(value: any, references: string[]): any {
