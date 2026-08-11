@@ -54,7 +54,7 @@
     },
     {
       "id": "REQ-07",
-      "description": "An S3 bucket's logging configuration depends entirely on an unresolvable condition such that whether logging is enabled cannot be determined.",
+      "description": "An S3 bucket's logging configuration depends entirely on an unresolvable condition such that whether logging is enabled cannot be determined, and at least one branch of that condition delivers logs to a destination bucket.",
       "category": "INTRINSIC_UNRESOLVABLE",
       "expectedBehavior": "pass",
       "rationale": "When the rule cannot definitively assert non-compliance because the configuration value is not resolvable at analysis time, it should not flag."
@@ -79,6 +79,20 @@
       "category": "SPECIFIC_RESOURCE",
       "expectedBehavior": "pass",
       "rationale": "Being an explicit log destination for one or more other buckets qualifies for the exemption regardless of how many source buckets target it."
+    },
+    {
+      "id": "REQ-11",
+      "description": "An S3 bucket's logging configuration is governed by a condition in which no branch specifies a destination bucket (for example, both branches are AWS::NoValue, or the branches set only a LogFilePrefix).",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "flag",
+      "rationale": "The unresolvable-intrinsic exemption exists because the outcome is genuinely unknown. When no branch delivers logs anywhere, the outcome is known: logging is off however the condition resolves. This narrows REQ-07 to conditions that could actually enable logging."
+    },
+    {
+      "id": "REQ-12",
+      "description": "Another bucket's conditional logging configuration mentions this bucket's logical ID somewhere other than DestinationBucketName, such as in a LogFilePrefix, and no bucket names it as an actual log destination.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "REQ-05 grants the log-destination exemption only on an explicit reference as a log target. Matching the logical ID anywhere within the logging block lets an unrelated value such as a prefix exempt a bucket that receives no logs."
     }
   ],
   "awsDocReferences": [

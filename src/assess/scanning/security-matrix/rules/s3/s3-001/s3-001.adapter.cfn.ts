@@ -29,16 +29,31 @@ class S3001CfnAdapter implements S3001Adapter {
     const properties = this.getProperties(this.ctx.resource);
     const loggingConfig = properties['LoggingConfiguration'];
     if (!this.isPlainObject(loggingConfig)) return false;
-    // When the logging configuration is governed by an unresolvable intrinsic
-    // (Fn::If, Fn::ImportValue), we cannot determine compliance and must
-    // treat it as "configured" so the control passes.
-    if (this.isUnresolvedIntrinsic(loggingConfig)) return true;
-    return this.hasDestinationBucket(loggingConfig as Record<string, unknown>);
+    return this.configuresLogDelivery(loggingConfig);
   }
 
   isLogDestination(): boolean {
     const buckets = this.collectOtherBuckets(this.ctx.template);
     return buckets.some(bucket => this.bucketTargetsThis(bucket));
+  }
+
+  /**
+   * A conditional block is only unknowable if one of its branches would actually
+   * deliver logs — `{Fn::If: [C, {DestinationBucketName: ...}, {Ref: AWS::NoValue}]}`
+   * may or may not log, so it passes. When no branch names a destination, logging
+   * is off however the condition resolves, and the bucket must still be flagged.
+   */
+  private configuresLogDelivery(loggingConfig: unknown): boolean {
+    if (!this.isPlainObject(loggingConfig)) return false;
+    const branches = this.conditionalBranches(loggingConfig);
+    if (branches) return branches.some(branch => this.configuresLogDelivery(branch));
+    if (this.isUnresolvedIntrinsic(loggingConfig)) return true;
+    return this.hasDestinationBucket(loggingConfig as Record<string, unknown>);
+  }
+
+  private conditionalBranches(value: unknown): unknown[] | undefined {
+    const branches = (value as Record<string, unknown>)['Fn::If'];
+    return Array.isArray(branches) ? branches.slice(1) : undefined;
   }
 
   private hasDestinationBucket(loggingConfig: Record<string, unknown>): boolean {
@@ -58,15 +73,23 @@ class S3001CfnAdapter implements S3001Adapter {
     return result;
   }
 
+  /**
+   * The exemption requires an explicit destination reference (REQ-05), so only the
+   * DestinationBucketName of each candidate branch is compared. Matching anywhere in
+   * the block would let an unrelated value such as a LogFilePrefix exempt a bucket.
+   */
   private bucketTargetsThis(bucket: Resource): boolean {
     const properties = this.getProperties(bucket);
-    const loggingConfig = properties['LoggingConfiguration'];
-    if (!this.isPlainObject(loggingConfig)) return false;
-    if (this.isUnresolvedIntrinsic(loggingConfig)) {
-      return this.referencesThisBucket(loggingConfig);
-    }
-    const destination = (loggingConfig as Record<string, unknown>)['DestinationBucketName'];
-    return typeof destination === 'string' && destination === this.ctx.logicalId;
+    return this.destinationsOf(properties['LoggingConfiguration']).some(destination =>
+      this.referencesThisBucket(destination)
+    );
+  }
+
+  private destinationsOf(loggingConfig: unknown): unknown[] {
+    if (!this.isPlainObject(loggingConfig)) return [];
+    const branches = this.conditionalBranches(loggingConfig);
+    if (branches) return branches.flatMap(branch => this.destinationsOf(branch));
+    return [(loggingConfig as Record<string, unknown>)['DestinationBucketName']];
   }
 
   private isUnresolvedIntrinsic(value: unknown): boolean {
