@@ -15,6 +15,7 @@ export interface ScanResult {
     resourceName?: string;
     cdkPath?: string;
     isCustomResource?: boolean;
+    manualFixRequired?: boolean;
     firstDetectedAt?: string;
     assessmentCount?: number;
     resolvedAt?: string;

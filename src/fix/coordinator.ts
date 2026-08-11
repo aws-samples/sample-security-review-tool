@@ -59,6 +59,7 @@ export class FixCoordinator {
     }
 
     public async generateFix(issue: ScanResult): Promise<Fix | null> {
+        if (issue.manualFixRequired) return null;
         this.onProgress({ phase: 'generating', details: 'Generating fix suggestion' });
         const fix = await this.fixGenerator.generateFix(issue);
         if (fix) {

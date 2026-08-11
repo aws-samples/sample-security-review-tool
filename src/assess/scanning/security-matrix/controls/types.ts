@@ -25,6 +25,7 @@ export type Priority = 'HIGH' | 'MEDIUM' | 'LOW';
 export interface RemediationScenario {
   readonly scenario: string;
   readonly intent: string;
+  readonly manualFixRequired?: boolean;
 }
 
 export interface ControlFinding {

@@ -6,14 +6,13 @@ import { TfContext, TerraformResource } from '../../../../../../../src/assess/sc
 /**
  * REQ-05: CloudFront distribution is configured to use the default CloudFront
  * certificate (*.cloudfront.net), regardless of any minimum protocol version
- * value set. Expected behavior: the rule passes (returns null).
+ * value set. Expected behavior: FLAG.
  *
  * In Terraform, the default CloudFront certificate is indicated by setting
  * cloudfront_default_certificate = true on the viewer_certificate block.
  *
- * Per user-resolved decision: when the SSL certificate is the default
- * CloudFront certificate, this rule passes. AWS forces TLSv1 in this case
- * but the rule defers to the default-certificate scenario as out of scope.
+ * AWS sets the security policy to TLSv1 regardless of minimum_protocol_version in
+ * this case, so TLS 1.0 and 1.1 are permitted and the declared value is ignored.
  */
 
 const PROJECT_NAME = 'test-project';
@@ -39,38 +38,61 @@ function buildContext(viewerCertificate: Record<string, unknown>): TfContext {
   };
 }
 
-describe('CF-001 REQ-05 (TF): default CloudFront certificate passes', () => {
-  it('returns null when cloudfront_default_certificate is true and no minimum_protocol_version is set', () => {
-    const context = buildContext({
-      cloudfront_default_certificate: true,
-    });
-    const adapter = new Cf001TfAdapterFactory().bind(context);
+describe('CF-001 REQ-05 (TF): default CloudFront certificate is flagged', () => {
+  const evaluate = (viewerCertificate: Record<string, unknown>) => {
+    const context = buildContext(viewerCertificate);
+    return cf001Control.run(new Cf001TfAdapterFactory().bind(context), context);
+  };
 
-    const result = cf001Control.run(adapter, context);
+  it('flags when cloudfront_default_certificate is true and no minimum_protocol_version is set', () => {
+    const result = evaluate({ cloudfront_default_certificate: true });
 
-    expect(result).toBeNull();
+    expect(result?.check_id).toBe('CF-001');
+    expect(result?.resourceName).toBe('aws_cloudfront_distribution.test');
   });
 
-  it('returns null when cloudfront_default_certificate is true even if an insecure minimum_protocol_version is set', () => {
-    const context = buildContext({
-      cloudfront_default_certificate: true,
+  it('flags when cloudfront_default_certificate is true and an insecure minimum_protocol_version is set', () => {
+    const result = evaluate({ cloudfront_default_certificate: true, minimum_protocol_version: 'TLSv1' });
+
+    expect(result?.check_id).toBe('CF-001');
+  });
+
+  it('flags when cloudfront_default_certificate is true even though a secure minimum_protocol_version is set', () => {
+    const result = evaluate({ cloudfront_default_certificate: true, minimum_protocol_version: 'TLSv1.2_2021' });
+
+    expect(result?.check_id).toBe('CF-001');
+  });
+
+  it('reports the certificate as the defect rather than the protocol version', () => {
+    const result = evaluate({ cloudfront_default_certificate: true, minimum_protocol_version: 'TLSv1.2_2021' });
+
+    expect(result?.issue).toContain('default CloudFront certificate');
+  });
+
+  it('marks the finding as requiring a manual fix', () => {
+    const result = evaluate({ cloudfront_default_certificate: true });
+
+    expect(result?.manualFixRequired).toBe(true);
+  });
+
+  it('does not mark automatically fixable scenarios as manual', () => {
+    const result = evaluate({
+      acm_certificate_arn: 'arn:aws:acm:us-east-1:123456789012:certificate/abc',
+      ssl_support_method: 'sni-only',
       minimum_protocol_version: 'TLSv1',
     });
-    const adapter = new Cf001TfAdapterFactory().bind(context);
 
-    const result = cf001Control.run(adapter, context);
-
-    expect(result).toBeNull();
+    expect(result?.check_id).toBe('CF-001');
+    expect(result?.manualFixRequired).toBeUndefined();
   });
 
-  it('returns null when cloudfront_default_certificate is true even if a secure minimum_protocol_version is set', () => {
-    const context = buildContext({
-      cloudfront_default_certificate: true,
+  it('does not flag when cloudfront_default_certificate is false and a secure policy is set', () => {
+    const result = evaluate({
+      cloudfront_default_certificate: false,
+      acm_certificate_arn: 'arn:aws:acm:us-east-1:123456789012:certificate/abc',
+      ssl_support_method: 'sni-only',
       minimum_protocol_version: 'TLSv1.2_2021',
     });
-    const adapter = new Cf001TfAdapterFactory().bind(context);
-
-    const result = cf001Control.run(adapter, context);
 
     expect(result).toBeNull();
   });

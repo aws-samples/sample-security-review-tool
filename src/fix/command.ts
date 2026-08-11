@@ -46,8 +46,12 @@ export class FixCommand {
                         if (issue.line) console.log(`${chalk.blueBright('Line:')} ${issue.line}`);
                         if (issue.fix) console.log(`${chalk.blueBright('Fix:')} ${issue.fix}`);
 
+                        if (issue.manualFixRequired) {
+                            console.log(`${chalk.yellowBright('Manual fix required:')} this finding cannot be resolved by editing your infrastructure code.`);
+                        }
+
                         const choices = [
-                            { name: 'Generate fix', value: 'generate' },
+                            ...(issue.manualFixRequired ? [] : [{ name: 'Generate fix', value: 'generate' }]),
                             { name: 'Suppress this finding', value: 'dontfix' },
                             { name: 'Skip for now', value: 'skipped' },
                             { name: 'Exit', value: 'exit' }

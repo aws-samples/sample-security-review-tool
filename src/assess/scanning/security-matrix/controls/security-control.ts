@@ -30,7 +30,13 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
         const finding = this.evaluate(adapter);
         if (!finding) return null;
         const fix = this.buildRemediation(adapter, finding.scenario);
-        return this.buildScanResult(context, adapter, finding, fix);
+        const result = this.buildScanResult(context, adapter, finding, fix);
+        if (this.requiresManualFix(finding.scenario)) result.manualFixRequired = true;
+        return result;
+    }
+
+    private requiresManualFix(scenario: string): boolean {
+        return this.remediationScenarios.find(s => s.scenario === scenario)?.manualFixRequired === true;
     }
 
     private buildRemediation(adapter: TAdapter, scenario: string): string {

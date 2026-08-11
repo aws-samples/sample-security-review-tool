@@ -41,8 +41,8 @@
       "id": "REQ-05",
       "description": "CloudFront distribution is configured to use the default CloudFront certificate (the *.cloudfront.net certificate), regardless of any minimum protocol version value set",
       "category": "WILDCARD_MATCH",
-      "expectedBehavior": "pass",
-      "rationale": "Per user-resolved decision: when the SSL certificate is the default CloudFront certificate, this rule passes (returns null). AWS forces TLSv1 in this case but the rule defers to the default-certificate scenario as out of scope."
+      "expectedBehavior": "flag",
+      "rationale": "AWS documents that specifying CloudFrontDefaultCertificate: true makes CloudFront set the security policy to TLSv1 'regardless of the value that you specify for MinimumProtocolVersion', so TLS 1.0 and 1.1 are permitted. This is the one configuration in which TLS 1.2 is guaranteed not to be enforced, and AWS Config's cloudfront-security-policy-check reports any effective policy below TLSv1.2_2018 as non-compliant with no default-certificate exemption. A distribution that also declares a TLS 1.2 policy is the most important case to report, because the declared value is silently ignored. Remediation differs from the other requirements: the certificate must be replaced, since changing MinimumProtocolVersion has no effect."
     },
     {
       "id": "REQ-06",
