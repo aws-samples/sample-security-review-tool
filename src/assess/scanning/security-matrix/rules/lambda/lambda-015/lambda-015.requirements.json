@@ -94,10 +94,5 @@
       "expectedBehavior": "pass",
       "rationale": "Such a configuration is structurally invalid and would be rejected by the deployment service before reaching production. The rule's scope is detecting use of 'latest', not validating the presence of an image reference; another rule should cover this misconfiguration."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/lambda/latest/dg/images-create.html",
-    "https://aws.amazon.com/blogs/compute/optimizing-lambda-functions-packaged-as-container-images/",
-    "https://docs.aws.amazon.com/lambda/latest/dg/java-image.html"
   ]
 }

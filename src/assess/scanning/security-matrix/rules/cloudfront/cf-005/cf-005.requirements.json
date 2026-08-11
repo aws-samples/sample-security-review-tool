@@ -107,11 +107,5 @@
       "expectedBehavior": "pass",
       "rationale": "Every custom origin meets the requirement of HTTPS with a secure TLS minimum; nothing to flag."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_CustomOriginConfig.html",
-    "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_OriginSslProtocols.html",
-    "https://aws.amazon.com/blogs/aws/cloudfront-update-https-tls-v1-1v1-2-to-the-origin-addmodify-headers/",
-    "https://aws.amazon.com/security/security-bulletins/CVE-2014-3566-advisory/"
   ]
 }

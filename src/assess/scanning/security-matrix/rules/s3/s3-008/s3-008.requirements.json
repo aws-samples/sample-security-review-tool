@@ -73,11 +73,5 @@
       "expectedBehavior": "flag",
       "rationale": "The rule evaluates each bucket individually. A lifecycle configuration attached to another bucket provides no coverage for the assessed bucket, which therefore lacks a lifecycle policy."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/how-to-set-lifecycle-configuration-intro.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-lifecycleconfiguration.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-rule.html",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html"
   ]
 }

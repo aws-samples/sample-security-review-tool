@@ -163,11 +163,5 @@
       "implemented": true,
       "tested": true
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Best_Practice_Recommended_Alarms_AWS_Services.html",
-    "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html",
-    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/component-configuration-examples-lambda.html",
-    "https://aws.amazon.com/blogs/mt/monitoring-aws-lambda-errors-using-amazon-cloudwatch/"
   ]
 }

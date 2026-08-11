@@ -101,13 +101,5 @@
       "expectedBehavior": "pass",
       "rationale": "Per resolved decision: when a pattern-based match is inconclusive, the rule assumes the pattern covers the table (lenient interpretation)."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",
-    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/logging-using-cloudtrail.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudtrail-trail-eventselector.md",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudtrail-trail-dataresource.md",
-    "https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_AdvancedEventSelector.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudtrail-trail.md"
   ]
 }

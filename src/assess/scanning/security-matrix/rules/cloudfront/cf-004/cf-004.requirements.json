@@ -86,9 +86,5 @@
       "expectedBehavior": "flag",
       "rationale": "The default cache behavior matches any request that does not match an additional behavior's path pattern, so an allow-all default exposes paths to HTTP."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https-viewers-to-cloudfront.html",
-    "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_UpdateDistribution.html"
   ]
 }

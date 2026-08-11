@@ -87,10 +87,5 @@
       "expectedBehavior": "pass",
       "rationale": "A role used by exactly one Lambda function and no other resource fully satisfies the uniqueness and dedicated-use requirement."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html",
-    "https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html",
-    "https://aws.amazon.com/blogs/compute/operating-lambda-building-a-solid-security-foundation-part-1/"
   ]
 }

@@ -137,13 +137,5 @@
       "expectedBehavior": "pass",
       "rationale": "A canonical user ID names a specific AWS account holder, so the grant is auditable and directed at a named principal rather than an untrusted wildcard."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/security_iam_service-with-iam.html",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html",
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html",
-    "https://repost.aws/knowledge-center/s3-invalid-principal-in-policy-error",
-    "https://aws.amazon.com/blogs/security/top-10-security-best-practices-for-securing-data-in-amazon-s3/",
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_iam-s3.html"
   ]
 }

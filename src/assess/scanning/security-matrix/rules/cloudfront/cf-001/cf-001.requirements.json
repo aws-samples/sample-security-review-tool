@@ -86,10 +86,5 @@
       "expectedBehavior": "flag",
       "rationale": "An empty viewer certificate configuration provides no assurance that TLS 1.2+ is enforced; CloudFront would fall back to permissive defaults."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-viewercertificate.html",
-    "https://docs.aws.amazon.com/help-panel/AmazonCloudFront/latest/console/distribution-security-policy.html"
   ]
 }

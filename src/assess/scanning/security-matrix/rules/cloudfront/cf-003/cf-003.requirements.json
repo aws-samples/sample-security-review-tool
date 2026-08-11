@@ -79,11 +79,5 @@
       "expectedBehavior": "pass",
       "rationale": "A reference to a concrete resource as the destination bucket is a valid, resolvable destination — logs will be delivered to that bucket."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-logging.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logging.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-logs-deliverysource.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html"
   ]
 }

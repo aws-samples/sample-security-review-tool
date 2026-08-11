@@ -95,11 +95,5 @@
       "expectedBehavior": "flag",
       "rationale": "An invalid retention value will not produce the intended retention behavior. Per the user resolution, an explicit non-zero, valid retention is required."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-apigateway-stage-accesslogsetting.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-logs-loggroup.html",
-    "https://docs.aws.amazon.com/cdk/api/v2/dotnet/api/Amazon.CDK.AWS.Apigatewayv2.CfnStage.IAccessLogSettingsProperty.html",
-    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/Working-with-log-groups-and-streams.html"
   ]
 }

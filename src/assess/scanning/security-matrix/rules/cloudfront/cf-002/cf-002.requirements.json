@@ -65,11 +65,5 @@
       "expectedBehavior": "flag",
       "rationale": "An explicitly null or unset web ACL identifier indicates no WAF protection is configured, leaving the distribution exposed to web threats."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-cloudfront-distribution-distributionconfig.md",
-    "https://docs.aws.amazon.com/sdk-for-kotlin/api/latest/cloudfront/aws.sdk.kotlin.services.cloudfront.model/-distribution-config/web-acl-id.html",
-    "https://aws.amazon.com/blogs/networking-and-content-delivery/mitigate-common-web-threats-with-one-click-in-amazon-cloudfront/",
-    "https://docs.aws.amazon.com/solutions/latest/constructs/aws_wafwebacl_cloudfront.html"
   ]
 }

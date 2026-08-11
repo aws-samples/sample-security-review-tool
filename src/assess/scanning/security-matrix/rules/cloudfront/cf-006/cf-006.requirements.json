@@ -100,11 +100,5 @@
       "expectedBehavior": "pass",
       "rationale": "The S3 origin is associated with a recognized OAC resource. The rule checks the presence and resolution of the OAC reference, not the granularity of its internal configuration."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html",
-    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-mediastore.html",
-    "https://aws.amazon.com/blogs/networking-and-content-delivery/amazon-cloudfront-introduces-origin-access-control-oac/",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-cloudfront-originaccesscontrol.html"
   ]
 }

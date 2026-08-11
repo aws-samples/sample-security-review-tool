@@ -94,10 +94,5 @@
       "expectedBehavior": "flag",
       "rationale": "REQ-05 grants the log-destination exemption only on an explicit reference as a log target. Matching the logical ID anywhere within the logging block lets an unrelated value such as a prefix exempt a bucket that receives no logs."
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/ServerLogs.html",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-server-access-logging.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-s3-bucket-loggingconfiguration.html"
   ]
 }

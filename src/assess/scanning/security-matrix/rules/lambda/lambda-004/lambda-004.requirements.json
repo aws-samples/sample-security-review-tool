@@ -91,10 +91,5 @@
       "implemented": true,
       "tested": true
     }
-  ],
-  "awsDocReferences": [
-    "https://docs.aws.amazon.com/lambda/latest/dg/services-xray.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-lambda-function-tracingconfig.html",
-    "https://aws.amazon.com/blogs/compute/streamlining-trace-sampling-behavior-for-aws-lambda-functions-with-aws-x-ray/"
   ]
 }
