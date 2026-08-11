@@ -1,12 +1,12 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import { AgentToolFactory } from '../implementation/agent-tools.js';
 import { RemediationUpdaterPromptBuilder } from './remediation-updater-prompt.js';
 import { FixValidationResult } from './fix-validation-result.js';
 import { FixtureType } from '../fixtures/fixture-type.js';
 import z from 'zod';
+import { OpusAgent } from '../shared/agents/opus-agent.js';
 
 const RemediationSchema = z.object({
     remediationInstructions: z.string().describe('Security rule remediation instructions')
@@ -20,8 +20,7 @@ export class RemediationUpdaterAgent {
     }
 
     public async invoke(details: FixValidationResult): Promise<string> {
-        const agent = new Agent({
-            model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 16384 }),
+        const agent = new OpusAgent({
             systemPrompt: this.promptBuilder.buildSystemPrompt(),
             tools: [AgentToolFactory.createWriteFileTool()],
             structuredOutputSchema: RemediationSchema

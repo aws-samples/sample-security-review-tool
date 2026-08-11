@@ -1,8 +1,8 @@
-import { Agent, BedrockModel } from '@strands-agents/sdk';
 import z from 'zod';
 import { RequirementsOutputSchema } from './requirements-schema.js';
 import { RequirementsPromptBuilder } from './requirements-prompt.js';
 import { createAwsKnowledgeMcpClient } from '../shared/aws-knowledge-mcp-client.js';
+import { OpusAgent } from '../shared/agents/opus-agent.js';
 
 export class RequirementsAgent {
     public async invoke(description: string): Promise<z.infer<typeof RequirementsOutputSchema>> {
@@ -10,8 +10,7 @@ export class RequirementsAgent {
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {
-            const agent = new Agent({
-                model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
+            const agent = new OpusAgent({
                 tools: [mcpClient],
                 systemPrompt: promptBuilder.buildSystemPrompt(),
                 structuredOutputSchema: RequirementsOutputSchema,
@@ -29,8 +28,7 @@ export class RequirementsAgent {
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {
-            const agent = new Agent({
-                model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
+            const agent = new OpusAgent({
                 tools: [mcpClient],
                 systemPrompt: promptBuilder.buildSystemPrompt(),
                 structuredOutputSchema: RequirementsOutputSchema,
