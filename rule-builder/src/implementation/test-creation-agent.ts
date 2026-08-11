@@ -1,9 +1,9 @@
-import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
 import { AgentToolFactory } from './agent-tools.js';
 import { TestCreationPromptBuilder } from './test-creation-prompt.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
+import { OpusAgent } from '../shared/agents/opus-agent.js';
 
 export class TestCreationAgent {
     private readonly promptBuilder: TestCreationPromptBuilder;
@@ -14,8 +14,7 @@ export class TestCreationAgent {
     }
 
     public async create(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {
-        const agent = new Agent({
-            model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 32768 }),
+        const agent = new OpusAgent({
             systemPrompt: this.promptBuilder.buildSystemPrompt(),
             tools: [
                 AgentToolFactory.createWriteFileTool({ ensureDir: true }),
