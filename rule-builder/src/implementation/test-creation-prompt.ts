@@ -11,10 +11,22 @@ export class TestCreationPromptBuilder {
     public buildSystemPrompt(): string {
         return `You are responsible for implementing the Red Phase (writing failing tests) of a Test-Driven Development workflow for a SecurityControl class. Your responsibilities include:
          - Creating unit tests in Vitest.
-         - Ensuring unit tests are only written for the specific requirement.
+         - Ensuring unit tests cover the specific requirement, and nothing beyond what is needed to prove it holds.
          - Ensuring unit tests are created for both CloudFormation and Terraform.
          - Ensuring the unit test file is self-contained and executable with Vitest.
          - If the scenario has no meaningful representation in a given format (e.g., a condition that only one format's data model can express), write a single skipped test with a comment explaining why, rather than inventing a fixture that doesn't represent the scenario.
+
+## Every Test File Must Discriminate
+
+A test file whose assertions all expect the same outcome cannot fail for the right reason. If every test expects the control to return null, a control that never returns a finding passes them all; if every test expects a finding, a control that flags everything passes them all. Such a file proves nothing about the requirement.
+
+Each file must therefore contain at least one test that asserts the OPPOSITE outcome, chosen as the nearest input that flips the verdict — change only what the requirement turns on, and keep everything else identical.
+
+For a requirement that passes because a value meets some standard, the opposite case is a value that fails to meet it while remaining present. Not an absent value: absence is usually a different requirement, and a test that removes the value entirely does not prove the standard is enforced.
+
+Name the opposite test so its purpose is clear, and comment which requirement owns the primary behavior.
+
+Write the tests from the requirement, not from the implementation. The source files below are provided so your fixtures use real property names and your imports resolve — not as a description of correct behavior. Where the current implementation appears to contradict the requirement, write the test the requirement demands and let it fail: the implementation phase that follows will make it pass. A test written to agree with existing code cannot detect that the code is wrong.
 
 ## CloudFormation Template Preprocessing
 

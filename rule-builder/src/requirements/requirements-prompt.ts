@@ -69,6 +69,20 @@ Cover at least these categories (skip only if genuinely inapplicable to this rul
 - Do not include template/fixture snippets.
 - Do not include cross-stack/cross-template scenarios (untestable architectural limitations).
 
+## Qualified Requirements Need Their Complement
+
+A requirement is qualified when its outcome depends on a value meeting some standard — "narrowed by a restrictive condition", "scoped to a specific source", "set to a supported version", "covering the assessed resource". The qualifier is the whole point of the requirement, so the specification must also state what happens when the qualifier is NOT met.
+
+For every qualified requirement, include a second requirement for the same scenario with a value that fails the qualifier, and the opposite expected behavior. Describe what disqualifies the value.
+
+Example: a rule about granting access to untrusted callers.
+- "Access is granted to an unspecified caller, narrowed by a restriction on which identities may use it" → pass
+- "Access is granted to an unspecified caller, with a restriction present that constrains something other than identity" → flag
+
+Without the second requirement, an implementation that accepts the mere presence of a restriction satisfies the specification, and the qualifier goes unenforced. This is the most common way a rule ships permissive: the passing case is described, the near-miss is not.
+
+These two requirements are not a conflict. Their preconditions are mutually exclusive — a value either meets the qualifier or it does not — so do not surface them as an ambiguity. If which values meet the qualifier is itself unclear, that IS an ambiguity: ask it.
+
 ## Ambiguity Detection
 
 If you are uncertain whether a scenario should 'flag' or 'pass', include it in the ambiguities array for human resolution. Do not guess.

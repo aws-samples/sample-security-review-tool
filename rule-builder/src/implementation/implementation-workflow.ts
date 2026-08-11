@@ -4,6 +4,7 @@ import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
 import { ImplementationConflictResolver } from './implementation-conflict-resolver.js';
 import { TestCreationAgent } from './test-creation-agent.js';
+import { checkDiscrimination } from './test-discrimination-check.js';
 import { RuleImplementationAgent } from './rule-implementation-agent.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
@@ -39,9 +40,20 @@ export class ImplementationWorkflow {
     }
 
     private warnIfTestsMissing(requirement: RuleRequirement): void {
-        if (this.isAlreadyImplemented(requirement)) return;
+        if (this.isAlreadyImplemented(requirement)) {
+            this.warnIfTestsDoNotDiscriminate(requirement);
+            return;
+        }
         const missing = this.testFileNames(requirement).filter(name => !fs.existsSync(path.join(this.context.testsFolderPath, name)));
         this.logger.warning(`${requirement.id} did not produce ${missing.join(' and ')}. The requirement is not covered.`);
+    }
+
+    private warnIfTestsDoNotDiscriminate(requirement: RuleRequirement): void {
+        for (const name of this.testFileNames(requirement)) {
+            const result = checkDiscrimination(path.join(this.context.testsFolderPath, name));
+            if (result.discriminates) continue;
+            this.logger.warning(`${requirement.id} ${name} does not discriminate: ${result.reason}. The requirement is not proven.`);
+        }
     }
 
     private isAlreadyImplemented(requirement: RuleRequirement): boolean {
