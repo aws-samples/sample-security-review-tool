@@ -1,10 +1,10 @@
-import { Agent, BedrockModel } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import { AgentToolFactory } from '../implementation/agent-tools.js';
 import { createAwsKnowledgeMcpClient } from '../shared/aws-knowledge-mcp-client.js';
 import { FixtureGenerationPromptBuilder } from './fixture-generation-prompt.js';
 import { FixtureType } from './fixture-type.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
+import { SonnetAgent } from '../shared/agents/sonnet-agent.js';
 
 export class FixtureGenerationAgent {
     private readonly promptBuilder: FixtureGenerationPromptBuilder;
@@ -18,8 +18,7 @@ export class FixtureGenerationAgent {
         const mcpClient = createAwsKnowledgeMcpClient();
 
         try {
-            const agent = new Agent({
-                model: new BedrockModel({ modelId: 'global.anthropic.claude-opus-4-7', maxTokens: 16384 }),
+            const agent = new SonnetAgent({
                 systemPrompt: this.promptBuilder.buildSystemPrompt(),
                 tools: [
                     mcpClient,
