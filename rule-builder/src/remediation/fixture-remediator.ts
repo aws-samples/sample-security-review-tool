@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import * as url from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { RuleContext } from '../shared/rule-context.js';
+import { FixtureDependencyInstaller } from '../shared/fixture-dependency-installer.js';
 import { RemediationUpdaterAgent } from './remediation-updater-agent.js';
 import { RelatedRulesRecorder } from './related-rules-recorder.js';
 import { FixtureType } from '../fixtures/fixture-type.js';
@@ -54,6 +55,7 @@ export class FixtureRemediator {
     private prepareFixtures(): void {
         fs.rmSync(this.fixtureType.outputFolderPath, { recursive: true, force: true });
         this.restoreFixtureInputs();
+        new FixtureDependencyInstaller(this.fixtureType.outputFolderPath, this.fixtureType.label).ensureInstalled();
     }
 
     private restoreFixtureInputs(): void {

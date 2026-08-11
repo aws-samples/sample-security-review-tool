@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RuleContext } from '../shared/rule-context.js';
+import { FixtureDependencyInstaller } from '../shared/fixture-dependency-installer.js';
 import { FixtureGenerationAgent } from './fixture-generation-agent.js';
 import { FixtureType } from './fixture-type.js';
 
@@ -9,6 +10,7 @@ export class FixtureGenerator {
 
     public async generate(): Promise<void> {
         this.prepareTemplate();
+        new FixtureDependencyInstaller(this.fixtureType.outputFolderPath, this.fixtureType.label).ensureInstalled();
         await this.prepareResources();
     }
 
