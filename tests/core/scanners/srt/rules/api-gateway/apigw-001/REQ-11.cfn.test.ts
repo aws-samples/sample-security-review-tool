@@ -88,4 +88,48 @@ describe('APIGW-001 CloudFormation - REQ-11: log group retention is unresolvable
     const result = apigw001Control.run(adapter, context);
     expect(result).toBeNull();
   });
+
+  /**
+   * `RetentionInDays: !Ref RetentionParameter` on a parameter with no Default reaches
+   * the rule as the string 'DEFAULT', which preprocessing substitutes for a Ref it
+   * cannot resolve. The retention is chosen at deploy time and cannot be judged here.
+   */
+  const evaluateRetention = (retention: unknown) => {
+    const template: Template = {
+      Resources: {
+        AccessLogGroup: {
+          Type: 'AWS::Logs::LogGroup',
+          Properties: { LogGroupName: '/aws/apigateway/access-logs', RetentionInDays: retention },
+        },
+        ApiStage: {
+          Type: 'AWS::ApiGateway::Stage',
+          Properties: {
+            StageName: 'prod',
+            RestApiId: 'MyApi',
+            AccessLogSetting: { DestinationArn: 'AccessLogGroup', Format: '$context.requestId' },
+          },
+        },
+      },
+    } as unknown as Template;
+
+    const resource = template.Resources!['ApiStage'];
+    const context: CfnContext = { stackName: 'test-stack', template, resource, logicalId: 'ApiStage' };
+    return apigw001Control.run(new Apigw001CfnAdapterFactory().bind(context), context);
+  };
+
+  it("passes when RetentionInDays is the unresolved-parameter placeholder 'DEFAULT'", () => {
+    expect(evaluateRetention('DEFAULT')).toBeNull();
+  });
+
+  it('passes when a resolved parameter default arrives as a numeric string', () => {
+    expect(evaluateRetention('30')).toBeNull();
+  });
+
+  it('still flags a non-numeric retention string (REQ-12)', () => {
+    expect(evaluateRetention('not-a-number')?.check_id).toBe('APIGW-001');
+  });
+
+  it('still flags a zero retention supplied as a string (REQ-04)', () => {
+    expect(evaluateRetention('0')?.check_id).toBe('APIGW-001');
+  });
 });

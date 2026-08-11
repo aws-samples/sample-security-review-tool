@@ -83,10 +83,10 @@
     },
     {
       "id": "REQ-11",
-      "description": "API Gateway stage has access logging enabled, but the referenced in-template log group's retention value cannot be resolved at analysis time",
+      "description": "API Gateway stage has access logging enabled, but the referenced in-template log group's retention value cannot be resolved at analysis time. This includes retention set from a template parameter with no default, which preprocessing substitutes with the placeholder string 'DEFAULT'.",
       "category": "INTRINSIC_UNRESOLVABLE",
       "expectedBehavior": "pass",
-      "rationale": "The rule cannot definitively assert that retention is missing or invalid when the value is unresolvable; flagging would risk false positives."
+      "rationale": "The rule cannot definitively assert that retention is missing or invalid when the value is unresolvable; flagging would risk false positives. The 'DEFAULT' placeholder means the value is chosen at deploy time, not that the author wrote an invalid retention, so it belongs here rather than under REQ-12. A parameter default that does resolve to a numeric string is a real value and is judged on that value."
     },
     {
       "id": "REQ-12",

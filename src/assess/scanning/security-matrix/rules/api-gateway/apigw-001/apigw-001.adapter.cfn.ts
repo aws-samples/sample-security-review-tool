@@ -7,6 +7,7 @@ const ACCESS_LOG_PROPERTY_BY_TYPE: Record<string, string> = {
 };
 
 const LOG_GROUP_TYPE = 'AWS::Logs::LogGroup';
+const UNRESOLVED_PARAMETER_PLACEHOLDER = 'DEFAULT';
 
 type RetentionStatus = 'valid' | 'invalid' | 'unknown';
 
@@ -111,10 +112,24 @@ class Apigw001CfnAdapter implements Apigw001Adapter {
 
   private classifyRetention(value: unknown): RetentionStatus {
     if (typeof value === 'number') return value > 0 ? 'valid' : 'invalid';
-    if (typeof value === 'string') return 'invalid';
+    if (typeof value === 'string') return this.classifyStringRetention(value);
     if (typeof value === 'boolean') return 'invalid';
     if (value && typeof value === 'object') return this.classifyIntrinsic(value as Record<string, unknown>);
     return 'invalid';
+  }
+
+  /**
+   * Preprocessing substitutes the string 'DEFAULT' for a Ref it cannot resolve to a
+   * parameter default, so that value means "chosen at deploy time" rather than a
+   * literal the author wrote. Reporting it as invalid contradicts REQ-11. A numeric
+   * string is a resolved parameter default and is judged on its value; YAML templates
+   * quote parameter defaults, so this arrives as a string rather than a number.
+   */
+  private classifyStringRetention(value: string): RetentionStatus {
+    if (value === UNRESOLVED_PARAMETER_PLACEHOLDER) return 'unknown';
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed)) return 'invalid';
+    return parsed > 0 ? 'valid' : 'invalid';
   }
 
   private classifyIntrinsic(intrinsic: Record<string, unknown>): RetentionStatus {
