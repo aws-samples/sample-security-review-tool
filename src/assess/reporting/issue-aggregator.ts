@@ -152,6 +152,7 @@ export class IssueAggregator {
                 this.captureIssueDetected(newIssue);
             } else {
                 const existingIssue = issues[existingIndex];
+                existingIssue.fix = newIssue.fix;
                 existingIssue.assessmentCount = (existingIssue.assessmentCount || 1) + 1;
                 matchedIndices.add(existingIndex);
                 this.reopenIfPreviouslyFixed(existingIssue);
