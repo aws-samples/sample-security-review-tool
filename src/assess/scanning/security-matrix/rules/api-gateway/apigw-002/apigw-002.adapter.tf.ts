@@ -1,6 +1,6 @@
 import { AdapterFactory, TerraformResource, TfContext } from '../../../controls/types.js';
 import { Apigw002Adapter } from './apigw-002.adapter.js';
-import { hasAnyRequestParameter, hasRequiredQueryOrHeaderParameter } from './apigw-002.request-parameters.js';
+import { hasQueryOrHeaderParameter, hasRequiredQueryOrHeaderParameter } from './apigw-002.request-parameters.js';
 
 const VALIDATOR_TYPE = 'aws_api_gateway_request_validator';
 
@@ -58,8 +58,8 @@ class Apigw002TfAdapter implements Apigw002Adapter {
     return hasRequiredQueryOrHeaderParameter(this.values['request_parameters']);
   }
 
-  get declaresAnyRequestParameter(): boolean {
-    return hasAnyRequestParameter(this.values['request_parameters']);
+  get declaresQueryOrHeaderParameter(): boolean {
+    return hasQueryOrHeaderParameter(this.values['request_parameters']);
   }
 
   get declaresRequestBodyModel(): boolean {

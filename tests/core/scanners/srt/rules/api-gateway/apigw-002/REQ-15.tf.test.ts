@@ -80,8 +80,9 @@ describe('APIGW-002 REQ-15 (Terraform): a method with no declared input needs no
     expect(result?.check_id).toBe('APIGW-002');
   });
 
-  // A path parameter is validatable input too: validation covers required parameters in the URI.
-  it('flags the same GET when it declares only a required path parameter', () => {
+  // A path parameter is part of the route, so a request missing it never reaches the method. It is
+  // not input a validator can usefully check, and the exemption still applies.
+  it('passes a GET whose only declared parameter is a path parameter', () => {
     const result = run(
       method({
         http_method: 'GET',
@@ -89,8 +90,7 @@ describe('APIGW-002 REQ-15 (Terraform): a method with no declared input needs no
       }),
     );
 
-    expect(result).not.toBeNull();
-    expect(result?.check_id).toBe('APIGW-002');
+    expect(result).toBeNull();
   });
 
   // A body-carrying verb is never exempt: declaring a model and validating it is a real fix.

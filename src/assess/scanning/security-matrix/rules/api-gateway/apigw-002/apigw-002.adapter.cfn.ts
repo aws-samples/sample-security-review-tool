@@ -1,6 +1,6 @@
 import { AdapterFactory, CfnContext, Resource } from '../../../controls/types.js';
 import { Apigw002Adapter } from './apigw-002.adapter.js';
-import { hasAnyRequestParameter, hasRequiredQueryOrHeaderParameter } from './apigw-002.request-parameters.js';
+import { hasQueryOrHeaderParameter, hasRequiredQueryOrHeaderParameter } from './apigw-002.request-parameters.js';
 
 const VALIDATOR_TYPE = 'AWS::ApiGateway::RequestValidator';
 
@@ -52,8 +52,8 @@ class Apigw002CfnAdapter implements Apigw002Adapter {
     return hasRequiredQueryOrHeaderParameter(this.properties['RequestParameters']);
   }
 
-  get declaresAnyRequestParameter(): boolean {
-    return hasAnyRequestParameter(this.properties['RequestParameters']);
+  get declaresQueryOrHeaderParameter(): boolean {
+    return hasQueryOrHeaderParameter(this.properties['RequestParameters']);
   }
 
   get declaresRequestBodyModel(): boolean {

@@ -11,7 +11,7 @@
   "requirements": [
     {
       "id": "REQ-01",
-      "description": "An API method (non-preflight HTTP verb) that declares a request body model or at least one request parameter has no request validation configured at all — it does not reference any request validator",
+      "description": "An API method (non-preflight HTTP verb) that declares a request body model or at least one query string or header parameter has no request validation configured at all — it does not reference any request validator",
       "category": "ABSENT",
       "expectedBehavior": "flag",
       "rationale": "The method accepts input that nothing checks, so request bodies and query/header parameters reach the backend unvalidated. The qualifier matters: a method declaring no input at all has nothing a validator could enforce, which REQ-15 covers separately."
@@ -107,15 +107,15 @@
     },
     {
       "id": "REQ-15",
-      "description": "An API method whose HTTP verb carries no request body by definition declares no request body model and no request parameters of any kind, and references no request validator",
+      "description": "An API method whose HTTP verb carries no request body by definition declares no request body model and no query string or header parameters, and references no request validator",
       "category": "ABSENT",
       "expectedBehavior": "pass",
-      "rationale": "The method declares no input, so no request validator configuration could enforce anything: parameter validation only checks declared required parameters, and body validation is not performed when no model matches the content type. Flagging would demand a change that cannot improve the method, and the only configuration that would clear it is body validation on a verb whose body has no defined semantics. Any declared parameter — path, query string or header — counts as input and removes the exemption.",
+      "rationale": "The method declares no input a validator could check, so no validator configuration could enforce anything: parameter validation only checks declared required parameters, and body validation is not performed when no model matches the content type. Flagging would demand a change that cannot improve the method, and the only configuration that would clear it is body validation on a verb whose body has no defined semantics.",
       "ambiguity": {
         "question": "Should a method that declares no body model and no parameters be required to reference a request validator, when no validator configuration could enforce anything for it?",
         "settledBy": "documentation",
         "docReference": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-method-request-validation.html",
-        "evidence": "The API Gateway request validation documentation states that validation checks \"the required request parameters in the URI, query string, and headers ... are included and not blank\" and that for the payload, \"If no matching content type is found, request validation is not performed.\" A method declaring neither required parameters nor a body model therefore has nothing either half of validation can act on. Restricted to verbs whose body has no defined semantics (GET, HEAD, DELETE): for POST, PUT and PATCH the actionable fix is to declare a model and validate it, so those keep flagging under REQ-01. Parameters are counted regardless of kind: validation covers required parameters in the URI, query string and headers, so a declared path parameter is validatable input. A narrower check exempted a GET declaring method.request.path.proxy, which was wrong."
+        "evidence": "The API Gateway request validation documentation states that validation checks \"the required request parameters in the URI, query string, and headers ... are included and not blank\" and that for the payload, \"If no matching content type is found, request validation is not performed.\" A method declaring neither required parameters nor a body model therefore has nothing either half of validation can act on. Restricted to verbs whose body has no defined semantics (GET, HEAD, DELETE): for POST, PUT and PATCH the actionable fix is to declare a model and validate it, so those keep flagging under REQ-01. Path parameters are excluded from the count of declared input even though validation nominally covers them, because a path parameter is part of the route: a request missing it does not match the resource and never reaches the method, so validating one cannot reject anything routing has not already rejected. This is why REQ-13 also considers only query string and header parameters when judging whether parameter validation enforces anything."
       }
     },
     {

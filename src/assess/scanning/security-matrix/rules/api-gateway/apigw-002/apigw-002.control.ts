@@ -80,12 +80,12 @@ export class Apigw002Control extends SecurityControl<Apigw002Adapter> {
     return !(adapter.referencedValidatorValidatesParameters && adapter.declaresRequiredQueryOrHeaderParameter);
   }
 
-  // A method declaring neither a body model nor any request parameter has no input for a
-  // validator to check. For these verbs a body has no defined semantics either, so no validator
-  // configuration could enforce anything and there is no change worth asking the author to make.
+  // A method declaring neither a body model nor a query or header parameter has no input a validator
+  // could check. For these verbs a body has no defined semantics either, so no validator configuration
+  // could enforce anything and there is no change worth asking the author to make.
   private hasNothingToValidate(adapter: Apigw002Adapter): boolean {
     if (adapter.httpMethod === undefined || !BODYLESS_METHODS.includes(adapter.httpMethod)) return false;
-    return !adapter.declaresRequestBodyModel && !adapter.declaresAnyRequestParameter;
+    return !adapter.declaresRequestBodyModel && !adapter.declaresQueryOrHeaderParameter;
   }
 
   private isPreflight(adapter: Apigw002Adapter): boolean {

@@ -1,6 +1,5 @@
 const QUERY_STRING_PREFIX = 'method.request.querystring.';
 const HEADER_PREFIX = 'method.request.header.';
-const METHOD_REQUEST_PREFIX = 'method.request.';
 
 /**
  * True when the declared request parameters mark at least one query string or header
@@ -12,17 +11,16 @@ export function hasRequiredQueryOrHeaderParameter(requestParameters: unknown): b
 }
 
 /**
- * True when the method declares any request parameter at all, of any kind and required or not. Used
- * to tell a method that has input a validator could be made to check from one that has none.
+ * True when a query string or header parameter is declared, required or not. Used to tell a method
+ * whose input a validator could be made to check from one that has no such input.
  *
- * Deliberately wider than hasRequiredQueryOrHeaderParameter: validation covers required parameters in
- * the URI, query string and headers, so a declared path parameter is input too. Narrowing this to
- * query and header parameters exempted a GET declaring `method.request.path.proxy: true`, which
- * API Gateway can validate.
+ * Path parameters are deliberately excluded, even though validation nominally covers them: a path
+ * parameter is part of the route, so a request missing it does not match the resource and never
+ * reaches the method. Validating one cannot reject anything routing has not already rejected.
  */
-export function hasAnyRequestParameter(requestParameters: unknown): boolean {
+export function hasQueryOrHeaderParameter(requestParameters: unknown): boolean {
   if (!isRecord(requestParameters)) return false;
-  return Object.keys(requestParameters).some(name => name.toLowerCase().startsWith(METHOD_REQUEST_PREFIX));
+  return Object.keys(requestParameters).some(isQueryOrHeader);
 }
 
 function isQueryOrHeader(name: string): boolean {

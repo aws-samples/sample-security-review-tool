@@ -87,9 +87,9 @@ describe('APIGW-002 REQ-15 (CloudFormation): a method with no declared input nee
     expect(result?.check_id).toBe('APIGW-002');
   });
 
-  // A path parameter is validatable input too: validation covers required parameters in the URI,
-  // so exempting a method that declares one would hide a real gap.
-  it('flags the same GET when it declares only a required path parameter', () => {
+  // A path parameter is not input a validator can usefully check: it is part of the route, so a
+  // request missing it never reaches the method. The exemption still applies.
+  it('passes a GET whose only declared parameter is a path parameter', () => {
     const result = run(
       buildTemplate({
         HttpMethod: 'GET',
@@ -97,8 +97,7 @@ describe('APIGW-002 REQ-15 (CloudFormation): a method with no declared input nee
       }),
     );
 
-    expect(result).not.toBeNull();
-    expect(result?.check_id).toBe('APIGW-002');
+    expect(result).toBeNull();
   });
 
   // A body-carrying verb is never exempt: declaring a model and validating it is a real fix.
