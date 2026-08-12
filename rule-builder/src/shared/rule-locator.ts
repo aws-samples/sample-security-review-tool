@@ -19,7 +19,7 @@ export class RuleLocator {
     }
 
     private get rulesRootFolderPath(): string {
-        return path.join(RuleContext.srtRootFolderPath(), 'src', 'assess', 'scanning', 'security-matrix', 'rules');
+        return RuleContext.rulesRootFolderPath();
     }
 
     private findRequirementsFilePath(): string {

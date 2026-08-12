@@ -5,6 +5,7 @@ import { BedrockConfig } from '../../src/config/aws/bedrock-config.js';
 import { RuleContext } from './shared/rule-context.js';
 import { RuleLocator } from './shared/rule-locator.js';
 import { BuildWorkflow } from './building/build-workflow.js';
+import { ConversionWorkflow } from './converting/conversion-workflow.js';
 import { ExerciseWorkflow } from './exercise/exercise-workflow.js';
 import { RuleBuilderLogger } from './shared/logging/rule-builder-logger.js';
 
@@ -16,26 +17,32 @@ BedrockConfig.initialize('default', 'us-east-1');
 
 const logger = new RuleBuilderLogger();
 
-interface ParsedArgs { ruleId: string; service?: string; description?: string; regenerate: boolean; isFullBuild: boolean; }
+interface ParsedArgs { ruleId?: string; legacyRuleId?: string; service?: string; description?: string; regenerate: boolean; isFullBuild: boolean; }
 
 async function main(): Promise<void> {
     const args = parseArgs(process.argv.slice(2));
-    if (args.isFullBuild) {
+    if (args.legacyRuleId) {
+        await convert(args);
+    } else if (args.isFullBuild) {
         await build(args);
     } else {
         await exercise(args);
     }
 }
 
+async function convert(args: ParsedArgs): Promise<void> {
+    await new ConversionWorkflow(args.legacyRuleId!).run({ regenerate: args.regenerate });
+}
+
 async function build(args: ParsedArgs): Promise<void> {
-    const context = new RuleContext(args.ruleId, args.service!, args.description!);
+    const context = new RuleContext(args.ruleId!, args.service!, args.description!);
     logger.runStart(context.ruleId, context.description);
     await new BuildWorkflow(context).run({ regenerate: args.regenerate });
     logger.runComplete(context.ruleId);
 }
 
 async function exercise(args: ParsedArgs): Promise<void> {
-    const context = new RuleLocator(args.ruleId).locate();
+    const context = new RuleLocator(args.ruleId!).locate();
     logger.runStart(context.ruleId, context.description);
     await new ExerciseWorkflow(context).run();
     logger.runComplete(context.ruleId);
@@ -43,6 +50,7 @@ async function exercise(args: ParsedArgs): Promise<void> {
 
 function parseArgs(argv: string[]): ParsedArgs {
     let ruleId: string | undefined;
+    let legacyRuleId: string | undefined;
     let service: string | undefined;
     let description: string | undefined;
     let regenerate = false;
@@ -59,6 +67,9 @@ function parseArgs(argv: string[]): ParsedArgs {
         switch (arg) {
             case '--rule':
                 ruleId = consumeValue();
+                break;
+            case '--convert':
+                legacyRuleId = consumeValue();
                 break;
             case '--service':
                 service = consumeValue();
@@ -79,6 +90,11 @@ function parseArgs(argv: string[]): ParsedArgs {
         }
     }
 
+    if (legacyRuleId) {
+        if (ruleId || service || description) throw new Error('--convert reads the rule id, service, and description from the existing rule; do not pass --rule, --service, or --description alongside it');
+        return { legacyRuleId, regenerate, isFullBuild: false };
+    }
+
     if (!ruleId) throw new Error('--rule is required');
 
     const hasService = !!service;
@@ -96,11 +112,16 @@ function printUsage(): void {
   Build a rule (full 5-phase pipeline):
     bun src/index.ts --rule <checkId> --service <service> --description <description> [--regenerate]
 
+  Convert a legacy rule (same 5-phase pipeline, details read from the existing rule):
+    bun src/index.ts --convert <legacyCheckId> [--regenerate]
+
   Exercise an existing rule (run its unit tests + remediation against existing fixtures):
     bun src/index.ts --rule <checkId>
 
 Options:
   --rule <checkId>        Rule ID (e.g. S3-001, DDB-002, LAMBDA-004)
+  --convert <checkId>     Legacy rule ID to convert (e.g. LAMBDA-013, API-GW-002). Cannot be combined
+                          with --rule, --service, or --description.
   --service <service>     Service folder name (e.g. s3, dynamodb, lambda). Required only when building.
   --description <desc>    Description of the rule. Required only when building.
   --regenerate            (Build only) Clear tests, control, and adapter files before running (keeps cached requirements)
@@ -108,6 +129,11 @@ Options:
 
 With only --rule, service and description are recovered from the rule's
 requirements.json; fixtures are NOT regenerated.
+
+With --convert, the legacy rule's service and description are read from its own
+source. The description is restated as a requirement ("X-Ray tracing not enabled"
+becomes "Lambda functions must have X-Ray tracing enabled") and drives the build.
+The legacy files are left in place, and listed at the end for removal.
 `);
 }
 

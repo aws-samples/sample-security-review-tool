@@ -74,6 +74,10 @@ export class RuleContext {
         throw new Error('Could not find SRT root folder');
     }
 
+    public static rulesRootFolderPath(): string {
+        return path.join(RuleContext.srtRootFolderPath(), 'src', 'assess', 'scanning', 'security-matrix', 'rules');
+    }
+
     private getSrtRootFolderPath(): string {
         return RuleContext.srtRootFolderPath();
     }
@@ -131,7 +135,7 @@ export class RuleContext {
     }
 
     private getRuleFolderPath(): string {
-        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'rules', this.service, this.safeRuleId);
+        return path.join(RuleContext.rulesRootFolderPath(), this.service, this.safeRuleId);
     }
 
     private getRuleControlFilePath(): string {
