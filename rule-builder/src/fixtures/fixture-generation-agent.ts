@@ -27,7 +27,7 @@ export class FixtureGenerationAgent {
                 ],
             });
 
-            await this.logger.task(`${this.fixtureType.label} fixture`, () => agent.invoke(this.promptBuilder.buildUserPrompt()));
+            await this.logger.concurrentTask(`${this.fixtureType.label} fixture`, () => agent.invoke(this.promptBuilder.buildUserPrompt()));
         } finally {
             await mcpClient.disconnect().catch(() => {});
         }

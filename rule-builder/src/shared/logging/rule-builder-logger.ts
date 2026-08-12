@@ -39,6 +39,19 @@ export class RuleBuilderLogger {
         }
     }
 
+    // task() parks the cursor on an open line, which overlapping calls would trample.
+    public async concurrentTask<T>(label: string, run: () => Promise<T>): Promise<T> {
+        const startedAt = performance.now();
+        try {
+            const result = await run();
+            this.writeItemLine(label, true, 'done', this.elapsedSince(startedAt));
+            return result;
+        } catch (error) {
+            this.writeItemLine(label, false, 'failed', this.elapsedSince(startedAt));
+            throw error;
+        }
+    }
+
     public group(label: string): void {
         this.write(this.theme.group(label));
     }
@@ -90,6 +103,10 @@ export class RuleBuilderLogger {
 
     private elapsedSince(startedAt: number): number {
         return performance.now() - startedAt;
+    }
+
+    private writeItemLine(label: string, succeeded: boolean, status: string, elapsedMs: number): void {
+        this.write(this.theme.itemPending(label) + this.theme.itemOutcome(succeeded, status, elapsedMs));
     }
 
     private write(line: string): void {
