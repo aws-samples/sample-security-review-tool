@@ -7,6 +7,7 @@ import { UvManager } from '../../../src/shared/scanner-tools/uv-manager.js';
 import { ScannerToolManager } from '../../../src/shared/scanner-tools/scanner-tool-manager.js';
 import { ScanTool } from '../../../src/shared/scanner-tools/types.js';
 import { UnitTestRunner } from '../shared/unit-test-runner.js';
+import { assessTestFile } from './test-discrimination.js';
 
 export class AgentToolFactory {
     public static createWriteFileTool(options: { ensureDir: boolean } = { ensureDir: false }) {
@@ -58,6 +59,20 @@ export class AgentToolFactory {
                 const result = spawnSync('npx', ['vitest', 'run', '--reporter=verbose', filePath], { cwd: srtRootPath, encoding: 'utf8', timeout: 60_000 });
                 const output = ((result.stdout ?? '') + (result.stderr ?? ''));
                 return { passed: result.status === 0, output };
+            },
+        });
+    }
+
+    public static createTestDiscriminationTool(controlFilePath: string, srtRootPath: string) {
+        return tool({
+            name: 'check_tests_prove_requirement',
+            description: 'Check whether a test file actually proves its requirement. Runs the file twice, once against a control replaced by one that reports a finding for every input, and once against a control that reports nothing. A file that keeps passing under either is satisfied by a control that hardcodes that answer, and so proves nothing. Call this for every test file you write, before you finish.',
+            inputSchema: z.object({
+                filePath: z.string().describe('The absolute path of the test file to assess'),
+            }),
+            callback: async ({ filePath }) => {
+                const { outcome, reason } = await assessTestFile(filePath, controlFilePath, srtRootPath);
+                return { acceptable: outcome === 'proves' || outcome === 'exempt', outcome, reason };
             },
         });
     }

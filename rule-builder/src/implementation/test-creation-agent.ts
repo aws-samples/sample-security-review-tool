@@ -13,15 +13,20 @@ export class TestCreationAgent {
         this.promptBuilder = new TestCreationPromptBuilder(context);
     }
 
-    public async create(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {
+    public async create(spec: RequirementsSpec, requirement: RuleRequirement, problems: string[] = []): Promise<void> {
         const agent = new OpusAgent({
             systemPrompt: this.promptBuilder.buildSystemPrompt(),
             tools: [
                 AgentToolFactory.createWriteFileTool({ ensureDir: true }),
                 AgentToolFactory.createSingleFileVitestTool(this.context.srtRootFolderPath),
+                AgentToolFactory.createTestDiscriminationTool(this.context.ruleControlFilePath, this.context.srtRootFolderPath),
             ],
         });
 
-        await this.logger.agentBlock(`creating unit tests for ${spec.ruleId} ${requirement.id}`, () => agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement)));
+        const title = problems.length > 0
+            ? `rewriting unit tests for ${spec.ruleId} ${requirement.id}`
+            : `creating unit tests for ${spec.ruleId} ${requirement.id}`;
+
+        await this.logger.agentBlock(title, () => agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement, problems)));
     }
 }

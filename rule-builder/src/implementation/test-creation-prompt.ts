@@ -37,7 +37,7 @@ ${PREPROCESSING_BEHAVIOR}
 ${TERRAFORM_PLAN_BEHAVIOR}`;
     }
 
-    public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement): string {
+    public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement, problems: string[] = []): string {
         const cfnTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.cfn.test.ts`);
         const tfTestFilePath = path.join(this.context.testsFolderPath, `${requirement.id}.tf.test.ts`);
 
@@ -82,6 +82,20 @@ ${TERRAFORM_PLAN_BEHAVIOR}`;
                 ${fs.readFileSync(this.context.securityControlTypesFilePath, 'utf8')}
                 </source-file>
             </source-files>
-        `;
+        ${this.rejectionNotice(problems)}`;
+    }
+
+    private rejectionNotice(problems: string[]): string {
+        if (problems.length === 0) return '';
+
+        return `
+## Your Previous Attempt Was Rejected
+
+${problems.map(problem => `- ${problem}`).join('\n')}
+
+Rewrite both files. Every input a test asserts on has to be one the requirement actually decides, and each file needs at least one test asserting the opposite outcome, using the nearest input that flips it. A file asserting only one outcome is satisfied by a control that hardcodes that outcome, which is why it was rejected.
+
+If you believe the scenario genuinely cannot be represented in one of the two formats, skip every test in that file and say why in a comment. Do not leave a live test alongside a skipped one to get past this.
+`;
     }
 }

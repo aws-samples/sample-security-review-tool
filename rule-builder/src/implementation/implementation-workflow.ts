@@ -4,11 +4,12 @@ import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
 import { ImplementationConflictResolver } from './implementation-conflict-resolver.js';
 import { TestCreationAgent } from './test-creation-agent.js';
-import { checkDiscrimination } from './test-discrimination-check.js';
+import { assessTestFile } from './test-discrimination.js';
 import { RuleImplementationAgent } from './rule-implementation-agent.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 const MAX_CONFLICT_ESCALATIONS = 3;
+const MAX_TEST_CREATION_ATTEMPTS = 3;
 
 export class ImplementationWorkflow {
     private readonly testCreationAgent: TestCreationAgent;
@@ -28,32 +29,44 @@ export class ImplementationWorkflow {
         let requirement = this.nextUnimplemented(spec, attempted);
         while (requirement) {
             attempted.add(requirement.id);
-            await this.testCreationAgent.create(spec, requirement);
+            await this.createTestsThatProveTheRequirement(spec, requirement);
             await this.implementWithConflictResolution(spec, requirement);
-            this.warnIfTestsMissing(requirement);
             requirement = this.nextUnimplemented(spec, attempted);
         }
     }
 
+    // Runs before the implementation, because an implementation written against tests that accept any
+    // outcome is not verified by them passing. Failing the build is the point: the rule this guards
+    // against shipped permissive with every one of its tests green.
+    private async createTestsThatProveTheRequirement(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {
+        let problems: string[] = [];
+
+        for (let attempt = 1; attempt <= MAX_TEST_CREATION_ATTEMPTS; attempt++) {
+            await this.testCreationAgent.create(spec, requirement, problems);
+
+            problems = await this.testFilesProvingNothing(requirement);
+            if (problems.length === 0) return;
+
+            this.logger.warning(`${requirement.id} tests do not prove the requirement (attempt ${attempt} of ${MAX_TEST_CREATION_ATTEMPTS})`);
+            for (const problem of problems) this.logger.substep(problem);
+        }
+
+        throw new Error(`${requirement.id} tests still do not prove the requirement after ${MAX_TEST_CREATION_ATTEMPTS} attempts. ${problems.join('; ')}`);
+    }
+
+    private async testFilesProvingNothing(requirement: RuleRequirement): Promise<string[]> {
+        const assessed = await Promise.all(this.testFileNames(requirement).map(async name => ({
+            name,
+            result: await assessTestFile(path.join(this.context.testsFolderPath, name), this.context.ruleControlFilePath, this.context.srtRootFolderPath),
+        })));
+
+        return assessed
+            .filter(({ result }) => result.outcome === 'proves-nothing' || result.outcome === 'broken')
+            .map(({ name, result }) => `${name}: ${result.reason}`);
+    }
+
     private nextUnimplemented(spec: RequirementsSpec, attempted: Set<string>): RuleRequirement | undefined {
         return spec.requirements.find(requirement => !attempted.has(requirement.id) && !this.isAlreadyImplemented(requirement));
-    }
-
-    private warnIfTestsMissing(requirement: RuleRequirement): void {
-        if (this.isAlreadyImplemented(requirement)) {
-            this.warnIfTestsDoNotDiscriminate(requirement);
-            return;
-        }
-        const missing = this.testFileNames(requirement).filter(name => !fs.existsSync(path.join(this.context.testsFolderPath, name)));
-        this.logger.warning(`${requirement.id} did not produce ${missing.join(' and ')}. The requirement is not covered.`);
-    }
-
-    private warnIfTestsDoNotDiscriminate(requirement: RuleRequirement): void {
-        for (const name of this.testFileNames(requirement)) {
-            const result = checkDiscrimination(path.join(this.context.testsFolderPath, name));
-            if (result.discriminates) continue;
-            this.logger.warning(`${requirement.id} ${name} does not discriminate: ${result.reason}. The requirement is not proven.`);
-        }
     }
 
     private isAlreadyImplemented(requirement: RuleRequirement): boolean {
