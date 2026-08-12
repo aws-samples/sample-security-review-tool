@@ -12,10 +12,6 @@ import { BanditFixes } from './bandit-fixes.js';
 export class BanditScanner extends BaseScanner {
   private readonly cmd = new CommandRunner();
   private readonly scanToolManager = new ScannerToolManager();
-  private readonly priorityOverrides: Record<string, string> = {
-    'B105': 'High',
-    'B106': 'High'
-  };
 
   constructor(context: ProjectContext) {
     super(context);
@@ -78,9 +74,9 @@ export class BanditScanner extends BaseScanner {
       path: customPath || path.normalize(result.filename) || 'unknown',
       line: result.line_number,
       issue: result.issue_text || 'No message',
-      fix: BanditFixes[result.test_id],
+      fix: BanditFixes[result.test_id]?.intent,
       check_id: result.test_id || 'unknown-rule',
-      priority: this.priorityOverrides[result.test_id] || ScannerUtils.mapSeverity(result.issue_severity),
+      priority: BanditFixes[result.test_id]?.priority || ScannerUtils.mapSeverity(result.issue_severity),
       references: result.more_info || '',
       status: 'Open'
     };

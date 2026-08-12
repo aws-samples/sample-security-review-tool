@@ -14,14 +14,16 @@ export class ScannerUtils {
 
     public static mapSeverity(severity: string): string {
         switch (severity.toLowerCase()) {
+            case 'critical':
+                return 'CRITICAL';
             case 'high':
-                return 'High';
+                return 'HIGH';
             case 'medium':
-                return 'Medium';
+                return 'MEDIUM';
             case 'low':
-                return 'Low';
+                return 'LOW';
             default:
-                return 'Unknown';
+                return 'UNKNOWN';
         }
     }
 

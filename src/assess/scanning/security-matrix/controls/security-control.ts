@@ -1,20 +1,23 @@
 import { ControlAdapter, CfnContext, ControlFinding, IacContext, Priority, RemediationScenario, Resource, ScanResult, TfContext } from './types.js';
 import { SrtLogger } from '../../../../shared/logging/srt-logger.js';
+import type { Remediation } from '../../remediation/types.js';
+
+export const RELATED_RULES_HEADING = '\n\nAdditional constraints (your fix must also satisfy these related rules):\n\n';
 
 export interface SecurityControlMetadata {
     readonly id: string;
     readonly priority: Priority;
     readonly description: string;
     readonly remediationScenarios: RemediationScenario[];
-    readonly relatedRules?: readonly SecurityControl[];
+    readonly relatedRules?: readonly Remediation[];
 }
 
-export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlAdapter> {
+export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlAdapter> implements Remediation {
     public readonly id: string;
     public readonly priority: Priority;
     public readonly description: string;
     public readonly remediationScenarios: RemediationScenario[];
-    public readonly relatedRules: readonly SecurityControl[];
+    public readonly relatedRules: readonly Remediation[];
 
     constructor(metadata: SecurityControlMetadata) {
         this.id = metadata.id;
@@ -22,6 +25,10 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
         this.description = metadata.description;
         this.remediationScenarios = metadata.remediationScenarios;
         this.relatedRules = metadata.relatedRules ?? [];
+    }
+
+    public get intent(): string {
+        return this.remediationScenarios[0]?.intent ?? '';
     }
 
     protected abstract evaluate(adapter: TAdapter): ControlFinding | null;
@@ -42,9 +49,15 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
     private buildRemediation(adapter: TAdapter, scenario: string): string {
         const def = this.remediationScenarios.find(s => s.scenario === scenario);
         const primaryIntent = def?.intent ?? '';
-        if (this.relatedRules.length === 0) return primaryIntent;
-        const relatedGuidance = this.relatedRules.map(rule => `[${rule.id}] ${rule.description}: ${rule.remediationScenarios[0]?.intent ?? ''}`).join('\n\n');
-        return `${primaryIntent}\n\nAdditional constraints (your fix must also satisfy these related rules):\n\n${relatedGuidance}`;
+        const related = this.relatedRules.filter(rule => rule.intent.trim().length > 0);
+        if (related.length === 0) return primaryIntent;
+        const relatedGuidance = related.map(rule => this.describeRelatedRule(rule)).join('\n\n');
+        return `${primaryIntent}${RELATED_RULES_HEADING}${relatedGuidance}`;
+    }
+
+    private describeRelatedRule(rule: Remediation): string {
+        const prefix = rule.description ? `[${rule.id}] ${rule.description}:` : `[${rule.id}]`;
+        return `${prefix} ${rule.intent}`;
     }
 
     private buildScanResult(context: IacContext, adapter: TAdapter, finding: ControlFinding, fix: string): ScanResult {

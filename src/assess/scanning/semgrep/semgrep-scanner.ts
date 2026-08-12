@@ -69,9 +69,9 @@ export class SemgrepScanner extends BaseScanner {
       path: relativePath,
       line: result.start?.line,
       issue: result.extra?.message || result.message || 'No message',
-      fix: SemgrepFixes[checkId],
+      fix: SemgrepFixes[checkId]?.intent,
       check_id: checkId,
-      priority: result.extra?.metadata?.impact || 'Unknown',
+      priority: SemgrepFixes[checkId]?.priority || ScannerUtils.mapSeverity(result.extra?.metadata?.impact ?? ''),
       references: result.extra?.metadata?.references?.join(' | ') || '',
       status: 'Open'
     };
