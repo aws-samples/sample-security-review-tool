@@ -62,7 +62,7 @@ export class ImplementationConflictResolver {
         });
 
         const userPrompt = this.buildUserPrompt(current, conflicting, explanation, spec);
-        const result = await this.logger.agentBlock(`resolving conflict between ${current.id} and ${conflicting.id}`, () => agent.invoke(userPrompt));
+        const result = await this.logger.task(`resolving ${current.id} vs ${conflicting.id}`, () => agent.invoke(userPrompt));
         const decision = result.structuredOutput as z.infer<typeof ConflictDecisionSchema>;
 
         if (decision.removedRequirementId !== current.id && decision.removedRequirementId !== conflicting.id) {

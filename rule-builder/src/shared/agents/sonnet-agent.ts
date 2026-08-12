@@ -11,6 +11,7 @@ export class SonnetAgent extends Agent {
             additionalRequestFields: effortRequestFields(effort),
         });
         config.retryStrategy = new TransientErrorRetryStrategy();
+        config.printer = false;
         super(config);
     }
 }

@@ -8,6 +8,8 @@ import { AmbiguityResolver } from './ambiguity-resolver.js';
 import { AmbiguityResolutionSchema, DraftRequirementSchema, RequirementsOutputSchema } from './requirements-schema.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
+const MAX_LOGGED_QUESTION = 90;
+
 type RequirementsOutput = z.infer<typeof RequirementsOutputSchema>;
 type DraftRequirement = z.infer<typeof DraftRequirementSchema>;
 type Resolution = z.infer<typeof AmbiguityResolutionSchema>;
@@ -24,7 +26,7 @@ export class RequirementsWorkflow {
     public async run(options: RequirementsWorkflowOptions = {}): Promise<RequirementsSpec> {
         if (this.hasCachedSpec(options)) return this.loadCachedSpec();
 
-        const output = await new RequirementsAgent().invoke(this.context.description);
+        const output = await this.logger.task('drafting requirements', () => new RequirementsAgent().invoke(this.context.description));
         const spec = this.buildSpec(output, await this.settleAll(output.requirements));
         this.persist(spec);
         return spec;
@@ -53,7 +55,7 @@ export class RequirementsWorkflow {
         }
 
         const resolution = await resolver.resolve(this.context.description, draft.description, draft.ambiguity);
-        this.logResolution(draft, resolution);
+        this.logResolution(draft.id, draft.ambiguity, resolution);
 
         return {
             id: draft.id,
@@ -70,9 +72,13 @@ export class RequirementsWorkflow {
         };
     }
 
-    private logResolution(draft: DraftRequirement, resolution: Resolution): void {
-        this.logger.step(`${draft.id} ${draft.description} → ${resolution.chosenBehavior} (${resolution.settledBy})`);
-        if (resolution.docReference) this.logger.substep(resolution.docReference);
+    private logResolution(id: string, question: string, resolution: Resolution): void {
+        this.logger.step(`${id} ${this.shorten(question)} → ${resolution.chosenBehavior} (${resolution.settledBy})`);
+    }
+
+    private shorten(question: string): string {
+        if (question.length <= MAX_LOGGED_QUESTION) return question;
+        return `${question.slice(0, MAX_LOGGED_QUESTION - 1).trimEnd()}…`;
     }
 
     private buildSpec(output: RequirementsOutput, requirements: RuleRequirement[]): RequirementsSpec {

@@ -26,16 +26,15 @@ export class RuleBuilderLogger {
         this.write(this.theme.phaseComplete(summary, this.elapsedSince(this.phaseStartedAt)));
     }
 
-    // Frames an agent.invoke() call: begin rule, the agent's live stream, then a footer rule with elapsed + outcome.
-    public async agentBlock<T>(title: string, run: () => Promise<T>): Promise<T> {
+    public async task<T>(label: string, run: () => Promise<T>): Promise<T> {
         const startedAt = performance.now();
-        this.write(this.theme.agentBegin(title));
+        this.itemStart(label);
         try {
             const result = await run();
-            this.write(this.theme.agentEnd(true, this.elapsedSince(startedAt)));
+            this.itemEnd(true, 'done', this.elapsedSince(startedAt));
             return result;
         } catch (error) {
-            this.write(this.theme.agentEnd(false, this.elapsedSince(startedAt)));
+            this.itemEnd(false, 'failed', this.elapsedSince(startedAt));
             throw error;
         }
     }

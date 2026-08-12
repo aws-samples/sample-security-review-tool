@@ -2,11 +2,11 @@
 // CHANGING THE LOOK OF THE RULE-BUILDER LOGS
 //
 // All visual styling lives in this file. The workflow code only ever calls the
-// semantic methods on RuleBuilderLogger (phaseStart, agentBlock, success, ...),
+// semantic methods on RuleBuilderLogger (phaseStart, task, success, ...),
 // so changing the entire look means writing a new `Theme` here — nothing else.
 //
 // The active look is "BannerTheme" (bold `━━ 1/5  REQUIREMENTS ━━` phase rules,
-// begin/end-framed agent blocks, trailing dim durations).
+// one line per agent call with leader dots, trailing dim durations).
 //
 // Two alternative looks were considered and can be added as drop-in themes:
 //
@@ -59,8 +59,6 @@ export interface Theme {
     runComplete(ruleId: string, elapsedMs: number): string;
     phaseStart(number: number, total: number, title: string): string;
     phaseComplete(summary: string, elapsedMs: number): string;
-    agentBegin(title: string): string;
-    agentEnd(succeeded: boolean, elapsedMs: number): string;
     group(label: string): string;
     itemPending(name: string): string;
     itemContinuation(): string;
@@ -83,19 +81,16 @@ interface Glyphs {
     arrow: string;
     separator: string;
     bannerRule: string;
-    blockTop: string;
-    blockBottom: string;
 }
 
-const UNICODE_GLYPHS: Glyphs = { success: '✔', failure: '✗', warning: '!', info: '·', arrow: '›', separator: '·', bannerRule: '━', blockTop: '┌─', blockBottom: '┴─' };
-const ASCII_GLYPHS: Glyphs = { success: '*', failure: 'x', warning: '!', info: '-', arrow: '>', separator: '-', bannerRule: '=', blockTop: '+-', blockBottom: '+-' };
+const UNICODE_GLYPHS: Glyphs = { success: '✔', failure: '✗', warning: '!', info: '·', arrow: '›', separator: '·', bannerRule: '━' };
+const ASCII_GLYPHS: Glyphs = { success: '*', failure: 'x', warning: '!', info: '-', arrow: '>', separator: '-', bannerRule: '=' };
 
-const AGENT_INDENT = '   ';
 const ITEM_INDENT = '    ';
 const STATUS_COLUMN = 58;
 const MIN_STATUS_COLUMN = 24;
 
-// The "banner rules" aesthetic: bold phase rules, begin/end-framed agent blocks, trailing dim durations.
+// The "banner rules" aesthetic: bold phase rules, dot-led item lines, trailing dim durations.
 export class BannerTheme implements Theme {
     private readonly chalk: ChalkInstance;
     private readonly glyphs: Glyphs;
@@ -120,15 +115,6 @@ export class BannerTheme implements Theme {
 
     public phaseComplete(summary: string, elapsedMs: number): string {
         return `  ${this.chalk.green(this.glyphs.success)} ${summary} ${this.chalk.dim(`${this.glyphs.separator} ${this.duration(elapsedMs)}`)}`;
-    }
-
-    public agentBegin(title: string): string {
-        return `\n${this.chalk.dim(this.block(this.glyphs.blockTop, title))}`;
-    }
-
-    public agentEnd(succeeded: boolean, elapsedMs: number): string {
-        const outcome = succeeded ? `done ${this.glyphs.separator} ${this.duration(elapsedMs)}` : this.chalk.red(`failed ${this.glyphs.separator} ${this.duration(elapsedMs)}`);
-        return `${this.chalk.dim(this.block(this.glyphs.blockBottom, outcome))}\n`;
     }
 
     public group(label: string): string {
@@ -189,12 +175,6 @@ export class BannerTheme implements Theme {
         const rule = this.glyphs.bannerRule;
         const prefix = `${rule}${rule} ${label} `;
         return prefix + rule.repeat(Math.max(0, this.capabilities.width - this.visibleLength(prefix)));
-    }
-
-    // Left/top/bottom-only frame for the uncontrolled agent stream — no right edge, so long lines never break it.
-    private block(corner: string, label: string): string {
-        const prefix = `${AGENT_INDENT}${corner} ${label} `;
-        return prefix + this.glyphs.bannerRule.repeat(Math.max(0, this.capabilities.width - this.visibleLength(prefix)));
     }
 
     private statusColumn(): number {

@@ -23,10 +23,8 @@ export class TestCreationAgent {
             ],
         });
 
-        const title = problems.length > 0
-            ? `rewriting unit tests for ${spec.ruleId} ${requirement.id}`
-            : `creating unit tests for ${spec.ruleId} ${requirement.id}`;
+        const label = problems.length > 0 ? `${requirement.id} tests (rewrite)` : `${requirement.id} tests`;
 
-        await this.logger.agentBlock(title, () => agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement, problems)));
+        await this.logger.task(label, () => agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement, problems)));
     }
 }

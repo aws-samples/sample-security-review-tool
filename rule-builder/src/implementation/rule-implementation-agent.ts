@@ -25,7 +25,7 @@ export class RuleImplementationAgent {
             structuredOutputSchema: ImplementationResultSchema,
         });
 
-        const result = await this.logger.agentBlock(`implementing ${spec.ruleId} ${requirement.id}`, () => agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement)));
+        const result = await this.logger.task(`${requirement.id} implementation`, () => agent.invoke(this.promptBuilder.buildUserPrompt(spec, requirement)));
         return result.structuredOutput as ImplementationResult;
     }
 }

@@ -6,8 +6,6 @@ import { OpusAgent } from '../shared/agents/opus-agent.js';
 type Resolution = z.infer<typeof AmbiguityResolutionSchema>;
 
 export class AmbiguityResolver {
-    // Resolutions run concurrently, so this deliberately does not stream to the console — interleaved
-    // agent output from a dozen resolutions in flight is unreadable. The caller logs each decision.
     public async resolve(ruleDescription: string, scenario: string, question: string): Promise<Resolution> {
         const mcpClient = createAwsKnowledgeMcpClient();
 
