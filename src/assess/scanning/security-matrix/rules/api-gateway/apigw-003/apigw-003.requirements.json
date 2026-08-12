@@ -1,0 +1,129 @@
+{
+  "ruleId": "APIGW-003",
+  "generatedAt": "2026-08-12T14:31:37.831Z",
+  "description": "Public-facing API Gateway stages must have an AWS WAF web ACL associated with them",
+  "cfnResources": [
+    "AWS::ApiGateway::Stage"
+  ],
+  "tfResources": [
+    "aws_api_gateway_stage"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "An API stage exists and the template contains no web application firewall association of any kind",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires every public-facing API stage to be protected by a web ACL. With no firewall association present anywhere in the template, the stage receives no request filtering, matching the NON_COMPLIANT condition of the AWS Config check api-gw-associated-with-waf ('the rule is NON_COMPLIANT if an AWS WAF Web ACL is not used')."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A web application firewall association explicitly references the assessed API stage as its protected target and names a web ACL",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "AWS WAF protects an API Gateway stage by associating a web ACL with that specific stage (the protected-resource identifier includes the API identifier and the stage name). When such an association targets the assessed stage, the stage is protected and the rule is satisfied."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A web application firewall association exists but its protected target is a stage of a different API",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Web ACL associations are per-stage; protecting a stage of another API confers no protection on the assessed stage, so the assessed stage remains unprotected and must be flagged. This is the required complement to the passing case where the association names the assessed stage."
+    },
+    {
+      "id": "REQ-04",
+      "description": "A web application firewall association exists for the same API as the assessed stage, but its protected target is a different stage of that API",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Association is scoped to an individual stage, not to the whole API, so protecting one stage (for example a test stage) leaves the assessed stage unfiltered. The rule evaluates one stage at a time and must flag the stage that is not covered."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A web application firewall association targets the assessed API stage, but the web ACL reference is empty or blank",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "An association with no usable web ACL identifier provides no rule evaluation for incoming requests; the presence of an association shell without a firewall behind it is equivalent to having no web ACL associated, which the rule treats as non-compliant."
+    },
+    {
+      "id": "REQ-06",
+      "description": "A web application firewall association exists with no protected-target value at all (target reference present but empty)",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "With no target value, the association cannot be matched to the assessed stage, so no evidence of protection for that stage exists and the rule must report the stage as unprotected rather than assume coverage."
+    },
+    {
+      "id": "REQ-07",
+      "description": "The protected-target reference of a web application firewall association depends entirely on a value that cannot be resolved at analysis time, so it may or may not designate the assessed stage",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the target cannot be resolved, the rule cannot assert that the stage is unprotected; flagging would produce a false positive on a template that may well be compliant at deployment time. Unresolvable coverage evidence is therefore treated as satisfying the rule."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Several web application firewall associations exist targeting different stages, and one of them targets the assessed stage",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "The rule only needs one web ACL association covering the assessed stage; additional associations aimed at other stages are irrelevant. Since a covering association exists, the stage is protected."
+    },
+    {
+      "id": "REQ-09",
+      "description": "A web application firewall association's protected target is expressed as a broad pattern that resolves to cover every stage of the API owning the assessed stage",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "A target expression that necessarily includes the assessed stage (all stages of the assessed stage's API) demonstrates that this stage is behind a web ACL, so the rule is satisfied."
+    },
+    {
+      "id": "REQ-10",
+      "description": "A web application firewall association's protected target is expressed as a broad pattern, but the pattern is scoped to an API other than the one owning the assessed stage",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "A broad target only counts as coverage when it provably includes the assessed stage. A wildcard confined to a different API never protects this stage, so accepting it would let the rule pass on the mere presence of a pattern; the stage must be flagged."
+    },
+    {
+      "id": "REQ-11",
+      "description": "The assessed API stage is protected only through a legacy-generation web application firewall association rather than the current-generation one",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "AWS WAF Classic is in a planned end-of-life process with support ending September 30, 2025, and AWS directs all Classic web ACLs and their resource associations to be migrated to the current AWS WAF (v2), so a stage attached only to a Classic regional web ACL is not covered by a supported web application firewall.",
+      "ambiguity": {
+        "question": "Does protection via the legacy (WAF Classic regional) association mechanism count as compliant coverage for an API stage, or must the association use the current AWS WAF (v2) generation?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/waf/latest/developerguide/waf-migrating-from-classic.html",
+        "evidence": "Searched AWS documentation for the API Gateway WAF association guidance (Security Hub control APIGateway.4 and AWS Config rule api-gw-associated-with-waf) and for the WAF Classic vs. current-generation distinction. The control/rule text itself is generation-neutral — it only says the stage must use \"an AWS WAF web ACL\" — so it does not settle the question on its own. The WAF developer guide does settle it: \"Migrating your AWS WAF Classic resources to AWS WAF\" (https://docs.aws.amazon.com/waf/latest/developerguide/waf-migrating-from-classic.html) states that AWS WAF Classic \"is going through a planned end-of-life process,\" warns that \"AWS WAF Classic support will end on September 30, 2025,\" and says that resources created in Classic prior to November 2019 \"either need to work with them using AWS WAF Classic or migrate them to this latest version,\" pointing users to the current AWS WAF. The migration guidance further explains that completing migration requires manually associating the new AWS WAF (v2) web ACL with the resource, which automatically disassociates it from the Classic web ACL — i.e., a Classic association is the pre-migration state, not the target compliant state. Because Classic protection is a deprecated, end-of-support mechanism that AWS explicitly instructs customers to move off of, a stage whose only firewall association is a Classic regional web ACL cannot be treated as demonstrably protected by the current-generation AWS WAF, and the rule should flag it. This also aligns with the strict default: a protective feature that does not demonstrably provide current, supported coverage of the assessed resource flags."
+      }
+    },
+    {
+      "id": "REQ-12",
+      "description": "The assessed API stage belongs to an API whose endpoint configuration makes it reachable only from within a private network rather than from the internet",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "AWS's own WAF-association requirement for API Gateway evaluates every REST API stage and fails any stage without a web ACL, with no exemption based on endpoint type, so a private-endpoint stage is still unprotected and non-compliant.",
+      "ambiguity": {
+        "question": "Should the rule exempt stages of non-internet-facing (private endpoint) APIs, since the rule targets public-facing stages, or should it flag every API stage regardless of endpoint reachability?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html",
+        "evidence": "Searched AWS docs for WAF/API Gateway association guidance and for private-endpoint exceptions. The governing guidance is Security Hub CSPM control APIGateway.4 (\"API Gateway should be associated with a WAF Web ACL\", resource type AWS::ApiGateway::Stage, backed by AWS Config rule api-gw-associated-with-waf): it \"checks whether an API Gateway stage uses an AWS WAF web access control list (ACL). This control fails if an AWS WAF web ACL is not attached to a REST API Gateway stage.\" It has no parameters and states no carve-out for endpoint configuration (private, regional, or edge-optimized); the Config rule description is likewise endpoint-type agnostic (NON_COMPLIANT if no web ACL is used). The AWS WAF \"Resources that you can protect\" page and the API Gateway \"Use AWS WAF to protect your REST APIs\" page restrict association only by resource type (REST API stages, Regional web ACL) and Region — neither excludes private APIs. Nothing found in the documentation exempts private-endpoint APIs. Endpoint reachability is also not a reliable protection boundary: private APIs are reached from VPCs, Direct Connect, and cross-account VPC endpoints, so application-layer exploits remain in scope. Both the documentation and the strict default therefore point the same way: flag any stage without an associated web ACL, regardless of endpoint configuration."
+      }
+    },
+    {
+      "id": "REQ-13",
+      "description": "The assessed stage belongs to a newer-generation API type (such as an HTTP or WebSocket API) for which stage-level web ACL association may not be supported",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "AWS WAF web ACL association is only supported for API Gateway REST API stages (ARN form arn:aws:apigateway:region::/restapis/{api-id}/stages/{stage-name}), so HTTP and WebSocket API stages cannot carry a stage-level web ACL and are outside the rule's scope rather than misconfigured.",
+      "ambiguity": {
+        "question": "Are stages of newer-generation API Gateway APIs in scope for this rule, given that AWS WAF stage association is documented only for REST APIs (and regional HTTP APIs are not associable the same way)?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html",
+        "evidence": "Searched AWS documentation for AWS WAF association support for API Gateway stage types. The Security Hub CSPM control APIGateway.4 (\"API Gateway should be associated with a WAF Web ACL\", https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html) declares resource type AWS::ApiGateway::Stage and states explicitly that the control \"fails if an AWS WAF web ACL is not attached to a REST API Gateway stage\" — the evaluated population is REST API stages only. The backing AWS Config rule api-gw-associated-with-waf (https://docs.aws.amazon.com/config/latest/developerguide/api-gw-associated-with-waf.html) likewise scopes itself to AWS::ApiGateway::Stage, not AWS::ApiGatewayV2::Stage. The WAF-side reference confirms the mechanism: the only API Gateway resource ARN AssociateWebACL accepts is arn:aws:apigateway:region::/restapis/{api-id}/stages/{stage-name} (https://docs.aws.amazon.com/service-authorization/latest/reference/list_wafv2.html), and AWS guidance states plainly that \"AWS WAF supports only API Gateway REST APIs\" (https://repost.aws/knowledge-center/configure-api-gateway-rest-api). For HTTP and WebSocket (ApiGatewayV2) stages there is therefore no configuration the owner could set that would satisfy the rule; flagging them would produce a finding with no remediable control, which is not the \"sound resource dismissed by a reviewer\" case the strict default is meant to cover but an out-of-scope resource type. The default to flag does not apply because the evidence affirmatively defines the rule's scope, so newer-generation API stages pass (are not in scope). Note this is a scope determination, not an unresolvable-value exception; a REST stage with no association still flags."
+      }
+    },
+    {
+      "id": "REQ-14",
+      "description": "A web application firewall association targets the assessed stage, and the web ACL it names is defined elsewhere in the same template with no rules configured",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "The rule's requirement is that a web ACL be associated with the stage; the ACL's internal rule set is a separate concern evaluated by other rules. An association naming a real web ACL therefore satisfies this rule even if that ACL currently contains no rules."
+    }
+  ]
+}

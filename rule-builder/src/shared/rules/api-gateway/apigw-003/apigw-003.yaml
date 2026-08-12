@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for APIGW-003 - Public-facing API Gateway stages must have an AWS WAF
+  web ACL associated with them.
+  Scenario 1 (missing-web-acl-association): StageMissingAssociation has no
+  WAFv2 or WAFRegional web ACL association covering it at all.
+  Scenario 2 (legacy-web-acl-association): StageLegacyAssociation is covered
+  only by an end-of-life AWS::WAFRegional::WebACLAssociation and has no
+  current-generation AWS::WAFv2::WebACLAssociation.
+
+Resources:
+  # --- Supporting resources for scenario: missing-web-acl-association ---
+  RestApiMissingAssociation:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: rest-api-missing-association
+
+  DeploymentMissingAssociation:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref RestApiMissingAssociation
+
+  StageMissingAssociation:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApiMissingAssociation
+      DeploymentId: !Ref DeploymentMissingAssociation
+      StageName: prod
+      # No WAFv2 or WAFRegional web ACL association exists anywhere in this
+      # template that covers this stage -> triggers missing-web-acl-association.
+
+  # --- Supporting resources for scenario: legacy-web-acl-association ---
+  RestApiLegacyAssociation:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: rest-api-legacy-association
+
+  DeploymentLegacyAssociation:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref RestApiLegacyAssociation
+
+  StageLegacyAssociation:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApiLegacyAssociation
+      DeploymentId: !Ref DeploymentLegacyAssociation
+      StageName: prod
+
+  # Only a legacy WAFRegional association covers this stage; no current
+  # AWS::WAFv2::WebACLAssociation exists for it -> triggers
+  # legacy-web-acl-association.
+  LegacyWebAclAssociation:
+    Type: AWS::WAFRegional::WebACLAssociation
+    Properties:
+      WebACLId: legacy-web-acl-id
+      ResourceArn: !Sub 'arn:aws:apigateway:${AWS::Region}::/restapis/${RestApiLegacyAssociation}/stages/prod'
