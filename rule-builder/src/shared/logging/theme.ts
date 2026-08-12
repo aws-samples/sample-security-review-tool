@@ -63,7 +63,6 @@ export interface Theme {
     itemPending(name: string): string;
     itemContinuation(): string;
     itemOutcome(succeeded: boolean, status: string, elapsedMs?: number): string;
-    itemNote(message: string): string;
     step(message: string): string;
     substep(message: string): string;
     success(message: string): string;
@@ -137,10 +136,6 @@ export class BannerTheme implements Theme {
         const text = succeeded ? status : this.chalk.red(status);
         const elapsed = elapsedMs === undefined ? '' : this.chalk.dim(` ${this.glyphs.separator} ${this.duration(elapsedMs)}`);
         return `${glyph} ${text}${elapsed}`;
-    }
-
-    public itemNote(message: string): string {
-        return `${ITEM_INDENT}  ${this.chalk.dim(message)}`;
     }
 
     public step(message: string): string {

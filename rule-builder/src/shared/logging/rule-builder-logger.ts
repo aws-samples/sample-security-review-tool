@@ -69,10 +69,6 @@ export class RuleBuilderLogger {
         this.write(this.theme.itemOutcome(succeeded, status, elapsedMs));
     }
 
-    public itemNote(message: string): void {
-        this.write(this.theme.itemNote(message));
-    }
-
     public step(message: string): void {
         this.write(this.theme.step(message));
     }

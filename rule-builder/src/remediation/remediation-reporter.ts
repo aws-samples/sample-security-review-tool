@@ -36,16 +36,12 @@ export class RemediationReporter {
         this.logger.itemEnd(true, status, this.elapsed());
     }
 
-    public fixRetrying(result: FixValidationResult, nextAttempt: number, maxAttempts: number): void {
-        this.logger.itemEnd(false, `${this.describeFailure(result)}, retrying ${nextAttempt}/${maxAttempts}`, this.elapsed());
+    public fixRetrying(result: FixValidationResult): void {
+        this.logger.itemEnd(false, `${this.describeFailure(result)}, retrying…`, this.elapsed());
     }
 
     public fixFailed(result: FixValidationResult): void {
         this.logger.itemEnd(false, `${this.describeFailure(result)}, gave up after ${this.attempts} attempts`, this.elapsed());
-    }
-
-    public regressionSnapshotSaved(snapshotPath: string): void {
-        this.logger.itemNote(`regression snapshot: ${snapshotPath}`);
     }
 
     private openItem(name: string): void {

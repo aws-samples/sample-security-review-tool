@@ -11,7 +11,7 @@ import type { ScanResult } from '../../../src/assess/scanning/base-scanner.js';
 import { FixValidationResult } from './fix-validation-result.js';
 import { RemediationReporter } from './remediation-reporter.js';
 
-const MAX_FIX_ATTEMPTS = 3;
+const MAX_FIX_ATTEMPTS = 5;
 
 export class FixtureRemediator {
     private validationResult: FixValidationResult | null = null;
@@ -155,7 +155,7 @@ export class FixtureRemediator {
     private reportValidationOutcome(): void {
         const result = this.validationResult!;
         if (result.isSuccessful) return this.reporter.fixResolved();
-        if (this.fixAttempt < MAX_FIX_ATTEMPTS) return this.reporter.fixRetrying(result, this.fixAttempt + 1, MAX_FIX_ATTEMPTS);
+        if (this.fixAttempt < MAX_FIX_ATTEMPTS) return this.reporter.fixRetrying(result);
         this.reporter.fixFailed(result);
     }
 
@@ -181,7 +181,6 @@ export class FixtureRemediator {
         const issuesPath = path.join(this.fixtureType.outputFolderPath, '.srt', 'issues.json');
         const snapshotPath = issuesPath.replace('.json', `.regression-attempt-${this.fixAttempt}.json`);
         await fs.promises.copyFile(issuesPath, snapshotPath);
-        this.reporter.regressionSnapshotSaved(snapshotPath);
     }
 
     private async recordRelatedRules(): Promise<void> {
