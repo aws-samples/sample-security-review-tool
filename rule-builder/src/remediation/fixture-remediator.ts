@@ -164,13 +164,29 @@ export class FixtureRemediator {
     }
 
     private async updateFix(issue: ScanResult): Promise<void> {
-        if (this.fixIntroducedRegressions()) {
-            await this.snapshotRegression();
-            await this.recordRelatedRules();
-            await this.refreshFixGuidance(issue);
-        } else {
-            issue.fix = await new RemediationUpdaterAgent(this.context, this.fixtureType).invoke(this.validationResult!);
+        if (!this.fixIntroducedRegressions()) {
+            issue.fix = await this.rewriteRemediation(this.validationResult!);
+            return;
         }
+
+        await this.snapshotRegression();
+        const newlyRecorded = await this.recordRelatedRules();
+        this.failIfNothingLeftToLearn(issue, newlyRecorded);
+        await this.refreshFixGuidance(issue);
+    }
+
+    private failIfNothingLeftToLearn(issue: ScanResult, newlyRecorded: string[]): void {
+        if (newlyRecorded.length > 0) return;
+
+        const checkIds = this.validationResult!.introducedFindings.map(f => f.check_id).join(', ');
+        throw new Error(
+            `Fixing ${issue.check_id} on the ${this.fixtureType.label} fixture keeps triggering ${checkIds}, which is already recorded as a related rule. ` +
+            `Its guidance is not sufficient to produce a passing fix — improve the remediation text for ${checkIds} in its fixes file.`
+        );
+    }
+
+    private rewriteRemediation(result: FixValidationResult): Promise<string> {
+        return new RemediationUpdaterAgent(this.context, this.fixtureType).invoke(result);
     }
 
     private fixIntroducedRegressions(): boolean {
@@ -183,9 +199,9 @@ export class FixtureRemediator {
         await fs.promises.copyFile(issuesPath, snapshotPath);
     }
 
-    private async recordRelatedRules(): Promise<void> {
+    private recordRelatedRules(): Promise<string[]> {
         const triggeredCheckIds = this.validationResult!.introducedFindings.map(f => f.check_id!).filter(Boolean);
-        await new RelatedRulesRecorder(this.context).record(triggeredCheckIds);
+        return new RelatedRulesRecorder(this.context).record(triggeredCheckIds);
     }
 
     private async refreshFixGuidance(issue: ScanResult): Promise<void> {
