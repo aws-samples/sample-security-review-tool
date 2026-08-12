@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for APIGW-002 - API Gateway methods must enforce request validation.
+
+Resources:
+  SampleRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: apigw-002-sample-api
+
+  SampleResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref SampleRestApi
+      ParentId: !GetAtt SampleRestApi.RootResourceId
+      PathPart: items
+
+  # Validator that enforces nothing (both flags disabled)
+  NoOpValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      RestApiId: !Ref SampleRestApi
+      Name: NoOpValidator
+      ValidateRequestBody: false
+      ValidateRequestParameters: false
+
+  # Validator that validates parameters only (body disabled, parameters enabled)
+  ParamsOnlyValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      RestApiId: !Ref SampleRestApi
+      Name: ParamsOnlyValidator
+      ValidateRequestBody: false
+      ValidateRequestParameters: true
+
+  # Scenario: no-request-validator
+  # Method does not reference any RequestValidatorId at all.
+  MethodWithoutValidator:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SampleRestApi
+      ResourceId: !Ref SampleResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: '200'
+
+  # Scenario: request-validator-enforces-nothing
+  # Method references a validator whose flags are both disabled.
+  MethodWithNoOpValidator:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SampleRestApi
+      ResourceId: !Ref SampleResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      RequestValidatorId: !Ref NoOpValidator
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: '200'
+
+  # Scenario: parameter-validation-without-required-parameters
+  # Method references a validator that validates parameters only, but declares
+  # no required query string or header parameters (all declared as not required).
+  MethodWithParamsOnlyValidatorNoRequired:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref SampleRestApi
+      ResourceId: !Ref SampleResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      RequestValidatorId: !Ref ParamsOnlyValidator
+      RequestParameters:
+        method.request.querystring.filter: false
+        method.request.header.X-Trace-Id: false
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: '200'

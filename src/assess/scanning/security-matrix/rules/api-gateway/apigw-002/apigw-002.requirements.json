@@ -1,0 +1,149 @@
+{
+  "ruleId": "APIGW-002",
+  "generatedAt": "2026-08-11T22:18:56.701Z",
+  "description": "API Gateway methods must enforce request validation of the request body or query/header parameters, excluding CORS preflight methods",
+  "cfnResources": [
+    "AWS::ApiGateway::Method"
+  ],
+  "tfResources": [
+    "aws_api_gateway_method"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "An API method (non-preflight HTTP verb) that declares a request body model or at least one request parameter has no request validation configured at all — it does not reference any request validator",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The method accepts input that nothing checks, so request bodies and query/header parameters reach the backend unvalidated. The qualifier matters: a method declaring no input at all has nothing a validator could enforce, which REQ-15 covers separately."
+    },
+    {
+      "id": "REQ-02",
+      "description": "An API method that declares a request body model references a request validator whose configuration enables validation of the request body",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Body validation checks the payload against the model declared for the request content type, so with both the model and the flag present the payload is enforced before reaching the backend."
+    },
+    {
+      "id": "REQ-03",
+      "description": "An API method references a request validator whose configuration enables validation of required query string and header parameters but not the body",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule requires validation of the body OR of query/header parameters; a parameter-only validator enforces presence of required parameters, so it satisfies the rule."
+    },
+    {
+      "id": "REQ-05",
+      "description": "An API method references a request validator that exists but specifies no validation flags at all, leaving both body and parameter validation at their defaults",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "Both validation options default to false when unspecified, so the referenced validator validates nothing and the method's requests are unvalidated."
+    },
+    {
+      "id": "REQ-06",
+      "description": "An API method declares an empty/blank request validator reference value",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "A blank validator reference identifies no validator, so no validation is applied to the method's requests; this is equivalent to omitting validation entirely."
+    },
+    {
+      "id": "REQ-07",
+      "description": "A request validator with validation enabled exists in the same template but is associated with a different API, and the assessed method does not reference it",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Validation is only applied to a method that explicitly references a validator belonging to its own API; an unrelated validator elsewhere in the template provides no coverage for the assessed method."
+    },
+    {
+      "id": "REQ-08",
+      "description": "A request validator with validation enabled exists and is referenced by a different method of the same API, while the assessed method references no validator",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Request validation in API Gateway is configured per method; validation on a sibling method does not cause the assessed method's requests to be validated."
+    },
+    {
+      "id": "REQ-10",
+      "description": "A CORS preflight method (the HTTP verb used by browsers for preflight requests) has no request validation configured",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "pass",
+      "rationale": "CORS preflight requests carry no body and are answered by a mock integration returning CORS headers; the rule explicitly excludes preflight methods, so absence of validation on them is not a finding."
+    },
+    {
+      "id": "REQ-11",
+      "description": "Whether the assessed method has request validation, or whether the referenced validator enables validation, depends entirely on a condition whose value cannot be determined at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the effective configuration is undeterminable, the rule cannot assert non-compliance; flagging would produce a false positive for the branch in which validation is enabled, so the rule returns no finding."
+    },
+    {
+      "id": "REQ-12",
+      "description": "A method whose HTTP verb is a wildcard matching all verbs (including the preflight verb) has no request validation configured",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "An ANY/wildcard method accepts every verb, including body-bearing verbs such as POST and PUT, so it is a normal request-accepting method whose lack of a request validator leaves real request payloads and parameters unvalidated; the preflight exclusion applies only to methods that serve OPTIONS exclusively.",
+      "ambiguity": {
+        "question": "Should a method defined with a wildcard HTTP verb that also serves preflight requests be treated as an excluded preflight method (pass) or as a normal request-accepting method that must enforce validation (flag)?",
+        "settledBy": "strict-default",
+        "docReference": null,
+        "evidence": "Searched AWS documentation for guidance tying API Gateway request validation to wildcard (ANY) methods and to the CORS preflight exclusion: the request-validator extensions pages (x-amazon-apigateway-request-validator / -validators), the request-validation Compute Blog post, the CORS/preflight pages (http-api-cors, help-panel CORS, the CORS troubleshooting article), and the ANY/catch-all material (x-amazon-apigateway-any-method blog, HTTP API $default route, CDK ProxyResourceOptions anyMethod). These confirm that ANY is a catch-all frontend method matching all HTTP verbs and that request validators are configured per method or per API, but none of them states whether a wildcard method should be treated as a preflight method for the purposes of a validation requirement — no document settles the exclusion question. The strict default therefore applies, and it points the same way as the semantics: a wildcard method is not restricted to OPTIONS, so it will also receive GET/POST/PUT traffic with bodies and parameters. Treating it as an excluded preflight method would ship a resource that accepts unvalidated real requests, with nothing in the output revealing the miss; flagging it produces a finding a reviewer can dismiss if the method genuinely only serves preflight. The value here is fully resolvable at analysis time (the verb is literally ANY/wildcard and no validator is configured), so the unresolvable-value exception does not apply."
+      }
+    },
+    {
+      "id": "REQ-13",
+      "description": "An API method references a validator that enables only parameter validation, but the method declares no required query string or header parameters (and any declared parameters are marked optional), so validation has nothing to enforce",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "API Gateway parameter validation only checks that parameters marked required are present and non-blank, so a method with no required query string or header parameters has nothing validated and the enabled validator enforces nothing.",
+      "ambiguity": {
+        "question": "Does the rule require that the method actually declare something for the enabled validation to act on (required parameters for parameter validation, or a body model for body validation), or is enabling validation on the referenced validator sufficient regardless of what the method declares?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-method-request-validation.html",
+        "evidence": "Searched the API Gateway developer guide and supporting AWS material for the semantics of `validateRequestParameters`. The \"Request validation for REST APIs in API Gateway\" page (Overview of basic request validation) states that for validation API Gateway verifies \"The required request parameters in the URI, query string, and headers of an incoming request are included and not blank\" — validation is scoped strictly to parameters declared as required, and API Gateway only checks existence, not type or format. The AWS Compute Blog walkthrough (\"How to remove boilerplate validation logic in your REST APIs with Amazon API Gateway request validation\") demonstrates the same behavior empirically: with a parameter validator enabled, omitting the optional `type` query parameter returns 200 OK, while omitting the required `Account-Id` header returns 400. Therefore a method that references a parameter-only validator but declares no required parameters (all declared parameters optional) receives no enforcement whatsoever — every request passes through to the integration exactly as if validation were off. The rule's intent is that the method actually enforce validation, so enabling the validator flag is not sufficient by itself; the method must declare something for the enabled validation type to act on (required parameters for parameter validation, or a request body model for body validation). This configuration is effectively inert and must be flagged. This is not an intrinsic exception: the absence of required parameters is fully determinable from the method's static declaration at analysis time. The strict default would also flag (a protective feature present but not demonstrably covering the assessed request surface), but documentation independently settles it here."
+      }
+    },
+    {
+      "id": "REQ-14",
+      "description": "An API method that accepts a request body references a validator that enables only query string and header parameter validation, leaving the body unvalidated",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule is satisfied by validation of the body OR of query/header parameters, so parameter-only validation on a body-accepting method still meets the stated requirement."
+    },
+    {
+      "id": "REQ-15",
+      "description": "An API method whose HTTP verb carries no request body by definition declares no request body model and no request parameters of any kind, and references no request validator",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "The method declares no input, so no request validator configuration could enforce anything: parameter validation only checks declared required parameters, and body validation is not performed when no model matches the content type. Flagging would demand a change that cannot improve the method, and the only configuration that would clear it is body validation on a verb whose body has no defined semantics. Any declared parameter — path, query string or header — counts as input and removes the exemption.",
+      "ambiguity": {
+        "question": "Should a method that declares no body model and no parameters be required to reference a request validator, when no validator configuration could enforce anything for it?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-method-request-validation.html",
+        "evidence": "The API Gateway request validation documentation states that validation checks \"the required request parameters in the URI, query string, and headers ... are included and not blank\" and that for the payload, \"If no matching content type is found, request validation is not performed.\" A method declaring neither required parameters nor a body model therefore has nothing either half of validation can act on. Restricted to verbs whose body has no defined semantics (GET, HEAD, DELETE): for POST, PUT and PATCH the actionable fix is to declare a model and validate it, so those keep flagging under REQ-01. Parameters are counted regardless of kind: validation covers required parameters in the URI, query string and headers, so a declared path parameter is validatable input. A narrower check exempted a GET declaring method.request.path.proxy, which was wrong."
+      }
+    },
+    {
+      "id": "REQ-16",
+      "description": "An API method that declares no request body model references a request validator that enables body validation, and no required query string or header parameter is validated",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "API Gateway performs body validation only against a model matching the request content type, so with no model declared the payload is not validated despite the flag being enabled. The method appears to enforce validation while enforcing nothing.",
+      "ambiguity": {
+        "question": "Does enabling body validation without declaring a request body model enforce anything, or does the method merely appear compliant?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-method-request-validation.html",
+        "evidence": "The documentation states the payload is checked against \"the configured JSON schema request of the method for a given content type\" and that \"If no matching content type is found, request validation is not performed.\" Enabling the flag with no model is therefore a silent no-op rather than an error, which is the more dangerous failure: the configuration reads as validated. This does not fire when parameter validation is enabled and the method declares a required parameter, because that half still enforces something."
+      }
+    }
+  ],
+  "removedRequirements": [
+    {
+      "id": "REQ-04",
+      "description": "An API method references a request validator whose configuration explicitly disables both body validation and parameter validation",
+      "conflictedWith": "REQ-13",
+      "reason": "The rule's purpose is that a method must actually enforce validation of a body or of query/header parameters; a validator reference that enforces nothing does not satisfy it. REQ-13 is the direct expression of that purpose: parameter validation enabled with no required query string or header parameters validates nothing, so the method must be flagged. REQ-04's stated scenario (both validation flags false) is already covered by that same principle, but its fixture is not that scenario — it is a validator with parameter validation ON and no required parameters, and it asserts a pass. That assertion drifts from the rule's obligation and would make the rule permissive precisely where the misconfiguration is real, letting a no-op validator silently count as compliant. Keeping the flagging requirement preserves the rule's enforcement guarantee; any over-reporting is visible and correctable, whereas the missed case would fail silently."
+    },
+    {
+      "id": "REQ-09",
+      "description": "The template defines several request validators, some with all validation disabled, and the assessed method references one that enables at least one form of validation",
+      "conflictedWith": "REQ-13",
+      "reason": "The rule's purpose is that a method actually enforces validation of a request body or of query/header parameters. REQ-13 tests exactly that: a validator that turns on parameter validation while the method declares no required query/header parameters enforces nothing, which is the substantive misconfiguration the rule exists to catch. REQ-09's real concern — that only the validator referenced by the assessed method matters, not other disabled validators in the template — is incidental to this conflict and can still be exercised with a referenced validator that enables body validation or that validates declared required parameters; its passing verdict depends on a fixture shape (parameters-only validator, no declared parameters) that is vacuous validation and therefore contradicts the rule's purpose. Keeping REQ-09 instead would make the rule silently permissive toward methods whose enabled validator can never reject anything; keeping REQ-13 preserves the flag and any over-reporting is visible and correctable."
+    }
+  ]
+}
