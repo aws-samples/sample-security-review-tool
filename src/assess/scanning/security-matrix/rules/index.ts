@@ -20,7 +20,6 @@ import { documentdbRules } from './documentdb/index.js';
 import { timestreamRules } from './timestream/index.js';
 import { dmsRules } from './dms/index.js';
 import { sagemakerRules } from './sagemaker/index.js';
-import { lexRules } from './lex/index.js';
 import { openSearchRules } from './opensearch/index.js';
 import { cognitoRules } from './cognito/index.js';
 import { securityLakeRules } from './security-lake/index.js';
@@ -71,7 +70,6 @@ export const allCloudFormationRules = [
   ...documentdbRules,
   ...timestreamRules,
   ...dmsRules,
-  ...lexRules,
   ...sagemakerRules,
   ...securityLakeRules,
   ...athenaRules,
@@ -115,7 +113,6 @@ import { tfDocumentdbRules } from './documentdb/index.js';
 import { tfTimestreamRules } from './timestream/index.js';
 import { tfDmsRules } from './dms/index.js';
 import { tfSagemakerRules } from './sagemaker/index.js';
-import { tfLexRules } from './lex/index.js';
 import { tfOpensearchRules } from './opensearch/index.js';
 import { tfCognitoRules } from './cognito/index.js';
 import { tfSecurityLakeRules } from './security-lake/index.js';
@@ -171,7 +168,6 @@ export const allTerraformRules: BaseTerraformRule[] = [
   ...tfDocumentdbRules,
   ...tfTimestreamRules,
   ...tfDmsRules,
-  ...tfLexRules,
   ...tfSagemakerRules,
   ...tfSecurityLakeRules,
   ...tfAthenaRules,

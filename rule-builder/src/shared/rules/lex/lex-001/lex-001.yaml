@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for LEX-001 - Lex bots must have DataPrivacy.ChildDirected explicitly set to true (COPPA).
+
+# NOTE on scenario MISSING_DATA_PRIVACY:
+# The AWS::Lex::Bot resource type declares DataPrivacy as a Required property
+# in the CloudFormation resource specification (cfn-lint enforces this with
+# E3003). Any template that omits DataPrivacy fails cfn-lint validation before
+# it could ever be scanned, so a resource that triggers MISSING_DATA_PRIVACY
+# cannot be expressed as a valid CloudFormation fixture. This scenario is
+# therefore intentionally not represented here.
+
+Resources:
+  # Scenario: CHILD_DIRECTED_NOT_TRUE
+  # DataPrivacy configuration is present but ChildDirected is false, so the
+  # COPPA child-directed declaration is not explicitly true.
+  LexBotChildDirectedFalse:
+    Type: AWS::Lex::Bot
+    Properties:
+      Name: ChildDirectedFalseBot
+      RoleArn: arn:aws:iam::123456789012:role/LexBotRole
+      IdleSessionTTLInSeconds: 300
+      DataPrivacy:
+        ChildDirected: false

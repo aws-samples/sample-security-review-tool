@@ -1,0 +1,104 @@
+{
+  "ruleId": "LEX-001",
+  "generatedAt": "2026-08-13T15:58:30.076Z",
+  "description": "Lex bots must have the DataPrivacy child-directed setting explicitly set to true to comply with COPPA",
+  "cfnResources": [
+    "AWS::Lex::Bot"
+  ],
+  "tfResources": [
+    "aws_lexv2models_bot",
+    "aws_lex_bot"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Bot is defined without any data privacy configuration at all",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires the child-directed data privacy setting to be explicitly set to true. With no data privacy configuration present, the COPPA child-directed declaration is absent and cannot be considered true, so the bot is non-compliant."
+    },
+    {
+      "id": "REQ-02",
+      "description": "Bot has a data privacy configuration with the child-directed setting explicitly set to true",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "AWS requires each Lex bot to declare, via the child-directed field, whether its use is directed to children under 13 and subject to COPPA. An explicit true value satisfies the rule's compliant state."
+    },
+    {
+      "id": "REQ-03",
+      "description": "Bot has a data privacy configuration with the child-directed setting explicitly set to false",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "The rule demands the child-directed setting be explicitly true; an explicit false is the configured-but-disabled state and is therefore non-compliant."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Bot has a data privacy configuration present but it contains no child-directed value",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty data privacy configuration provides no explicit child-directed declaration, and the underlying setting defaults to a non-true value, so the requirement for an explicit true is not met."
+    },
+    {
+      "id": "REQ-05",
+      "description": "Bot's child-directed setting is expressed as a truthy textual representation of true rather than a native boolean",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "IaC formats commonly serialize booleans as strings; a value that unambiguously represents true (for example the literal text 'true', case-insensitively) conveys the same explicit COPPA declaration and must be treated as compliant."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Bot's child-directed setting holds a value that does not resolve to true, such as a textual value other than a recognized representation of true, a numeric value, or an empty value",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "Only a value that resolves to true satisfies the explicit COPPA child-directed declaration. Any other concrete value (including textual values like 'yes' or 'no', numerics, or an empty value) is not an explicit true and must be flagged; accepting mere presence of the setting would let non-compliant bots pass."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Bot's child-directed setting value depends entirely on a condition or parameter whose value cannot be determined at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the value is unresolvable at analysis time, the rule cannot assert non-compliance because the deployed value may legitimately be true; flagging would produce a false positive."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Bot's child-directed setting is selected by an unresolvable condition, but every possible branch of that selection yields a value that is not true",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "flag",
+      "rationale": "Although the selection mechanism is unresolvable, all reachable outcomes are non-true, so the bot is non-compliant regardless of how the condition resolves and the rule can safely assert a finding."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Bot configures other privacy or protection related settings (such as encryption or logging of conversation data) but does not include the child-directed declaration",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Other data protection settings do not substitute for the COPPA child-directed declaration, which AWS requires to be specified per bot; the specific required setting is still missing."
+    },
+    {
+      "id": "REQ-10",
+      "description": "The child-directed setting is declared on a related resource such as a bot alias, bot version, or locale definition rather than on the bot itself, and the bot has no child-directed declaration",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "The COPPA child-directed declaration is a property of the bot resource being assessed. A declaration on a different, related resource does not provide the assessed bot with an explicit true value, so the bot is non-compliant."
+    },
+    {
+      "id": "REQ-11",
+      "description": "Another bot in the same template has the child-directed setting explicitly set to true, while the assessed bot has none",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Rules evaluate one resource at a time and the child-directed declaration is per bot; a compliant sibling bot provides no coverage for the assessed bot."
+    },
+    {
+      "id": "REQ-12",
+      "description": "Bot declares more than one data privacy configuration, one of which sets the child-directed setting to true while another sets it to a non-true value",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "A bot with conflicting data privacy declarations, one of which sets child-directed to a non-true value, does not demonstrably enforce child-directed protection, so the effective deployed value cannot be assumed to be true.",
+      "ambiguity": {
+        "question": "When a bot carries multiple conflicting data privacy declarations, should the rule pass because at least one declares child-directed true, or flag because a non-true declaration is also present and the effective deployed value is indeterminate?",
+        "settledBy": "strict-default",
+        "docReference": null,
+        "evidence": "I searched the AWS documentation for the guidance governing Lex data privacy and COPPA: the Lex V2 API reference for the DataPrivacy structure (https://docs.aws.amazon.com/lexv2/latest/APIReference/API_DataPrivacy.html), the CloudFormation reference for AWS::Lex::Bot and its DataPrivacy property (aws-properties-lex-bot-dataprivacy), and the CDK DataPrivacyProperty interfaces. These consistently state that childDirected is a single required Boolean that must be set to true or false to declare whether the bot's use is directed to children under 13 and subject to COPPA, and that a value must not be specified that does not accurately reflect that use. None of these documents addresses what the effective value is when a bot carries multiple conflicting data privacy declarations — the schema contemplates exactly one DataPrivacy structure with one Boolean, so the conflict case is simply undocumented and no source resolves precedence between duplicate declarations. Therefore the strict default applies. This is not an intrinsic-exception: the values are all present and readable at analysis time (no unresolved intrinsic or runtime condition), they merely disagree, so the scanner is not blind to the configuration. Under the default, a protective setting that is not demonstrably covering the resource — here, a child-directed=true declaration undercut by a coexisting non-true declaration whose precedence is unknown — must flag. Passing on the presence of any single compliant declaration would ship permissive for a resource that may well deploy with childDirected false, and the miss would be invisible in the output; flagging produces a finding a reviewer can inspect and dismiss after confirming which declaration wins."
+      }
+    }
+  ]
+}
