@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Fixture for APIGW-008 - API Gateway stages with response caching enabled
+  but without cache data encryption. Triggers the single "unencrypted-cache"
+  remediation scenario across all applicable resource types
+  (AWS::ApiGateway::Stage, AWS::ApiGateway::Deployment, AWS::Serverless::Api).
+
+Resources:
+  # Supporting resource for the Stage/Deployment resources below.
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: apigw-008-fixture-api
+      Body:
+        swagger: '2.0'
+        info:
+          title: apigw-008-fixture-api
+          version: '1.0'
+        paths:
+          /test:
+            get:
+              responses: {}
+
+  # Scenario: unencrypted-cache
+  # Deployment's StageDescription enables caching for a method without
+  # encrypting the cached response data.
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref RestApi
+      StageDescription:
+        MethodSettings:
+          - HttpMethod: GET
+            ResourcePath: /test
+            CachingEnabled: true
+            CacheDataEncrypted: false
+
+  # Scenario: unencrypted-cache
+  # Stage directly enables caching for a method without encrypting the
+  # cached response data.
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: prod
+      RestApiId: !Ref RestApi
+      DeploymentId: !Ref ApiDeployment
+      MethodSettings:
+        - HttpMethod: GET
+          ResourcePath: /test
+          CachingEnabled: true
+          CacheDataEncrypted: false
+
+  # Scenario: unencrypted-cache
+  # SAM Api resource enables caching for a method without encrypting the
+  # cached response data.
+  ServerlessApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: apigw-008-fixture-serverless-api
+          version: '1.0'
+        paths:
+          /test:
+            get:
+              responses: {}
+      MethodSettings:
+        - HttpMethod: GET
+          ResourcePath: /test
+          CachingEnabled: true
+          CacheDataEncrypted: false

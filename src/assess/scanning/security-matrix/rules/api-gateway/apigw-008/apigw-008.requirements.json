@@ -1,0 +1,154 @@
+{
+  "ruleId": "APIGW-008",
+  "generatedAt": "2026-08-13T15:30:16.814Z",
+  "description": "API Gateway stages with caching enabled must have cache data encryption enabled for all cached methods (via a catch-all or per-method setting)",
+  "cfnResources": [
+    "AWS::ApiGateway::Stage",
+    "AWS::ApiGateway::Deployment",
+    "AWS::Serverless::Api"
+  ],
+  "tfResources": [
+    "aws_api_gateway_stage",
+    "aws_api_gateway_method_settings"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "API stage has no method-level settings at all and therefore no response caching turned on anywhere",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "The rule only concerns stages where response caching is enabled; with no caching there is no cached data at rest to encrypt, so no finding is warranted."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A catch-all setting that applies to every method and path enables response caching and also enables encryption of cached data",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "A catch-all method setting applies to all methods of the stage, so enabling cache data encryption there encrypts every cached response, satisfying the requirement that all cached methods have encrypted cache data."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A catch-all setting that applies to every method enables response caching but does not specify any value for cache data encryption",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Cache data encryption defaults to disabled when unspecified, so cached responses for all methods would be stored unencrypted."
+    },
+    {
+      "id": "REQ-04",
+      "description": "A catch-all setting that applies to every method enables response caching and explicitly disables cache data encryption",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Explicitly disabling cache data encryption while caching is enabled means all cached responses are stored unencrypted, which the rule prohibits."
+    },
+    {
+      "id": "REQ-05",
+      "description": "Caching is enabled only for one specific method and path, and that same specific setting also enables cache data encryption",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "The only method whose responses are cached has encryption enabled for its cached data, so every cached method is covered."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Caching is enabled for one specific method and path with cache data encryption disabled or unspecified for that method",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "At least one method caches responses without encryption at rest, so the stage does not encrypt all cached data."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Cache data encryption is enabled for one specific method while caching is enabled for a different specific method that has no encryption enabled",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Encryption applies only to the method it is configured for; the method that actually caches responses remains unencrypted, so the finding must still be produced."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Multiple method-level settings exist: every setting that enables caching also enables cache data encryption, while other settings that adjust unrelated behavior leave caching off",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Only methods with caching enabled need encrypted cache data; all such methods are encrypted, so the stage is compliant regardless of other non-caching settings."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Multiple method-level settings enable caching, some with cache data encryption enabled and at least one without it",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires encryption for all cached methods; any single cached method lacking encryption leaves cached data exposed at rest."
+    },
+    {
+      "id": "REQ-10",
+      "description": "A catch-all setting enables caching with encryption enabled, but a setting for one specific method overrides encryption to disabled while keeping caching enabled for that method",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "The more specific method setting takes precedence over the catch-all, so that method's cached responses are stored unencrypted despite the catch-all."
+    },
+    {
+      "id": "REQ-11",
+      "description": "A catch-all setting leaves caching disabled while a specific method enables caching together with cache data encryption",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Only the specifically configured method caches responses and it encrypts its cache data, so no unencrypted cached data exists on the stage."
+    },
+    {
+      "id": "REQ-12",
+      "description": "Method-level settings collection is present but contains no entries",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "With no entries, no method has caching enabled, so there is no unencrypted cached data and the rule does not apply."
+    },
+    {
+      "id": "REQ-13",
+      "description": "Caching is enabled for the stage's methods but the cache data encryption value cannot be determined at analysis time because it depends on an unresolvable condition",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the encryption value is indeterminate the rule cannot assert non-compliance; flagging would produce a false positive for a deployment that may well be encrypted."
+    },
+    {
+      "id": "REQ-14",
+      "description": "Whether caching is enabled for the stage's methods cannot be determined at analysis time because it depends on an unresolvable condition, and no cache data encryption is configured",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule's precondition (caching actually enabled) is not established, so non-compliance cannot be asserted and the assessment must not report a finding."
+    },
+    {
+      "id": "REQ-15",
+      "description": "A separate configuration resource that explicitly targets the assessed stage enables caching for all of that stage's methods and also enables cache data encryption",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Method-level caching settings may be defined by a related resource that references the assessed stage; when that related configuration encrypts cached data for the stage, the assessed stage is compliant."
+    },
+    {
+      "id": "REQ-16",
+      "description": "The assessed stage enables caching for its methods without encryption, while a separate configuration resource that enables cache data encryption targets a different stage",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Coverage must apply to the assessed stage; encryption configured for another stage leaves the assessed stage's cached responses unencrypted."
+    },
+    {
+      "id": "REQ-17",
+      "description": "Caching is enabled at the method level with cache data encryption disabled, but the stage-level cache capacity/cluster that makes caching effective is not enabled or not provisioned",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Method-level caching being enabled with cacheDataEncrypted false is itself the failure condition — the encryption check keys off the per-method caching setting, not on whether a stage cache cluster is provisioned, and an unencrypted cache setting becomes effective the moment a cache cluster is turned on.",
+      "ambiguity": {
+        "question": "When method-level caching is enabled but the stage has no cache cluster provisioned (so no responses are actually cached), should the rule still flag the missing cache data encryption, or treat the stage as having no caching and pass?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html",
+        "evidence": "I searched the AWS docs for API Gateway cache data encryption guidance and its corresponding managed checks. Security Hub CSPM control APIGateway.5 (\"API Gateway REST API cache data should be encrypted at rest\", resource type AWS::ApiGateway::Stage) states: \"This control checks whether all methods in API Gateway REST API stages that have cache enabled are encrypted. The control fails if any method in an API Gateway REST API stage is configured to cache and the cache is not encrypted. Security Hub CSPM evaluates the encryption of a particular method only when caching is enabled for that method.\" The trigger is explicitly the per-method caching setting (\"configured to cache\"), with no exemption for stages lacking a provisioned cache cluster or cache cluster size. The AWS Control Tower control reference for the same rule reinforces this by instructing remediation as \"Ensure that you do not set CacheDataEncrypted to false for any method setting\", again without conditioning on CacheClusterEnabled. So a stage whose method settings declare cachingEnabled true with cacheDataEncrypted false is non-compliant regardless of cluster provisioning; the unencrypted setting is a latent misconfiguration that takes effect as soon as a cache cluster is enabled, and cluster state can also change independently of the method settings. This aligns with the strict default as well (a protective feature absent for the assessed configuration → flag), but the documentation itself settles it."
+      }
+    },
+    {
+      "id": "REQ-18",
+      "description": "A specific method enables caching without stating an encryption value, while a catch-all setting for all methods enables cache data encryption",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "A catch-all method setting (HttpMethod `*`, ResourcePath `/*`) enabling cache data encryption is the documented way to cover every cached method, so a method that enables caching without stating an encryption value inherits encryption from the catch-all and only an explicit false leaves the cache unencrypted.",
+      "ambiguity": {
+        "question": "Does a catch-all setting enabling cache data encryption cover a specific method that enables caching but omits an encryption value (inheritance from the catch-all), or must each caching-enabled method state encryption itself?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/controltower/latest/controlreference/api-gateway-rules.html",
+        "evidence": "I searched AWS documentation for API Gateway stage method-setting inheritance and for the governing cache-encryption controls. Two passages on the AWS Control Tower control reference page decide it. (1) Control CT.APIGATEWAY.PR.3 (\"Require that an Amazon API Gateway REST API stage has encryption at rest configured for cache data\") states in its usage considerations that where cache clustering is enabled, \"this control requires cache encryption to be enabled for all resources and methods by specifying a MethodSetting entry with an HttpMethod of * and ResourcePath of /*\" — the catch-all entry is the prescribed and sufficient means of covering all methods, not a per-method obligation. (2) The remediation guidance on the same page says to \"Configure encryption on API Gateway caches with a MethodSetting that sets CacheDataEncrypted to true for all methods (HttpMethod of * and ResourcePath of /*). Ensure that you do not set CacheDataEncrypted to false for any method setting,\" and its explicitly compliant JSON/YAML example is precisely this scenario: a catch-all entry with CacheDataEncrypted: true plus a narrower per-method entry (ResourcePath /, HttpMethod POST) that omits CacheDataEncrypted entirely. The API Gateway developer guide on cache settings (https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-caching.html) reinforces the underlying semantics: a method-level entry overrides stage/catch-all cache settings only for the values it actually specifies, so an omitted encryption value is not an override and the catch-all value governs. Since the documented failure condition is an explicit CacheDataEncrypted: false (or no encryption-enabling setting at all), a caching-enabled method that merely omits the value while a catch-all enables encryption is compliant. The strict default toward flagging does not apply because documentation directly resolves the inheritance question, and the unresolvable-value exception is not implicated — the deciding value is statically present in the catch-all setting."
+      }
+    }
+  ]
+}

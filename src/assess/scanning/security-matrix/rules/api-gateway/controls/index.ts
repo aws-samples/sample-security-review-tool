@@ -17,7 +17,12 @@ import { Apigw005TfAdapterFactory } from '../apigw-005/apigw-005.adapter.tf.js';
 import { apigw006Control } from '../apigw-006/apigw-006.control.js';
 import { Apigw006CfnAdapterFactory } from '../apigw-006/apigw-006.adapter.cfn.js';
 import { Apigw006TfAdapterFactory } from '../apigw-006/apigw-006.adapter.tf.js';
+import { apigw008Control } from '../apigw-008/apigw-008.control.js';
+import { Apigw008CfnAdapterFactory } from '../apigw-008/apigw-008.adapter.cfn.js';
+import { Apigw008TfAdapterFactory } from '../apigw-008/apigw-008.adapter.tf.js';
 
+// APIG10 (sensitive info logging) is deliberately absent: what a logged parameter contains
+// depends on runtime API inputs, so it cannot be detected from a template.
 export const apiGatewayControls: RegisteredControl[] = [
   { control: apigw001Control, cfnAdapter: new Apigw001CfnAdapterFactory(), tfAdapter: new Apigw001TfAdapterFactory() },
   { control: apigw002Control, cfnAdapter: new Apigw002CfnAdapterFactory(), tfAdapter: new Apigw002TfAdapterFactory() },
@@ -25,4 +30,5 @@ export const apiGatewayControls: RegisteredControl[] = [
   { control: apigw004Control, cfnAdapter: new Apigw004CfnAdapterFactory(), tfAdapter: new Apigw004TfAdapterFactory() },
   { control: apigw005Control, cfnAdapter: new Apigw005CfnAdapterFactory(), tfAdapter: new Apigw005TfAdapterFactory() },
   { control: apigw006Control, cfnAdapter: new Apigw006CfnAdapterFactory(), tfAdapter: new Apigw006TfAdapterFactory() },
+  { control: apigw008Control, cfnAdapter: new Apigw008CfnAdapterFactory(), tfAdapter: new Apigw008TfAdapterFactory() },
 ];
