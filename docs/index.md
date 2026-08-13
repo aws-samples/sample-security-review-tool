@@ -97,7 +97,7 @@ cd rule-builder
 bun src/index.ts --rule S3-011 --service s3 --description "S3 buckets must have intelligent tiering enabled"
 ```
 
-`--rule`, `--service`, and `--description` are all required to build. Add `--regenerate` to clear the existing tests, control, and adapter files first (cached requirements are kept).
+`--rule`, `--service`, and `--description` are all required for a rule that does not exist yet. Add `--regenerate` to clear the existing tests, control, and adapter files first (cached requirements are kept).
 
 ### Convert an existing rule
 
@@ -109,13 +109,16 @@ The rule ID, service, and description are read from the legacy rule's own source
 
 The legacy rule is deleted as soon as the new one is implemented, before the unit tests and remediation run, so the fixtures are only ever scanned by one of the two. The old rule sources, the old tests, and the registrations in the service `index.ts` all go; when the legacy rule was the last one in its service, the service `index.ts` and its entries in `rules/index.ts` go too. Every deleted path is listed as it happens.
 
-### Exercise an existing rule
+Because the legacy source is gone after that, a second `--convert` has nothing to read the service and description from. It resumes instead: the converted rule's `requirements.json` supplies both, and the build runs without the description rewrite and without the deletion step. Use it when a conversion fails in the fixture or remediation phase — it also works when the check ID survived conversion (`ATH-001` stays `ATH-001`), where the legacy rule and its replacement would otherwise be indistinguishable by ID.
+
+### Rebuild or exercise an existing rule
 
 ```bash
-bun src/index.ts --rule S3-011
+bun src/index.ts --rule S3-011 --regenerate    # rebuild: all five phases
+bun src/index.ts --rule S3-011                 # exercise: unit tests + remediation only
 ```
 
-Runs the rule's unit tests and remediation against its existing fixtures. Nothing is regenerated; the service and description are recovered from the rule's `requirements.json`.
+Neither form needs `--service` or `--description`; both are recovered from the rule's `requirements.json`. Exercising regenerates nothing and reuses the existing fixtures.
 
 ### The five phases
 
