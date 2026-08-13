@@ -1,0 +1,131 @@
+{
+  "ruleId": "APIGW-005",
+  "generatedAt": "2026-08-13T12:51:14.995Z",
+  "description": "When VPC-connected resources such as EC2 instances or VPC-connected Lambda functions call an API, API Gateway REST APIs must be configured as PRIVATE endpoints and accessed through a properly configured VPC endpoint (with subnet IDs, security group IDs, and private DNS enabled) for the API Gateway execute-api service, rather than being exposed as a public endpoint.",
+  "cfnResources": [
+    "AWS::ApiGateway::RestApi"
+  ],
+  "tfResources": [
+    "aws_api_gateway_rest_api"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "An API is declared with no endpoint-type configuration at all, so it defaults to an internet-facing endpoint, and the template also defines VPC-attached callers.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "API Gateway REST APIs default to a publicly reachable endpoint type (edge-optimized) when no endpoint type is specified. The rule requires the API to be a private endpoint reachable only from within a VPC, so an API with no endpoint-type configuration is non-compliant. The scope condition settled under REQ-15 applies here too: an absent endpoint type deploys exactly as an explicit regional or edge-optimized one, so with no VPC-attached callers in the template the API is outside the condition this rule governs and must pass."
+    },
+    {
+      "id": "REQ-02",
+      "description": "The API's endpoint type is explicitly set to a publicly reachable type (regional or edge-optimized) instead of private.",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Regional and edge-optimized API Gateway endpoints are accessible over the public internet and cannot be reached through an interface VPC endpoint. Only the private endpoint type restricts invocation to clients inside a VPC, so an explicitly public endpoint type violates the rule."
+    },
+    {
+      "id": "REQ-03",
+      "description": "The API's endpoint-type list is present but contains no values.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty endpoint-type list asserts no private configuration; the deployed API falls back to the public default endpoint type. Because private access is not affirmatively configured, the rule must report a finding."
+    },
+    {
+      "id": "REQ-04",
+      "description": "The API is configured as a private endpoint, and the template contains an interface VPC endpoint for the API Gateway invocation service that specifies subnets, security groups, private DNS enabled, and explicitly references the assessed API.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "This is the fully compliant pattern: a private API endpoint plus an interface endpoint for the execute-api service with network placement (subnets), traffic control (security groups), and private DNS enabled so in-VPC callers resolve the standard invoke URL to the endpoint's private addresses. The explicit association ties the coverage to the assessed API."
+    },
+    {
+      "id": "REQ-05",
+      "description": "The API is configured as a private endpoint, but the template contains no VPC endpoint for the API Gateway invocation service at all.",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "A private API can only be invoked from a VPC that has an interface endpoint for the API Gateway execute-api service. Without such an endpoint, in-VPC callers cannot reach the API and the required private access path is not provisioned, so the configuration is incomplete and must be flagged."
+    },
+    {
+      "id": "REQ-06",
+      "description": "The API is configured as a private endpoint, and the template's only interface VPC endpoint is for a different AWS service rather than the API Gateway invocation service.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Interface VPC endpoints are service-specific. An endpoint for any service other than API Gateway's execute-api service provides no private path to the assessed API, so the required coverage is missing."
+    },
+    {
+      "id": "REQ-07",
+      "description": "The API is configured as a private endpoint and an interface VPC endpoint for the API Gateway invocation service exists with subnets and security groups, but private DNS is explicitly disabled and the endpoint is not associated with the assessed API.",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "With private DNS disabled and no association to the API, callers cannot resolve the standard invoke hostname to the endpoint and must rely on header rewriting or endpoint-specific hostnames, which the rule does not accept. The rule requires private DNS enabled on the invocation-service endpoint, so an explicitly disabled setting is non-compliant."
+    },
+    {
+      "id": "REQ-09",
+      "description": "The API is configured as a private endpoint and an interface VPC endpoint for the API Gateway invocation service has private DNS enabled, but the endpoint declares no subnets (or an empty subnet list).",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "An interface endpoint materializes as elastic network interfaces inside specified subnets; with no subnets there is no in-VPC network path for callers to reach the private API. The rule explicitly requires subnet IDs on the endpoint, so this configuration is incomplete."
+    },
+    {
+      "id": "REQ-10",
+      "description": "The API is configured as a private endpoint and an interface VPC endpoint for the API Gateway invocation service specifies subnets and private DNS enabled, but declares no security groups (or an empty security group list).",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "Security groups control which callers may reach the endpoint's network interfaces on HTTPS; omitting them leaves the endpoint's access control unspecified (falling back to the VPC default group). The rule explicitly requires security group IDs on the endpoint, so this configuration is incomplete."
+    },
+    {
+      "id": "REQ-11",
+      "description": "The API is configured as a private endpoint, and the template contains several interface VPC endpoints, at least one of which targets the API Gateway invocation service and is fully configured with subnets, security groups, and private DNS enabled, while others are incomplete or target other services.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Only one properly configured interface endpoint for the API Gateway invocation service is needed to provide the private access path for the assessed API. The presence of additional unrelated or incomplete endpoints does not remove that coverage, so the rule should not report a finding."
+    },
+    {
+      "id": "REQ-12",
+      "description": "The API is configured as a private endpoint with a properly configured invocation-service VPC endpoint, but the API's access policy explicitly denies or excludes requests arriving through that VPC endpoint or its VPC.",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "If the API's resource policy excludes the very VPC endpoint that constitutes the private access path, in-VPC callers are denied and the intended private invocation route does not work; the configuration therefore fails to deliver private access through the endpoint and must be flagged."
+    },
+    {
+      "id": "REQ-13",
+      "description": "Whether the API's endpoint type is private, or whether private DNS is enabled on the invocation-service VPC endpoint, is determined by a value that cannot be resolved at analysis time.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the deciding value is unknown at analysis time, the rule cannot assert that the deployed configuration is non-compliant; flagging would produce a false positive. Static analysis rules return no finding when the critical value is unresolvable."
+    },
+    {
+      "id": "REQ-14",
+      "description": "The API is configured as a private endpoint and the invocation-service interface endpoint is identified through a dynamically constructed service name that still clearly resolves to the API Gateway invocation service (for example, with a region placeholder), with subnets, security groups, and private DNS enabled.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "Service names for interface endpoints are conventionally composed with a region substitution; as long as the composed value unambiguously designates the API Gateway execute-api service and the endpoint is otherwise fully configured, the required private access path exists and the rule should pass."
+    },
+    {
+      "id": "REQ-15",
+      "description": "An API is configured as a publicly reachable endpoint and the template contains no VPC-attached compute resources that would call it.",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "AWS guidance recommends PRIVATE API Gateway endpoints specifically when the API's clients reside within a VPC, and allows public endpoint types otherwise, so a public REST API with no VPC-attached callers in the template is outside the condition this rule governs.",
+      "ambiguity": {
+        "question": "Does this rule apply to every REST API unconditionally, or only when the template also defines VPC-attached callers (such as instances or VPC-connected functions) that would invoke the API?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/whitepapers/latest/security-overview-amazon-api-gateway/security-design-principles.html",
+        "evidence": "I searched AWS documentation for endpoint-type selection guidance for API Gateway REST APIs (private vs. regional/edge-optimized) and for the private-endpoint/execute-api VPC endpoint requirements. The \"Security design principles\" section of the AWS whitepaper \"Security Overview of Amazon API Gateway\" states under \"Endpoint type selection\": \"Private endpoints are recommended when your clients are within a VPC or transit VPC setting... Public endpoint types should be selected based on the requirements for operations and security.\" This makes the requirement conditional on the location of the callers rather than unconditional for all REST APIs. Supporting docs (Introducing Amazon API Gateway Private Endpoints; Private REST APIs in API Gateway) confirm that the PRIVATE endpoint type plus an execute-api interface VPC endpoint with subnets, security groups, and private DNS exists precisely to serve in-VPC clients, and that a private API is only reachable from within a VPC — so mandating it where no VPC-attached compute calls the API would prohibit a supported and documented deployment pattern rather than correct a misconfiguration. Therefore the rule's precondition (VPC-connected resources such as EC2 instances or VPC-connected Lambda functions calling the API) is a genuine scope condition: with no VPC-attached callers defined in the template, the assessed public API is not in scope and the rule passes. This is settled by documentation, not by the strict-flag default; it is also not the unresolvable-value exception, since the absence of VPC-attached callers is directly observable at analysis time."
+      }
+    }
+  ],
+  "removedRequirements": [
+    {
+      "id": "REQ-08",
+      "description": "The API is configured as a private endpoint and is explicitly associated with an interface VPC endpoint for the API Gateway invocation service that has subnets and security groups, but private DNS on that endpoint is disabled.",
+      "conflictedWith": "REQ-07",
+      "reason": "The rule description is explicit that compliance requires access \"through a properly configured VPC endpoint (with subnet IDs, security group IDs, and private DNS enabled)\" for the execute-api service. REQ-08 grants a PASS to an execute-api endpoint with private DNS explicitly disabled, which contradicts the rule's stated definition of a properly configured endpoint; its rationale (that private DNS is mere invocation convenience because a vpce-specific hostname exists) is an argument for changing the rule's purpose, not an application of it. REQ-07 (and the matching REQ-04 test) is the requirement that follows directly from the stated purpose, and it is also the flagging behavior: keeping it means a private-DNS-disabled execute-api endpoint is reported and can be reviewed or the rule adjusted deliberately, whereas keeping REQ-08 would silently relax the private-DNS check for every associated private REST API and make the rule permissive without any warrant in its description.",
+      "ambiguity": {
+        "question": "When a private API is explicitly associated with the invocation-service interface endpoint (which yields a dedicated, resolvable invoke hostname for that API), should the rule still require private DNS to be enabled on that endpoint, or does the association satisfy the private-access requirement?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-private-apis.html",
+        "evidence": "I searched the AWS docs for the private REST API access model with private DNS disabled. The API Gateway developer guide's \"Private REST APIs in API Gateway\" best practices page lists \"Associate your VPC endpoint to your API. This creates a Route 53 alias DNS record and simplifies invoking your private API\" and, separately, \"Turn on private DNS for your VPC... you can invoke your API within a VPC without passing the Host or x-apigw-api-id header\" — i.e., private DNS is described as a convenience for using the default hostname, not as the control that keeps traffic private. The same page (and the API Gateway private-API best-practices whitepaper and re:Post CORS/403 articles) explicitly documents supported private-DNS-disabled patterns: with an endpoint association, clients invoke https://{rest-api-id}-{vpce-id}.execute-api.{region}.amazonaws.com/{stage}, which resolves to the interface endpoint's ENIs inside the VPC. AWS even recommends disabling private DNS when the VPC must also reach public/Regional API default endpoints. Privacy for a PRIVATE-type API is enforced by the endpoint type, the interface endpoint (with subnets/security groups), and the resource/endpoint policies — never by the private DNS flag; a PRIVATE API is unreachable from the internet regardless of that flag. Since the scenario has PRIVATE type plus an explicit association to an execute-api interface endpoint with subnets and security groups, the resource has a resolvable private-only invoke path and is compliant, so the rule should not flag solely on PrivateDnsEnabled=false. This is settled by documentation rather than the strict default."
+      }
+    }
+  ]
+}
