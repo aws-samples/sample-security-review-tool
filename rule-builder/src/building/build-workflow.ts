@@ -11,7 +11,7 @@ import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 const BUILD_PHASE_COUNT = 5;
 
-export interface BuildOptions { regenerate?: boolean; }
+export interface BuildOptions { regenerate?: boolean; afterImplementation?: () => void | Promise<void>; }
 
 export class BuildWorkflow {
     private readonly logger = new RuleBuilderLogger();
@@ -31,6 +31,7 @@ export class BuildWorkflow {
 
         this.logger.phaseStart(3, BUILD_PHASE_COUNT, 'Implementation');
         await this.runImplementation(requirements);
+        await options.afterImplementation?.();
         this.verifyUnitTests('implementation');
         this.logger.phaseComplete(`${this.context.ruleId} implemented`);
 

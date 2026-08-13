@@ -107,7 +107,7 @@ bun src/index.ts --convert LAMBDA-013
 
 The rule ID, service, and description are read from the legacy rule's own source, so `--rule`, `--service`, and `--description` must not be passed alongside `--convert`. The description is restated as a requirement ("X-Ray tracing not enabled" becomes "Lambda functions must have X-Ray tracing enabled"), and the service prefix loses its hyphens (`API-GW-002` becomes `APIGW-002`).
 
-The legacy files are left in place. The run ends by listing them — the old rule sources, the service `index.ts`, and the old tests — so you can compare the new findings against the old ones before deleting anything.
+The legacy rule is deleted as soon as the new one is implemented, before the unit tests and remediation run, so the fixtures are only ever scanned by one of the two. The old rule sources, the old tests, and the registrations in the service `index.ts` all go; when the legacy rule was the last one in its service, the service `index.ts` and its entries in `rules/index.ts` go too. Every deleted path is listed as it happens.
 
 ### Exercise an existing rule
 

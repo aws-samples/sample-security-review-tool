@@ -133,7 +133,8 @@ requirements.json; fixtures are NOT regenerated.
 With --convert, the legacy rule's service and description are read from its own
 source. The description is restated as a requirement ("X-Ray tracing not enabled"
 becomes "Lambda functions must have X-Ray tracing enabled") and drives the build.
-The legacy files are left in place, and listed at the end for removal.
+The legacy rule sources, tests, and registrations are deleted once the new rule is
+implemented, before the unit tests and remediation run.
 `);
 }
 
