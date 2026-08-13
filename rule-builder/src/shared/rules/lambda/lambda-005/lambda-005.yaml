@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for LAMBDA-005 - Lambda execution roles with excessive IAM permissions.
+  Triggers both remediation scenarios:
+    1. wildcard-action-and-resource: inline policy grants Action:* on Resource:*
+    2. overly-broad-managed-policy: role attached to AdministratorAccess managed policy
+
+Resources:
+  # Scenario 1: wildcard-action-and-resource
+  WildcardGrantExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lambda005-wildcard-grant-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: wildcard-inline-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  WildcardGrantFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda005-wildcard-grant-function
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt WildcardGrantExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async () => ({ statusCode: 200 });
+
+  # Scenario 2: overly-broad-managed-policy
+  BroadManagedPolicyExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lambda005-broad-managed-policy-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  BroadManagedPolicyFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: lambda005-broad-managed-policy-function
+      Runtime: nodejs22.x
+      Handler: index.handler
+      Role: !GetAtt BroadManagedPolicyExecutionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async () => ({ statusCode: 200 });

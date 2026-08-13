@@ -1,0 +1,152 @@
+{
+  "ruleId": "LAMBDA-005",
+  "generatedAt": "2026-08-13T15:58:50.017Z",
+  "description": "IAM roles used by Lambda functions must not grant wildcard actions paired with wildcard resources in inline policies, nor be attached to overly broad managed policies (such as AdministratorAccess, PowerUserAccess, or other FullAccess/Admin-level policies); they must instead be restricted to the specific actions and resource ARNs the function requires.",
+  "cfnResources": [
+    "AWS::IAM::Role",
+    "AWS::IAM::Policy",
+    "AWS::IAM::ManagedPolicy",
+    "AWS::Lambda::Function"
+  ],
+  "tfResources": [
+    "aws_iam_role",
+    "aws_iam_role_policy",
+    "aws_iam_policy",
+    "aws_iam_role_policy_attachment",
+    "aws_iam_policy_attachment",
+    "aws_lambda_function"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "An execution role used by a serverless function has no permission grants of any kind — no embedded permission documents and no attached predefined or shared permission sets.",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "The rule flags over-broad permission grants. A role with no permission grants at all confers no privileges, so there is nothing over-broad to report; least privilege is trivially satisfied."
+    },
+    {
+      "id": "REQ-02",
+      "description": "An execution role used by a serverless function embeds a permission grant that allows every possible action against every possible resource.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "AWS guidance (Operating Lambda: Building a solid security foundation) states that wildcard action plus wildcard resource grants must never be used for function permissions in production, and Lambda's execution-role documentation requires least-privilege scoping to the specific actions and resources the function needs. This is the core violation the rule targets."
+    },
+    {
+      "id": "REQ-03",
+      "description": "An execution role used by a serverless function embeds a permission grant that allows every possible action, but only against a specific, explicitly named resource identifier.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "pass",
+      "rationale": "The rule's violation condition is an unrestricted action set paired with an unrestricted resource set. When the resource scope is narrowed to specific named resource identifiers, the blast radius is bounded to those resources, so the qualifier for the violation is not met and the rule must not fire. Without this complement, an implementation could flag on the action wildcard alone."
+    },
+    {
+      "id": "REQ-04",
+      "description": "An execution role used by a serverless function embeds a permission grant that allows all actions belonging to one single AWS service (a service-prefixed wildcard) against every possible resource.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "A service-prefixed wildcard such as \"s3:*\" grants every action of that service and, when paired with \"Resource\": \"*\", grants those actions over every resource, which AWS guidance names as the wildcard-action/wildcard-resource anti-pattern to be replaced with specific actions and resource ARNs.",
+      "ambiguity": {
+        "question": "Does a service-scoped wildcard action set (all actions of a single service) combined with an unrestricted resource scope count as the 'wildcard actions paired with wildcard resources' violation, or is only a fully unrestricted action set (all actions of all services) in scope?",
+        "settledBy": "documentation",
+        "docReference": "https://aws.amazon.com/blogs/security/top-10-security-best-practices-for-securing-data-in-amazon-s3/",
+        "evidence": "I searched AWS documentation for least-privilege guidance on wildcard actions in IAM policies used by Lambda execution roles, and for IAM Access Analyzer/Security Hub treatment of service-level wildcards. The AWS Security Blog's \"Top 10 security best practices for securing data in Amazon S3\" section \"Ensure that any identity-based policies don't use wildcard actions\" states that least-privilege identity policies require \"defining specific actions such as S3:GetObject or S3:PutObject instead of S3:*\", and explicitly ties this to detecting \"policies with wildcard actions and wildcard resources\" — i.e., a service-prefixed wildcard like S3:* is itself the wildcard action being prohibited, not merely the all-services \"*\" case. This is reinforced by the AWS IoT FleetWise security best practices page (\"Limit the use of the * wildcard for the Action and Resource properties... declare a finite set of actions and resources\") and by \"Operating Lambda: Building a solid security foundation – Part 1\", which warns that IAM supports the \"*\" wildcard in both the resources and actions attributes and that such \"star permissions\" should never reach production because they \"grant broad permissions, often for many permissions or resources.\" No consulted document limits the violation to a fully unrestricted action set; the guidance targets wildcard breadth in the Action element generally. A service-scoped wildcard plus an unrestricted resource scope therefore leaves the function able to perform every operation of that service on every resource in the account, which contradicts the rule's requirement to restrict to the specific actions and resource ARNs the function requires. Since the documentation settles this in favor of flagging, the strict default was not needed."
+      }
+    },
+    {
+      "id": "REQ-05",
+      "description": "An execution role used by a serverless function embeds a permission grant covering every possible resource, but the action set is limited to a small list of explicitly named actions.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "An unrestricted resource scope grants the named actions against every resource in the account, which violates the rule's independent requirement that permissions be scoped to specific resource ARNs, so narrowing the action list does not compensate for `Resource: \"*\"`.",
+      "ambiguity": {
+        "question": "Should a grant of specific named actions against an unrestricted resource scope be flagged, given the rule also demands restriction to specific resource identifiers, or does the rule only fire when both the action set and the resource scope are unrestricted?",
+        "settledBy": "documentation",
+        "docReference": "https://aws.amazon.com/blogs/compute/operating-lambda-building-a-solid-security-foundation-part-1/",
+        "evidence": "Searched AWS documentation for Lambda execution-role least-privilege guidance and for IAM guidance on wildcard `Resource` elements. AWS's Lambda security guidance (\"Operating Lambda: Building a solid security foundation – Part 1\", section \"Avoiding wildcard permissions in IAM policies\") states that IAM supports the \"*\" wildcard in *both* the resources and actions attributes and that such \"star permissions\" should never be used in production; it further faults broad managed policies specifically because \"they do not specify individual resources,\" treating an unrestricted resource scope as sufficient grounds for disapproval on its own. The Lambda execution-role page (https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html) and the Lambda permissions reference (https://docs.aws.amazon.com/lambda/latest/dg/lambda-api-permissions-ref.html) reinforce this by directing that permissions be reduced to only what is required and that scope be restricted \"by resource, specify the resource by ARN.\" Service security-best-practice pages repeat the same rule: limit the `*` wildcard for the `Action` *and* `Resource` properties and \"declare a finite set of actions and resources.\" The documentation therefore treats action scoping and resource scoping as two independent least-privilege obligations rather than a conjunctive condition, so a grant of a few named actions against `Resource: \"*\"` still permits those actions on every resource in the account (e.g. `s3:GetObject` on all buckets) and must be flagged. This aligns with the rule text itself, which demands restriction to \"the specific actions and resource ARNs the function requires.\" The condition is disjunctive: wildcard actions or wildcard resources each independently trigger the finding."
+      }
+    },
+    {
+      "id": "REQ-06",
+      "description": "An execution role used by a serverless function embeds a permission statement that covers every action against every resource, but the statement's effect is to refuse rather than to permit access, and no permitting statement is over-broad.",
+      "category": "DISABLED",
+      "expectedBehavior": "pass",
+      "rationale": "A refusing statement grants no privileges whatsoever; it only subtracts access. Because the rule targets excessive granted privilege, an unrestricted refusal cannot make the role over-permissive and must not be flagged."
+    },
+    {
+      "id": "REQ-07",
+      "description": "An execution role used by a serverless function embeds a permission grant that permits all actions except a short list of explicitly excluded actions, against every possible resource.",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "Expressing a grant as 'everything except a few actions' still confers near-administrative privilege over all resources, which is exactly the over-broad grant AWS guidance says must not be attached to function execution roles. Carving out a handful of actions does not achieve least privilege."
+    },
+    {
+      "id": "REQ-08",
+      "description": "An execution role used by a serverless function has several embedded permission grants; most are narrowly scoped to specific actions and specific resource identifiers, but one grant permits every action against every resource.",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Permissions are cumulative — the effective privilege of the role is the union of all its grants. A single unrestricted grant makes the role administrative regardless of how well-scoped the other grants are, so the rule must fire."
+    },
+    {
+      "id": "REQ-09",
+      "description": "An execution role used by a serverless function is attached to a predefined administrator-level permission set that confers full control over the entire account.",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "AWS explicitly documents that broad managed policies such as AdministratorAccess are intended for human user roles and must not be applied to Lambda functions because they do not specify individual resources. Attaching such a policy defeats least privilege for the execution role."
+    },
+    {
+      "id": "REQ-10",
+      "description": "An execution role used by a serverless function is attached to a predefined permission set granting full administrative access to a single AWS service (a service-wide full-access set).",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "flag",
+      "rationale": "The rule's stated scope includes full-access and admin-level predefined policies, not only account-wide administrator policies. A service-wide full-access set grants every action of that service over all of its resources, which exceeds the specific actions and resource identifiers the function requires."
+    },
+    {
+      "id": "REQ-11",
+      "description": "An execution role used by a serverless function is attached only to narrowly scoped predefined permission sets that grant a limited, service-specific set of operations (for example the minimal set needed to write function logs).",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Not all predefined permission sets are over-broad. A minimal, purpose-built permission set is consistent with least privilege for a function execution role, so the qualifier for the violation (administrator-, power-user-, or full-access-level breadth) is not met and the rule must not fire. Without this complement, an implementation could wrongly flag any predefined permission set."
+    },
+    {
+      "id": "REQ-12",
+      "description": "An execution role used by a serverless function is attached to a mix of permission sets: several narrowly scoped ones plus one administrator-level or power-user-level set.",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "Effective privilege is the union of all attached permission sets, so the presence of even one administrator- or power-user-level attachment renders the role over-permissive. The rule must not be satisfied merely because well-scoped attachments also exist."
+    },
+    {
+      "id": "REQ-13",
+      "description": "A separately declared permission document elsewhere in the same configuration grants every action against every resource and is explicitly bound to the assessed serverless function execution role.",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "flag",
+      "rationale": "Permissions attached through a standalone permission document bound to the role are equivalent in effect to permissions embedded directly in the role. The rule must resolve such bindings for the assessed role and flag the unrestricted grant."
+    },
+    {
+      "id": "REQ-14",
+      "description": "A separately declared permission document in the same configuration grants every action against every resource but is bound to a different identity than the assessed serverless function execution role, which itself holds only narrowly scoped grants.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "Rules evaluate one resource at a time, and a broad permission document bound to another identity confers no privilege on the assessed role. Flagging it would attribute another principal's permissions to this role."
+    },
+    {
+      "id": "REQ-15",
+      "description": "A role that grants every action against every resource is trusted only by a non-serverless-compute principal and is not referenced as the execution role of any serverless function in the configuration.",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "pass",
+      "rationale": "The rule is scoped to roles used by serverless functions. A role whose trust relationship and usage lie outside that scope is not the subject of this check, and other rules cover general role permissiveness."
+    },
+    {
+      "id": "REQ-16",
+      "description": "An execution role used by a serverless function declares an embedded permission document whose list of permission statements is empty.",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "An empty statement list grants no actions on any resource, so no over-broad privilege exists. The mere presence of a permission container is not itself a violation."
+    },
+    {
+      "id": "REQ-17",
+      "description": "Whether the execution role of a serverless function receives an administrator-level permission grant depends entirely on a value that cannot be determined at analysis time.",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the presence or content of the broad grant is undecidable at analysis time, the rule cannot assert non-compliance; reporting a finding would be an unprovable false positive. The rule returns no finding for unresolvable values."
+    }
+  ]
+}

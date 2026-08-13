@@ -5,7 +5,6 @@ import { efsRules } from './efs/index.js';
 import { eksRules } from './eks/index.js';
 import { elasticacheRules } from './elasticache/index.js';
 import { fsxRules } from './fsx/index.js';
-import { lambdaRules } from './lambda/index.js';
 import { identityAccessRules } from './iam/index.js';
 import { rdsRules } from './rds/index.js';
 import { vpcConfigurationRules } from './vpc/index.js';
@@ -53,7 +52,6 @@ export const allCloudFormationRules = [
   ...eksRules,
   ...elasticacheRules,
   ...fsxRules,
-  ...lambdaRules,
   ...iamIdentityCenterRules,
   ...identityAccessRules,
   ...iotRules,
@@ -102,7 +100,6 @@ import { tfEfsRules } from './efs/index.js';
 import { tfEksRules } from './eks/index.js';
 import { tfElasticacheRules } from './elasticache/index.js';
 import { tfFsxRules } from './fsx/index.js';
-import { tfLambdaRules } from './lambda/index.js';
 import { tfIamRules } from './iam/index.js';
 import { tfRdsRules } from './rds/index.js';
 import { tfVpcRules } from './vpc/index.js';
@@ -155,7 +152,6 @@ export const allTerraformRules: BaseTerraformRule[] = [
   ...tfEksRules,
   ...tfElasticacheRules,
   ...tfFsxRules,
-  ...tfLambdaRules,
   ...tfIamIdentityCenterRules,
   ...tfIamRules,
   ...tfIotRules,
