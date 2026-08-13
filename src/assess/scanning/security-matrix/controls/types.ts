@@ -45,7 +45,11 @@ export interface AdapterFactory<TContext extends IacContext> {
 }
 
 export interface RegisteredControl {
-  readonly control: { readonly id: string; run(adapter: ControlAdapter, context: IacContext): ScanResult | null };
+  readonly control: {
+    readonly id: string;
+    readonly supersedes?: readonly string[];
+    run(adapter: ControlAdapter, context: IacContext): ScanResult | null;
+  };
   readonly cfnAdapter: AdapterFactory<CfnContext>;
   readonly tfAdapter: AdapterFactory<TfContext>;
 }

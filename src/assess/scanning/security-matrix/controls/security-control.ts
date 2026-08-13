@@ -10,6 +10,7 @@ export interface SecurityControlMetadata {
     readonly description: string;
     readonly remediationScenarios: RemediationScenario[];
     readonly relatedRules?: readonly Remediation[];
+    readonly supersedes?: readonly string[];
 }
 
 export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlAdapter> implements Remediation {
@@ -18,6 +19,7 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
     public readonly description: string;
     public readonly remediationScenarios: RemediationScenario[];
     public readonly relatedRules: readonly Remediation[];
+    public readonly supersedes: readonly string[];
 
     constructor(metadata: SecurityControlMetadata) {
         this.id = metadata.id;
@@ -25,6 +27,7 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
         this.description = metadata.description;
         this.remediationScenarios = metadata.remediationScenarios;
         this.relatedRules = metadata.relatedRules ?? [];
+        this.supersedes = metadata.supersedes ?? [];
     }
 
     public get intent(): string {

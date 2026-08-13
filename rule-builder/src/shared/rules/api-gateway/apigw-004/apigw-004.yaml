@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for APIGW-004 - API Gateway methods/routes without authorization.
+  Triggers the single "missing-authorization" remediation scenario for both
+  AWS::ApiGateway::Method and AWS::ApiGatewayV2::Route resource types.
+
+Resources:
+  # --- REST API (AWS::ApiGateway::Method) ---
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: apigw-004-fixture-api
+
+  RestApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestApi
+      ParentId: !GetAtt RestApi.RootResourceId
+      PathPart: items
+
+  # Scenario: missing-authorization
+  # AuthorizationType explicitly NONE and no AuthorizerId - unauthenticated access allowed.
+  UnauthorizedGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref RestApiResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: '200'
+
+  # Compliant OPTIONS method (excluded from evaluation entirely) - kept only as
+  # a minimal sibling to demonstrate isOptionsMethod() short-circuit; does not
+  # affect scenario triggering since it is skipped by evaluate().
+  PreflightOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !Ref RestApiResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        IntegrationResponses:
+          - StatusCode: '200'
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+      MethodResponses:
+        - StatusCode: '200'
+
+  # --- HTTP API (AWS::ApiGatewayV2::Route) ---
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: apigw-004-fixture-http-api
+      ProtocolType: HTTP
+
+  HttpApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: GET
+      IntegrationUri: https://example.com/items
+      PayloadFormatVersion: '1.0'
+
+  # Scenario: missing-authorization
+  # AuthorizationType missing entirely and no AuthorizerId - unauthenticated access allowed.
+  UnauthorizedRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /items
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref HttpApiIntegration

@@ -3,6 +3,7 @@ import { ScanResult } from '../scanning/types.js';
 import { ReportingOptions, AssessmentSummary } from './types.js';
 import { ProjectContext } from '../../shared/project/project-context.js';
 import { PostHogClient } from '../../shared/analytics/posthog-client.js';
+import { allRegisteredControls } from '../scanning/security-matrix/rules/controls-registry.js';
 
 type IssueMatcher = (existing: ScanResult, newIssue: ScanResult) => boolean;
 
@@ -32,9 +33,33 @@ export class IssueAggregator {
         await this.processTemplateIssues(options, issues, matchedIndices);
 
         this.markUnmatchedIssuesAsResolved(issues, existingIssueCount, matchedIndices);
+        this.suppressSupersededIssues(issues);
 
         const summary = this.calculateSummary(issues);
         return { issues, summary };
+    }
+
+    private suppressSupersededIssues(issues: ScanResult[]): void {
+        const supersededBy = IssueAggregator.buildSupersededCheckMap();
+
+        for (const issue of issues) {
+            const status = issue.status?.toLowerCase();
+            if (status !== 'open' && status !== 'reopened') continue;
+
+            const ruleId = issue.check_id ? supersededBy.get(issue.check_id) : undefined;
+            if (!ruleId) continue;
+
+            issue.status = 'suppressed';
+            issue.suppressionReason = `Covered by ${ruleId}`;
+        }
+    }
+
+    private static buildSupersededCheckMap(): Map<string, string> {
+        const supersededBy = new Map<string, string>();
+        for (const { control } of allRegisteredControls) {
+            for (const checkId of control.supersedes ?? []) supersededBy.set(checkId, control.id);
+        }
+        return supersededBy;
     }
 
     private calculateSummary(issues: ScanResult[]): AssessmentSummary {

@@ -87,4 +87,62 @@ describe('IssueAggregator', () => {
         expect(issues[0].resolvedAt).toBeDefined();
         expect(summary.resolvedIssues).toBe(1);
     });
+
+    describe('superseded external checks', () => {
+        const checkovDuplicate: ScanResult = {
+            source: 'Checkov',
+            path: 'main.tf',
+            line: 19,
+            check_id: 'CKV_AWS_59',
+            issue: 'Ensure there is no open access to back-end resources through API',
+            priority: 'LOW',
+            status: 'open',
+        };
+
+        function aggregateCheckov(stored: ScanResult[], rescanned: ScanResult[]) {
+            vi.mocked(fileExists).mockResolvedValue(true);
+            vi.mocked(readJsonFile).mockImplementation(async (filePath: string) => {
+                if (filePath === ISSUES_PATH) return stored;
+                if (filePath === 'checkov.json') return rescanned;
+                return null;
+            });
+
+            const context = { getIssuesFilePath: () => ISSUES_PATH } as unknown as ConstructorParameters<typeof IssueAggregator>[0];
+
+            return new IssueAggregator(context).aggregateResults({
+                codeScanResult: { semgrepSummaryPath: 'semgrep.json', banditSummaryPath: null } as never,
+                templateResults: [{ checkovSummaryPath: 'checkov.json', securityMatrixPath: null } as never],
+                generateXlsx: false,
+                projectSummary: null,
+            });
+        }
+
+        it('suppresses a newly reported check that a matrix rule supersedes', async () => {
+            const { issues } = await aggregateCheckov([], [{ ...checkovDuplicate }]);
+
+            expect(issues[0].status).toBe('suppressed');
+            expect(issues[0].suppressionReason).toBe('Covered by APIGW-004');
+        });
+
+        it('suppresses a superseded check that was already stored as open', async () => {
+            const { issues } = await aggregateCheckov([{ ...checkovDuplicate }], [{ ...checkovDuplicate }]);
+
+            expect(issues).toHaveLength(1);
+            expect(issues[0].status).toBe('suppressed');
+        });
+
+        it('leaves checks that no matrix rule supersedes alone', async () => {
+            const unrelated = { ...checkovDuplicate, check_id: 'CKV2_AWS_53' };
+            const { issues } = await aggregateCheckov([], [unrelated]);
+
+            expect(issues[0].status).toBe('open');
+            expect(issues[0].suppressionReason).toBeUndefined();
+        });
+
+        it('does not resurrect a superseded check that the latest scan no longer reports', async () => {
+            const { issues } = await aggregateCheckov([{ ...checkovDuplicate }], []);
+
+            expect(issues[0].status).toBe('resolved');
+        });
+    });
 });

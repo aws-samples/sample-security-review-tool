@@ -1,0 +1,147 @@
+{
+  "ruleId": "APIGW-004",
+  "generatedAt": "2026-08-13T12:40:18.598Z",
+  "description": "API Gateway methods (other than OPTIONS) must have an authorization type of AWS_IAM, COGNITO_USER_POOLS, or CUSTOM configured (with an associated authorizer for CUSTOM or COGNITO_USER_POOLS), and API Gateway APIs must have an authorizer configured rather than allowing unauthenticated access",
+  "cfnResources": [
+    "AWS::ApiGateway::Method",
+    "AWS::ApiGatewayV2::Route"
+  ],
+  "tfResources": [
+    "aws_api_gateway_method",
+    "aws_apigatewayv2_route"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "A non-OPTIONS API method/route has no authorization configuration of any kind",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Without an authorization type the method is open to unauthenticated callers. AWS API Gateway treats a method with no authorization as publicly invokable, so the rule must produce a finding."
+    },
+    {
+      "id": "REQ-03",
+      "description": "An OPTIONS method has no authorization configured or explicitly declares no authorization",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "pass",
+      "rationale": "OPTIONS preflight requests in CORS cannot carry authorization credentials, so the rule explicitly excludes OPTIONS methods from the authorization requirement."
+    },
+    {
+      "id": "REQ-04",
+      "description": "A non-OPTIONS method uses IAM-based authorization",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "IAM authorization (AWS_IAM) requires SigV4-signed requests from an authenticated principal and needs no separate authorizer resource, satisfying the rule."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A non-OPTIONS method uses a custom (Lambda) authorization type and references an authorizer defined for the same API",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "A custom authorization type with an associated authorizer belonging to the assessed method's API means every request is evaluated by that authorizer, satisfying the rule's requirement of an authorizer for CUSTOM."
+    },
+    {
+      "id": "REQ-06",
+      "description": "A non-OPTIONS method uses a custom (Lambda) authorization type but no authorizer is associated with it",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires CUSTOM authorization to be backed by an associated authorizer; declaring the type without an authorizer leaves the method with no functioning authorization mechanism, so it must be flagged."
+    },
+    {
+      "id": "REQ-07",
+      "description": "A non-OPTIONS method uses user-pool-based authorization and references an authorizer defined for the same API",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "COGNITO_USER_POOLS authorization with an associated user-pool authorizer validates caller identity tokens on every request, satisfying the rule."
+    },
+    {
+      "id": "REQ-08",
+      "description": "A non-OPTIONS method uses user-pool-based authorization but no authorizer is associated with it",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires COGNITO_USER_POOLS authorization to be backed by an associated authorizer; without one, no token validation occurs and the method is effectively unauthenticated."
+    },
+    {
+      "id": "REQ-09",
+      "description": "A non-OPTIONS method references an authorizer that belongs to a different API than the API containing the assessed method",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Coverage must apply to the assessed resource; an authorizer scoped to another API cannot authorize requests to this method, so the authorization requirement is unmet."
+    },
+    {
+      "id": "REQ-10",
+      "description": "An authorization type value is present but empty",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty authorization type is not one of the accepted values (IAM, user pool, or custom) and provides no caller authentication, so it is equivalent to no authorization and must be flagged."
+    },
+    {
+      "id": "REQ-11",
+      "description": "The authorization type of a non-OPTIONS method is determined entirely by a condition whose value cannot be resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the effective authorization type is indeterminate, the rule cannot assert non-compliance; flagging would produce a false positive, so it returns no finding."
+    },
+    {
+      "id": "REQ-12",
+      "description": "A non-OPTIONS method declares an authorizer-requiring authorization type, but the identity of the associated authorizer cannot be resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "An authorizer association is present even though its target cannot be resolved; the rule cannot prove that no valid authorizer covers the method, so it must not flag."
+    },
+    {
+      "id": "REQ-13",
+      "description": "An API contains several non-OPTIONS methods, some unauthenticated, while the specific method being assessed has a valid authorization type with any required authorizer",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "Rules evaluate one resource at a time; the assessed method is properly authorized, and findings for sibling methods are raised when those resources are themselves assessed."
+    },
+    {
+      "id": "REQ-14",
+      "description": "A catch-all route matching any path and any HTTP method (including OPTIONS) is configured with a valid authorization type and associated authorizer where required",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "A broadly matching route that carries a valid authorization configuration protects all requests it serves, satisfying the rule regardless of the breadth of its matching pattern."
+    },
+    {
+      "id": "REQ-15",
+      "description": "A non-OPTIONS method has no authorization type but does require an API key for invocation",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "AWS documentation states API keys are for usage plans and throttling/metering, not for authentication or authorization; therefore the method still allows unauthenticated access and must be flagged."
+    },
+    {
+      "id": "REQ-16",
+      "description": "A non-OPTIONS route uses token-based authorization built into the API platform (a JWT-style authorization type) with an associated authorizer",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "A JWT authorization type with an attached authorizer is API Gateway's native token-based access control for HTTP APIs — where COGNITO_USER_POOLS does not exist — so it enforces authentication on the route just as IAM, user-pool, or custom authorization does on REST APIs.",
+      "ambiguity": {
+        "question": "The rule text enumerates only IAM, user-pool, and custom authorization types — should a JWT authorization type (available on HTTP APIs, where COGNITO_USER_POOLS does not exist) with an associated authorizer be accepted as compliant, or flagged because it is not in the enumerated list?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html",
+        "evidence": "I searched the AWS documentation for HTTP API route authorization types and JWT authorizers. \"Control access to HTTP APIs with JWT authorizers in API Gateway\" (https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html) documents that a route is protected by setting AuthorizationType: JWT together with an AuthorizerId referencing an AWS::ApiGatewayV2::Authorizer of AuthorizerType JWT; API Gateway then validates the token's signature, issuer, audience, and scopes and denies requests that fail (401/403). Supporting references (repost knowledge-center article on Cognito/API Gateway integrations, the apigatewayv2 Authorizer API reference showing JWTConfiguration is \"Supported only for HTTP APIs\", and the CDK HttpJwtAuthorizer docs) confirm JWT is the HTTP API equivalent of REST-API Cognito user-pool authorization, and that COGNITO_USER_POOLS is not a valid HTTP API authorization type. The rule's enumeration (AWS_IAM, COGNITO_USER_POOLS, CUSTOM) is therefore REST-API vocabulary; the rule's intent — no unauthenticated access, an authorizer must be configured — is satisfied by JWT with an associated authorizer. This is not an ambiguity requiring the strict-default: the documentation affirmatively establishes that such a route is authenticated, so flagging it would be a false positive on a properly protected resource. Only AuthorizationType NONE (or JWT/CUSTOM without an associated authorizer) leaves the route unauthenticated and should flag."
+      }
+    },
+    {
+      "id": "REQ-17",
+      "description": "A non-OPTIONS method has no authorization type, but the API it belongs to has a resource policy that restricts which callers may invoke it",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "flag",
+      "rationale": "An API-level resource policy only restricts where or from which account a call may originate and is documented as an optional control used in conjunction with — not in place of — an authorizer, so a method with no authorization type still has no identity-based authorization and is unprotected.",
+      "ambiguity": {
+        "question": "Does an API-level access policy restricting invocation constitute acceptable authorization coverage for a method with no authorization type, or must the method itself declare one of the accepted authorization types?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/whitepapers/latest/security-overview-amazon-api-gateway/security-design-principles.html",
+        "evidence": "Searched AWS docs for API Gateway resource policy versus method authorization type, the access-control overview, and the authorization workflow. Findings: (1) The API Gateway security whitepaper (security-design-principles) states resource policies are \"optional for API Gateway public endpoints\" and that \"Resource policies can be used in conjunction with authorizers,\" directing readers to the separate Authentication and Authorization section — i.e. they complement rather than replace method authorization. (2) The AWS Compute Blog access-control matrix classifies resource policies as resource/network-scoped controls (source IP, account, VPC endpoint) and distinguishes them from identity-based controls (IAM, Cognito, Lambda/JWT authorizers), which are what the rule enumerates. (3) The private-APIs best-practices whitepaper explicitly warns that network-level restriction is insufficient because \"malicious users can potentially gain access to private networks, so it's a best practice to implement an authorizer for APIs.\" (4) \"How API Gateway resource policies affect authorization workflow\" confirms a resource-policy-only configuration is functional (no authentication type defined) but authorizes solely on inbound caller criteria, performing no caller authentication. Therefore an API-level access policy is at best partial coverage of the required scope and does not demonstrably authenticate/authorize the assessed method; the method must itself declare AWS_IAM, COGNITO_USER_POOLS, or CUSTOM. The documentation settles this toward flagging, consistent with the strict default."
+      }
+    }
+  ],
+  "removedRequirements": [
+    {
+      "id": "REQ-02",
+      "description": "A non-OPTIONS API method/route explicitly declares that no authorization is used",
+      "conflictedWith": "REQ-08",
+      "reason": "REQ-08 is a direct restatement of the rule's core obligation: user-pool/JWT-style authorization only counts if an authorizer is actually associated, since without one no token validation occurs and the method is effectively unauthenticated. REQ-02's conflicting fixture requires a non-OPTIONS HTTP API route that declares JWT (user-pool) authorization with no associated authorizer to PASS — that expectation is not entailed by REQ-02's own stated scope (methods explicitly declaring NONE) and directly contradicts the rule's requirement that COGNITO_USER_POOLS/CUSTOM authorization be authorizer-backed. Keeping REQ-02 would force the rule to treat an authorizer-less JWT route as compliant, making the rule silently permissive on exactly the unauthenticated-access condition it exists to prohibit. Removing REQ-02 costs coverage of the explicit-NONE scenario (which the rule's other authorization-type checks still largely address, since NONE is not in the allowed set), whereas removing REQ-08 would remove the flag and institutionalize a false pass."
+    }
+  ]
+}
