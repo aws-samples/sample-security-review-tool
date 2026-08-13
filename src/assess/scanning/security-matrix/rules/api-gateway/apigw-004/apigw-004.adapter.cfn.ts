@@ -10,9 +10,14 @@ interface ApiFamily {
   readonly apiIdProperty: string;
 }
 
+const ROUTE_TYPE = 'AWS::ApiGatewayV2::Route';
+const API_TYPE = 'AWS::ApiGatewayV2::Api';
+const WEBSOCKET_PROTOCOL = 'WEBSOCKET';
+const CONNECT_ROUTE_KEY = '$connect';
+
 const API_FAMILIES: Record<string, ApiFamily> = {
   'AWS::ApiGateway::Method': { authorizerType: 'AWS::ApiGateway::Authorizer', apiIdProperty: 'RestApiId' },
-  'AWS::ApiGatewayV2::Route': { authorizerType: 'AWS::ApiGatewayV2::Authorizer', apiIdProperty: 'ApiId' },
+  [ROUTE_TYPE]: { authorizerType: 'AWS::ApiGatewayV2::Authorizer', apiIdProperty: 'ApiId' },
 };
 
 export class Apigw004CfnAdapterFactory implements AdapterFactory<CfnContext> {
@@ -38,6 +43,23 @@ class Apigw004CfnAdapter implements Apigw004Adapter {
 
   isOptionsMethod(): boolean {
     return this.httpMethod() === 'OPTIONS';
+  }
+
+  isWebSocketRouteWithoutAuthorizationSupport(): boolean {
+    if (this.resourceType !== ROUTE_TYPE) return false;
+    const routeKey = this.properties()['RouteKey'];
+    if (routeKey === CONNECT_ROUTE_KEY) return false;
+    return this.protocolTypeOfApi() === WEBSOCKET_PROTOCOL;
+  }
+
+  /** Undefined unless the route's API is in this template and states its protocol. */
+  private protocolTypeOfApi(): string | undefined {
+    const apiId = this.properties()['ApiId'];
+    if (typeof apiId !== 'string') return undefined;
+    const api = (this.ctx.template.Resources ?? {})[apiId] as Resource | undefined;
+    if (api?.Type !== API_TYPE) return undefined;
+    const protocolType = (api.Properties as Record<string, unknown> | undefined)?.['ProtocolType'];
+    return typeof protocolType === 'string' ? protocolType.toUpperCase() : undefined;
   }
 
   hasNoAuthorizationConfiguration(): boolean {

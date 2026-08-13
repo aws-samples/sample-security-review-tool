@@ -23,6 +23,7 @@ export class Apigw004Control extends SecurityControl<Apigw004Adapter> {
 
   protected evaluate(adapter: Apigw004Adapter): ControlFinding | null {
     if (adapter.isOptionsMethod()) return null;
+    if (adapter.isWebSocketRouteWithoutAuthorizationSupport()) return null;
     if (!adapter.hasNoAuthorizationConfiguration()) return null;
     return {
       scenario: MISSING_AUTHORIZATION,

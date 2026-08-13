@@ -134,6 +134,19 @@
         "docReference": "https://docs.aws.amazon.com/whitepapers/latest/security-overview-amazon-api-gateway/security-design-principles.html",
         "evidence": "Searched AWS docs for API Gateway resource policy versus method authorization type, the access-control overview, and the authorization workflow. Findings: (1) The API Gateway security whitepaper (security-design-principles) states resource policies are \"optional for API Gateway public endpoints\" and that \"Resource policies can be used in conjunction with authorizers,\" directing readers to the separate Authentication and Authorization section — i.e. they complement rather than replace method authorization. (2) The AWS Compute Blog access-control matrix classifies resource policies as resource/network-scoped controls (source IP, account, VPC endpoint) and distinguishes them from identity-based controls (IAM, Cognito, Lambda/JWT authorizers), which are what the rule enumerates. (3) The private-APIs best-practices whitepaper explicitly warns that network-level restriction is insufficient because \"malicious users can potentially gain access to private networks, so it's a best practice to implement an authorizer for APIs.\" (4) \"How API Gateway resource policies affect authorization workflow\" confirms a resource-policy-only configuration is functional (no authentication type defined) but authorizes solely on inbound caller criteria, performing no caller authentication. Therefore an API-level access policy is at best partial coverage of the required scope and does not demonstrably authenticate/authorize the assessed method; the method must itself declare AWS_IAM, COGNITO_USER_POOLS, or CUSTOM. The documentation settles this toward flagging, consistent with the strict default."
       }
+    },
+    {
+      "id": "REQ-18",
+      "description": "A WebSocket route other than $connect has no authorization configured",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "pass",
+      "rationale": "API Gateway only offers authorization settings on the $connect route of a WebSocket API. $disconnect, $default and custom routes carry no authorization type or authorizer that a caller could satisfy, so a finding on them asks for a setting the platform does not support. The connection was already authorized at $connect.",
+      "ambiguity": {
+        "question": "Does the authorization requirement apply to every route of a WebSocket API, or only to $connect?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-websocket-api-control-access.html",
+        "evidence": "The API Gateway developer guide puts authorization settings under $connect alone: \"When you set up the $connect route for your API, the following optional settings are available to enable authorization for your API\", listing AWS_IAM and CUSTOM there and nowhere else. The access-control page for WebSocket APIs states \"we recommend that you configure an authorizer for the $connect route on all your WebSocket APIs\", and the Lambda authorizer walkthrough configures only the $connect route. A $disconnect or $default route therefore has no authorization to configure, and reporting one produces a finding that cannot be remediated."
+      }
     }
   ],
   "removedRequirements": [

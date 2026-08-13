@@ -10,9 +10,14 @@ interface ApiFamily {
   readonly apiIdArgument: string;
 }
 
+const ROUTE_TYPE = 'aws_apigatewayv2_route';
+const API_TYPE = 'aws_apigatewayv2_api';
+const WEBSOCKET_PROTOCOL = 'WEBSOCKET';
+const CONNECT_ROUTE_KEY = '$connect';
+
 const API_FAMILIES: Record<string, ApiFamily> = {
   aws_api_gateway_method: { authorizerType: 'aws_api_gateway_authorizer', apiIdArgument: 'rest_api_id' },
-  aws_apigatewayv2_route: { authorizerType: 'aws_apigatewayv2_authorizer', apiIdArgument: 'api_id' },
+  [ROUTE_TYPE]: { authorizerType: 'aws_apigatewayv2_authorizer', apiIdArgument: 'api_id' },
 };
 
 export class Apigw004TfAdapterFactory implements AdapterFactory<TfContext> {
@@ -38,6 +43,24 @@ class Apigw004TfAdapter implements Apigw004Adapter {
 
   isOptionsMethod(): boolean {
     return this.httpMethod() === 'OPTIONS';
+  }
+
+  isWebSocketRouteWithoutAuthorizationSupport(): boolean {
+    if (this.resourceType !== ROUTE_TYPE) return false;
+    const routeKey = this.values()['route_key'];
+    if (routeKey === CONNECT_ROUTE_KEY) return false;
+    return this.protocolTypeOfApi() === WEBSOCKET_PROTOCOL;
+  }
+
+  /** Undefined unless the route's API is in this project and states its protocol. */
+  private protocolTypeOfApi(): string | undefined {
+    const apiId = this.values()['api_id'];
+    if (typeof apiId !== 'string') return undefined;
+    const api = (this.ctx.allResources ?? []).find(
+      resource => resource.type === API_TYPE && (resource.address === apiId || this.nameOf(resource) === apiId),
+    );
+    const protocolType = (api?.values ?? {})['protocol_type'];
+    return typeof protocolType === 'string' ? protocolType.toUpperCase() : undefined;
   }
 
   hasNoAuthorizationConfiguration(): boolean {
