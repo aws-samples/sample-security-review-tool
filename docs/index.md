@@ -8,8 +8,9 @@ For end-user documentation (installation, CLI usage, CI/CD integration), see [do
 
 - [Node.js](https://nodejs.org/) 22+
 - [Git](https://git-scm.com/downloads)
-- [Bun](https://bun.sh/) (required for CLI binary compilation)
+- [Bun](https://bun.sh/) (required for CLI binary compilation and for the rule builder)
 - AWS credentials with `bedrock:InvokeModel` permission (env vars, SSO, named profiles, or federated roles)
+- [Terraform](https://developer.hashicorp.com/terraform/install) on your `PATH` (required by the rule builder to validate Terraform fixtures and fixes)
 - (Optional) [mise](https://mise.jdx.dev/getting-started.html) — manages tool versions and runs tasks via `mise.toml`
 
 ## Getting Started
@@ -45,6 +46,8 @@ tests/                      # Test suites (mirrors src/ structure)
   core/                     # Core logic and security rule tests
   fix-tests/                # Fix command tests
   utils/                    # Shared test utilities
+rule-builder/               # Separate CLI that builds, converts, and exercises security rules
+fixtures/                   # Generated per-rule fixture projects (cdk, cfn, terraform)
 scripts/                    # Build scripts (CLI compilation)
 docs/                       # Documentation (user guide)
 .claude/                    # Claude Code configuration and skills
@@ -85,41 +88,60 @@ Output is written to `build/<platform>/srt` (or `srt.exe` on Windows). Use the `
 
 ## Adding Security Rules
 
-SRT includes a Claude Code skill for generating security matrix rules. This skill automates the creation of new security checks that scan CloudFormation templates for AWS security best practices violations.
+Security rules are built by the **rule builder**, a separate CLI in `rule-builder/`. It drives Bedrock through a five-phase pipeline and writes the rule, its tests, and its fixtures for you. Run every command from the `rule-builder` folder.
 
-**Prerequisites:**
-- [Claude Code](https://claude.com/claude-code) CLI installed
-- Project opened in Claude Code
-
-**To generate a new security rule:**
+### Build a new rule
 
 ```bash
-# In Claude Code, invoke the skill
-/security-rule-generator
+cd rule-builder
+bun src/index.ts --rule S3-011 --service s3 --description "S3 buckets must have intelligent tiering enabled"
 ```
 
-Claude Code will guide you through:
-1. **Rule ID**: Format `SERVICE-###` (e.g., S3-010, KMS-003)
-2. **Resource types**: AWS CloudFormation resource types to check
-3. **Security requirement**: What security property to validate
-4. **Priority**: HIGH, MEDIUM, or LOW
+`--rule`, `--service`, and `--description` are all required to build. Add `--regenerate` to clear the existing tests, control, and adapter files first (cached requirements are kept).
 
-The skill automatically:
-- Fetches relevant AWS documentation
-- Reviews existing rule patterns in the codebase
-- Generates the rule implementation following project conventions
-- Creates unit tests with compliant/non-compliant scenarios
-- Registers the rule in the appropriate service index
+### Convert an existing rule
 
-**Example:**
-```
-User: /security-rule-generator
-Claude: What security rule would you like to create?
-User: S3 buckets should have intelligent tiering enabled
-Claude: [Gathers requirements, generates S3-011 rule and tests]
+```bash
+bun src/index.ts --convert LAMBDA-013
 ```
 
-Rules are created at `src/assess/scanning/security-matrix/rules/{service}/` with corresponding tests at `tests/core/scanners/srt/rules/{service}/`.
+The rule ID, service, and description are read from the legacy rule's own source, so `--rule`, `--service`, and `--description` must not be passed alongside `--convert`. The description is restated as a requirement ("X-Ray tracing not enabled" becomes "Lambda functions must have X-Ray tracing enabled"), and the service prefix loses its hyphens (`API-GW-002` becomes `APIGW-002`).
+
+The legacy files are left in place. The run ends by listing them — the old rule sources, the service `index.ts`, and the old tests — so you can compare the new findings against the old ones before deleting anything.
+
+### Exercise an existing rule
+
+```bash
+bun src/index.ts --rule S3-011
+```
+
+Runs the rule's unit tests and remediation against its existing fixtures. Nothing is regenerated; the service and description are recovered from the rule's `requirements.json`.
+
+### The five phases
+
+| Phase | What it does |
+|---|---|
+| 1. Requirements | Turns the description into a list of testable requirements, cached as `{rule-id}.requirements.json` |
+| 2. Scaffolding | Writes the control file and the CFN and Terraform adapters |
+| 3. Implementation | Fills in the control logic and unit tests, then verifies the tests pass |
+| 4. Fixtures | Generates compliant and non-compliant CDK, CloudFormation, and Terraform projects |
+| 5. Remediation | Runs `assess` and `fix` against the fixtures, then re-verifies the unit tests |
+
+A failing unit test after phase 3 or phase 5 stops the run.
+
+### Where the output lands
+
+| Path | Contents |
+|---|---|
+| `src/assess/scanning/security-matrix/rules/{service}/{rule-id}/` | `.control.ts`, `.adapter.ts`, `.adapter.cfn.ts`, `.adapter.tf.ts`, `.requirements.json` |
+| `tests/core/scanners/srt/rules/{service}/{rule-id}/` | Unit tests |
+| `fixtures/{rule-id}/{cdk,cfn,terraform}/` | Fixture projects used by phases 4 and 5 |
+
+Logs are written to `~/.srt/logs`. Bedrock is called with the `default` AWS profile in `us-east-1`.
+
+### Legacy rules
+
+Not every rule has been converted yet. The unconverted ones still use the older flat layout, a single `{service}/###-name.cf.ts` file paired with a `.tf.ts` file. Convert them with `--convert` rather than editing them in place.
 
 ## CI/CD
 
