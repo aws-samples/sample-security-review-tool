@@ -1,0 +1,154 @@
+{
+  "ruleId": "ATH-002",
+  "generatedAt": "2026-08-13T15:30:52.298Z",
+  "description": "Athena WorkGroups must use an S3 output location bucket whose bucket policy includes a Deny statement enforcing HTTPS/TLS (aws:SecureTransport) for all requests",
+  "cfnResources": [
+    "AWS::Athena::WorkGroup",
+    "AWS::S3::Bucket",
+    "AWS::S3::BucketPolicy"
+  ],
+  "tfResources": [
+    "aws_athena_workgroup",
+    "aws_s3_bucket",
+    "aws_s3_bucket_policy"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Athena workgroup defines no query-result output location at all, so no result bucket can be identified for evaluation",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "With no output location configured on the workgroup, query results land in whatever bucket the client chooses, so no bucket policy denying non-TLS requests can be shown to protect the results and the workgroup's results are left unprotected by configuration.",
+      "ambiguity": {
+        "question": "When a workgroup specifies no query-result output location (results location is left to client-side settings), should the rule flag because TLS enforcement on the result bucket cannot be established, or pass because there is no in-template bucket in scope for the check?",
+        "settledBy": "strict-default",
+        "docReference": null,
+        "evidence": "Searched AWS documentation for Athena result-location/client-side-settings behavior and for the S3 aws:SecureTransport deny guidance: the Athena \"Encryption in transit\" page (https://docs.aws.amazon.com/athena/latest/ug/encryption-in-transit.html) states you should allow only encrypted HTTPS/TLS connections via the aws:SecureTransport condition on the S3 bucket policy, and the S3 example-bucket-policies page and the s3-bucket-ssl-requests-only guidance describe the required explicit Deny; the Athena CfnWorkGroup/ResultConfiguration references explain that when no workgroup output location is set (and workgroup settings do not override), the client-side setting determines the results bucket. None of these documents addresses what a scanner should conclude when a workgroup declares no output location at all, so no doc settles the scenario and docReference is left null. Applying the strict default: an omitted output location is an absent value, not a value that is unresolvable at analysis time (it is not a parameter, Ref, or condition whose resolution is deferred) — the configuration is simply not there, and results will be written to an arbitrary client-supplied bucket whose policy cannot be inspected or guaranteed. That is the \"never configured leaves the resource unprotected\" and \"protective feature not demonstrably covering the assessed resource\" case, both of which flag. Flagging costs a reviewer one dismissible finding; passing silently ships a workgroup whose results may be written over plain HTTP to an unknown bucket."
+      }
+    },
+    {
+      "id": "REQ-02",
+      "description": "Athena workgroup points its query results at a storage bucket defined in the same template, and that bucket has no access policy of any kind",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Without any resource-level access policy on the result bucket, nothing denies plaintext HTTP requests, so Athena query results can be read or written over unencrypted connections. AWS guidance for enforcing encryption in transit is an explicit Deny on requests where aws:SecureTransport is false; its complete absence means the requirement is unmet."
+    },
+    {
+      "id": "REQ-03",
+      "description": "Athena workgroup points its query results at a storage bucket whose access policy contains a Deny statement applying to all principals and all actions on that bucket and its contents, conditioned on the request not using secure transport, where the policy explicitly identifies the same bucket used by the workgroup",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "This is exactly the AWS-documented 'restrict access to only HTTPS requests' bucket policy: Effect Deny, Principal *, Action s3:*, Resource covering the bucket and its objects, Condition Bool aws:SecureTransport false. It blocks all plaintext access to the workgroup's results, satisfying the rule."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Athena workgroup's result bucket is covered by a policy Deny statement whose action and resource scopes are broad wildcards that include the bucket and all of its contents, conditioned on requests not using secure transport",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "A wildcard action and a resource scope that encompasses the assessed bucket and its objects is at least as restrictive as an explicitly enumerated scope, so every request to the workgroup's result location is denied unless it uses TLS. The security objective is met."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A qualifying secure-transport Deny policy exists in the template, but it is attached to and scoped at a different storage bucket than the one the Athena workgroup writes its results to, and the workgroup's own result bucket has no such policy",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Bucket policies are resource-level and apply only to the bucket they are attached to and the ARNs they name. TLS enforcement on an unrelated bucket provides no protection for the workgroup's result location, so the assessed workgroup remains non-compliant."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Athena workgroup's result bucket has a secure-transport Deny statement whose resource scope covers only the objects stored inside the bucket, not operations addressed to the bucket itself",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "A secure-transport Deny scoped only to <code>bucket/*</code> leaves bucket-level operations (such as GetBucketLocation, ListBucket, and policy/configuration calls used against Athena result buckets) reachable over plain HTTP, so AWS's prescribed policy denies non-TLS requests on both the bucket ARN and the object ARN, and an object-only scope is incomplete coverage.",
+      "ambiguity": {
+        "question": "Is a secure-transport Deny whose resource scope covers only the objects within the result bucket (and not the bucket-level ARN) sufficient to pass, or must the Deny cover both the bucket and its objects?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html",
+        "evidence": "Searched AWS documentation for the canonical aws:SecureTransport bucket-policy pattern and for the resource scope it requires. Every authoritative source returns the same two-element Resource array — the bucket ARN and the object ARN. The S3 User Guide \"Examples of Amazon S3 bucket policies\" → \"Restrict access to only HTTPS requests\" shows the RestrictToTLSRequestsOnly statement with Resource: [\"arn:aws:s3:::amzn-s3-demo-bucket\", \"arn:aws:s3:::amzn-s3-demo-bucket/*\"]. Security Hub CSPM's S3.5 remediation and the AWS Config rule s3-bucket-ssl-requests-only knowledge-center article use the identical two-ARN policy. AWS Control Tower's S3 control reference states the remediation as \"Configure an Amazon S3 bucket policy statement that denies access to all principals and actions for the S3 bucket and bucket objects when a secure transport protocol is not in use,\" and its CloudFormation example lists both !GetAtt S3Bucket.Arn and that ARN with \"/*\" appended. The wording is explicit that both the bucket and the bucket objects must be covered; the bucket-level ARN is not redundant, since S3 bucket-level actions (ListBucket, GetBucketLocation, and configuration/policy APIs — several of which Athena and its consumers invoke against the result bucket) are authorized against the bucket ARN and are therefore unaffected by an object-only Deny. A policy whose Deny scope covers only <bucket>/* thus permits unencrypted HTTP requests for those operations and does not satisfy the documented requirement. This is partial coverage of a required scope, which the documentation resolves against passing, so the rule flags. No unresolvable analysis-time value is involved: the resource scope is a literal in the policy document."
+      }
+    },
+    {
+      "id": "REQ-07",
+      "description": "Athena workgroup's result bucket has a Deny statement conditioned on requests not using secure transport, but the statement applies to only one narrow operation type rather than to all requests against the bucket",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires TLS enforcement for all requests. A Deny limited to a single operation (for example only object reads) still permits other plaintext operations such as writes, listings, or configuration reads against the results location, so encryption in transit is not enforced comprehensively."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Athena workgroup's result bucket has a Deny statement whose transport-security condition is inverted, denying requests that DO use secure transport instead of those that do not",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "AWS evaluates the aws:SecureTransport condition key as true when the request used HTTPS; denying on true blocks encrypted requests while leaving plaintext HTTP requests fully permitted. This achieves the opposite of the required control, so the workgroup's result location is not TLS-protected."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Athena workgroup's result bucket has a secure-transport Deny statement that carves out an exception so that one or more identities are excluded from the denial and may still reach the bucket over plaintext connections",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires the Deny to apply to all requests. Excluding principals from the denial leaves a permitted path for unencrypted access to Athena query results, defeating the in-transit encryption guarantee the control exists to provide."
+    },
+    {
+      "id": "REQ-10",
+      "description": "The Athena workgroup's query-result location value cannot be determined at analysis time because it derives entirely from an externally supplied or otherwise unresolvable value",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "If the result location cannot be resolved, the rule cannot identify which bucket must carry the TLS-enforcing policy and therefore cannot establish non-compliance. Rules must not assert a violation on values that are indeterminate at analysis time, so no finding is produced."
+    },
+    {
+      "id": "REQ-11",
+      "description": "The result bucket has an access policy, but whether the secure-transport Deny statement is included in it depends entirely on a condition that cannot be resolved at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "One resolution of the unresolvable condition yields a compliant policy containing the required Deny, so non-compliance cannot be proven. The rule must not produce a finding when the deciding value is indeterminate at analysis time."
+    },
+    {
+      "id": "REQ-12",
+      "description": "Athena workgroup's result bucket has an access policy containing several statements for unrelated purposes, one of which is a Deny on all principals and all actions covering the bucket and its contents when the request does not use secure transport",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "An explicit Deny overrides any Allow elsewhere in the policy set, so the presence of other statements does not weaken the TLS enforcement. One qualifying secure-transport Deny is sufficient for the workgroup's result location to be protected in transit."
+    },
+    {
+      "id": "REQ-13",
+      "description": "Athena workgroup's result bucket has an access policy attached but the policy contains no statements at all",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty statement list grants and denies nothing, so no condition prevents plaintext HTTP access to the query results bucket. The required secure-transport Deny is effectively absent."
+    },
+    {
+      "id": "REQ-14",
+      "description": "Athena workgroup's result bucket has a broad Deny statement covering all principals, actions, the bucket and its contents, but its condition constrains something other than transport security, such as the source network address of the caller",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "The control is satisfied only by a denial keyed on the request's transport security. A Deny conditioned on an unrelated attribute still permits unencrypted requests that satisfy that attribute, so query results can travel over plaintext connections. The mere presence of a conditional Deny must not be accepted as TLS enforcement."
+    },
+    {
+      "id": "REQ-15",
+      "description": "Athena workgroup's result bucket policy only grants access conditioned on the request using secure transport, and contains no statement that denies requests lacking secure transport",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires an explicit Deny. A conditional Allow can be overridden or supplemented by other Allow grants (in the bucket policy or in identity policies) that lack the transport condition, whereas an explicit Deny always wins during policy evaluation. Allow-only conditioning therefore does not guarantee that plaintext access is blocked."
+    },
+    {
+      "id": "REQ-16",
+      "description": "Athena workgroup is configured to store query results in the service-managed storage offered by the analytics service instead of a customer-owned storage bucket",
+      "category": "DISABLED",
+      "expectedBehavior": "pass",
+      "rationale": "When managed query result storage is enabled the workgroup has no customer output location, and results reside in service-owned storage whose transport security is controlled by AWS rather than by a customer bucket policy. There is no customer bucket policy the template could or should supply, so no finding applies."
+    },
+    {
+      "id": "REQ-17",
+      "description": "Athena workgroup's query results point at a storage bucket that is not defined anywhere in the assessed template, so no policy for it can be inspected",
+      "category": "ABSENT",
+      "expectedBehavior": "pass",
+      "rationale": "The result bucket is external to the assessed template, so its bucket policy is not resolvable at analysis time and the scanner has no configuration on which to assert that TLS enforcement is missing.",
+      "ambiguity": {
+        "question": "When the workgroup's result bucket is not managed in the assessed template, should the rule flag because TLS enforcement cannot be demonstrated, or pass because the bucket and its policy are outside the scope of what this template controls?",
+        "settledBy": "intrinsic-exception",
+        "docReference": null,
+        "evidence": "I searched AWS documentation for the guidance behind this rule: Athena \"Encryption in transit\" (recommends the aws:SecureTransport condition on the results bucket policy), the S3 example bucket policies page and the s3-bucket-ssl-requests-only Config/Security Hub guidance (require an explicit Deny on aws:SecureTransport false), and the AWS Security Blog pattern-based policy-as-code example, which models exactly this check by matching bucket and bucket-policy resources within the IaC plan. All of these establish *what* a compliant bucket policy looks like; none addresses how a template scanner should treat a results bucket that is not declared in the assessed template, so no document settles the scenario. Deciding it on principle: the deciding value here — the bucket's policy — is a genuine analysis-time unknown rather than an absent or awkward-to-read field. The bucket exists outside the template's control plane, its policy may well contain the required Deny statement, and the template contains no evidence either way. Because the scanner cannot know the configuration, it cannot assert non-compliance, so the unresolvable-value exception applies and the rule passes; note also that the referenced policy-as-code pattern anchors its evaluation on in-plan bucket/bucket-policy resources, consistent with limiting the assessment to template-managed buckets. Coverage of externally managed buckets belongs to runtime/account-level detection (for example the s3-bucket-ssl-requests-only Config rule), not to this template rule."
+      }
+    }
+  ]
+}

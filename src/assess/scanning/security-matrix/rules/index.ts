@@ -26,7 +26,6 @@ import { securityLakeRules } from './security-lake/index.js';
 import { kmsRules } from './kms/index.js';
 import { organizationsRules } from './organizations/index.js';
 import { iamIdentityCenterRules } from './iam-identity-center/index.js';
-import { athenaRules } from './athena/index.js';
 import { emrRules } from './emr/index.js';
 import { kinesisDataAnalyticsRules } from './kinesis-data-analytics/index.js';
 import { kinesisDataFirehoseRules } from './kinesis-data-firehose/index.js';
@@ -72,7 +71,6 @@ export const allCloudFormationRules = [
   ...dmsRules,
   ...sagemakerRules,
   ...securityLakeRules,
-  ...athenaRules,
   ...emrRules,
   ...kinesisDataAnalyticsRules,
   ...kinesisDataFirehoseRules,
@@ -119,7 +117,6 @@ import { tfSecurityLakeRules } from './security-lake/index.js';
 import { tfKmsRules } from './kms/index.js';
 import { tfOrganizationsRules } from './organizations/index.js';
 import { tfIamIdentityCenterRules } from './iam-identity-center/index.js';
-import { tfAthenaRules } from './athena/index.js';
 import { tfEmrRules } from './emr/index.js';
 import { tfKinesisDataAnalyticsRules } from './kinesis-data-analytics/index.js';
 import { tfKinesisDataFirehoseRules } from './kinesis-data-firehose/index.js';
@@ -170,7 +167,6 @@ export const allTerraformRules: BaseTerraformRule[] = [
   ...tfDmsRules,
   ...tfSagemakerRules,
   ...tfSecurityLakeRules,
-  ...tfAthenaRules,
   ...tfEmrRules,
   ...tfKinesisDataAnalyticsRules,
   ...tfKinesisDataFirehoseRules,
