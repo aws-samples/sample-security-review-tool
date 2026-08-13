@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for LEX-002 - Amazon Lex V2 bot slots must have obfuscation enabled.
+  Triggers the single "obfuscation-disabled" remediation scenario twice within
+  the same bot: once via an explicit ObfuscationSettingType of "None" and once
+  via a slot that omits ObfuscationSetting entirely (which is also treated as
+  disabled by the adapter).
+
+Resources:
+  BotRuntimeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lexv2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: LexRuntimeRolePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - polly:SynthesizeSpeech
+                  - comprehend:DetectSentiment
+                Resource: '*'
+
+  OrderFlowersTemplateBot:
+    Type: AWS::Lex::Bot
+    Properties:
+      Name: OrderFlowersWithCFN
+      RoleArn: !GetAtt BotRuntimeRole.Arn
+      DataPrivacy:
+        ChildDirected: false
+      IdleSessionTTLInSeconds: 300
+      Description: LEX-002 fixture bot with unobfuscated slots
+      AutoBuildBotLocales: false
+      BotLocales:
+        - LocaleId: en_US
+          Description: LEX-002 fixture locale
+          NluConfidenceThreshold: 0.40
+          VoiceSettings:
+            VoiceId: Ivy
+          SlotTypes:
+            - Name: FlowerTypes
+              Description: Slot type description
+              SlotTypeValues:
+                - SampleValue:
+                    Value: lilies
+                - SampleValue:
+                    Value: roses
+                - SampleValue:
+                    Value: tulips
+              ValueSelectionSetting:
+                ResolutionStrategy: ORIGINAL_VALUE
+          Intents:
+            - Name: OrderFlowers
+              Description: Intent to order a bouquet of flowers for pick up
+              SampleUtterances:
+                - Utterance: I would like to pick up flowers
+                - Utterance: I would like to order some flowers
+              IntentConfirmationSetting:
+                PromptSpecification:
+                  MessageGroupsList:
+                    - Message:
+                        PlainTextMessage:
+                          Value: "Okay, your {FlowerType} will be ready for pickup by {PickupTime} on {PickupDate}. Does this sound okay?"
+                  MaxRetries: 3
+                  AllowInterrupt: false
+                DeclinationResponse:
+                  MessageGroupsList:
+                    - Message:
+                        PlainTextMessage:
+                          Value: Okay, I will not place your order.
+                  AllowInterrupt: false
+              SlotPriorities:
+                - Priority: 1
+                  SlotName: FlowerType
+                - Priority: 2
+                  SlotName: PickupNote
+              Slots:
+                # Scenario: obfuscation-disabled - explicit ObfuscationSettingType "None"
+                - Name: FlowerType
+                  Description: The type of flower being ordered, explicitly not obfuscated
+                  SlotTypeName: FlowerTypes
+                  ObfuscationSetting:
+                    ObfuscationSettingType: None
+                  ValueElicitationSetting:
+                    SlotConstraint: Required
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: What type of flowers would you like to order?
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                # Scenario: obfuscation-disabled - ObfuscationSetting omitted entirely
+                - Name: PickupNote
+                  Description: A free-form note captured with no obfuscation configured
+                  SlotTypeName: AMAZON.FreeFormInput
+                  ValueElicitationSetting:
+                    SlotConstraint: Optional
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: Any special notes for your pickup?
+                      MaxRetries: 3
+                      AllowInterrupt: false
+            - Name: FallbackIntent
+              Description: Default fallback intent required by Amazon Lex V2
+              ParentIntentSignature: AMAZON.FallbackIntent

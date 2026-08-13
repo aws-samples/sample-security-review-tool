@@ -1,0 +1,110 @@
+{
+  "ruleId": "LEX-002",
+  "generatedAt": "2026-08-13T15:59:13.184Z",
+  "description": "Amazon Lex V2 bot slots must have obfuscation enabled (not set to \"None\"/disabled) for slot values",
+  "cfnResources": [
+    "AWS::Lex::Bot"
+  ],
+  "tfResources": [
+    "aws_lexv2models_slot"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "A conversational bot slot has value obfuscation configured with the standard obfuscation type, so the slot value is masked in conversation logs",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Amazon Lex V2 obfuscation settings accept either a disabled value or a default obfuscation value; when the default obfuscation type is selected, Lex replaces the captured slot value in CloudWatch conversation logs with the slot name, which is the compliant state this rule requires."
+    },
+    {
+      "id": "REQ-02",
+      "description": "A conversational bot slot has value obfuscation explicitly configured as none/disabled",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Selecting the 'none' obfuscation type tells Amazon Lex V2 to record raw slot values in conversation logs and stored utterances, exposing potentially sensitive user input; the rule exists to detect exactly this explicit opt-out."
+    },
+    {
+      "id": "REQ-03",
+      "description": "A conversational bot slot has no value obfuscation configuration at all",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Lex V2 slot obfuscation is opt-in — the service only masks a slot's values when obfuscationSetting is explicitly set to DEFAULT_OBFUSCATION — so a slot with no obfuscation configuration logs its values in cleartext and is unprotected.",
+      "ambiguity": {
+        "question": "When a Lex V2 slot omits the obfuscation setting entirely, does the service apply obfuscation by default (making omission compliant, so the rule should pass), or should omission be treated as unprotected and flagged?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/lexv2/latest/dg/monitoring-obfuscate.html",
+        "evidence": "I searched the Lex V2 developer guide and API reference for the obfuscation default. The developer guide page \"Obscuring slot values in conversation logs from Lex V2\" (https://docs.aws.amazon.com/lexv2/latest/dg/monitoring-obfuscate.html) states that you \"can enable slot obfuscation to mask those values for logging\" and that \"You can choose which slots to obfuscate... If you are using the API, set the obfuscationSetting field of the slot to DEFAULT_OBFUSCATION when you call the CreateSlot or UpdateSlot operation.\" That describes obfuscation as an opt-in, per-slot action requiring an explicit setting; nothing states that the service obfuscates slots for which the setting was never supplied. The obfuscationSetting property is optional on CreateSlot/UpdateSlot and on AWS::Lex::Bot slot definitions (CDK/CFN docs list it as optional), so omission leaves the slot in the unobfuscated state. The one contrary-looking sentence is in the ObfuscationSetting API type (https://docs.aws.amazon.com/lexv2/latest/APIReference/API_ObfuscationSetting.html): \"The default is to obscure the values.\" That sentence describes the obfuscationSettingType member, which is itself Required: Yes within the structure — i.e. it cannot be defaulted when the structure is present, and it says nothing about behavior when the whole structure is absent; read against the developer guide's opt-in instructions it does not establish service-side obfuscation for unconfigured slots. This is also not an analysis-time unknown: the configuration is fully visible and simply absent. Both the documented opt-in model and the strict default (\"never configured\" leaves the resource unprotected) point to flagging."
+      }
+    },
+    {
+      "id": "REQ-04",
+      "description": "A conversational bot slot has an obfuscation configuration structure present but it carries no obfuscation type value",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An obfuscation configuration with no type value provides no evidence that masking is selected; because the obfuscation type is the sole determinant of whether slot values are masked in conversation logs, an incomplete configuration cannot be treated as protective and must be reported."
+    },
+    {
+      "id": "REQ-05",
+      "description": "A conversational bot defines multiple slots and at least one of them has obfuscation disabled while others are obfuscated",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "Obfuscation is a per-slot control, so any single slot logging raw values leaks sensitive input regardless of sibling slots; coverage must be exhaustive across every slot in the bot."
+    },
+    {
+      "id": "REQ-06",
+      "description": "A conversational bot defines several slots across multiple language locales and intents, and every one of them has obfuscation enabled",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "When all slots in all locales and intents specify an obfuscation type that masks values, no slot value is written in clear text to conversation logs, so the bot satisfies the rule."
+    },
+    {
+      "id": "REQ-08",
+      "description": "A conversational bot slot has obfuscation fixed to the none/disabled value while some unrelated attribute of the slot depends on an unresolvable condition",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "flag",
+      "rationale": "Unresolvability only suppresses a finding when it affects the obfuscation type itself; here the obfuscation type is statically known to be disabled, so slot values are logged in clear text in every deployment outcome and the finding is certain."
+    },
+    {
+      "id": "REQ-09",
+      "description": "A conversational bot slot uses an obfuscation type value that is not the none/disabled value and is not a value the rule specifically recognizes",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "Only the 'none' value disables masking in Amazon Lex V2; any other obfuscation type instructs the service to obscure slot values, so treating unrecognized non-disabled values as compliant avoids false positives from newly introduced obfuscation types."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Obfuscation is enabled on a different slot of the same bot, or on a different slot resource, while the assessed slot leaves values unobfuscated",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Obfuscation applies only to the slot on which it is configured; a setting on another slot provides no coverage for the assessed slot, whose values would still be recorded in clear text."
+    },
+    {
+      "id": "REQ-11",
+      "description": "A conversational bot has obfuscation disabled on a slot while conversation logging for the bot is not enabled or is explicitly turned off",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "Slot obfuscation is a per-slot design-time protection that must be set on the slot itself, and the bot's logging configuration can be turned on at any time (independently, at the alias level) without touching the slot, so an unobfuscated slot leaves sensitive values exposed to logging regardless of whether logging is currently off.",
+      "ambiguity": {
+        "question": "Should the absence or explicit disabling of conversation log capture at the bot level be accepted as compensating coverage (pass), or must slot obfuscation be enabled regardless of current logging configuration (flag)?",
+        "settledBy": "strict-default",
+        "docReference": null,
+        "evidence": "Searched the AWS documentation for guidance tying Lex V2 slot obfuscation to conversation log configuration: \"Obscuring slot values in conversation logs from Lex V2\" (docs.aws.amazon.com/lexv2/latest/dg/monitoring-obfuscate.html), the ObfuscationSetting/Slot API and CloudFormation/CDK property references, and the AWS blog posts on protecting sensitive data in Lex conversation logs. These sources describe obfuscation only as the mechanism that masks slot values in CloudWatch Logs and recommend identifying and marking all potentially sensitive slots during bot design; the blog states it is best practice to mark all slots that could capture PII at design time for comprehensive coverage. None of the consulted documents state or imply that disabling or omitting conversation logging removes the requirement to obfuscate a slot, so no document settles the compensating-control question directly, and the strict default applies. The default points to flag for substantive reasons consistent with the docs: obfuscation is configured per slot in the bot definition, while conversation log capture is configured separately (per bot alias) and can be enabled at any moment without any change to the slot, so a disabled/absent logging setting is a transient, out-of-scope condition rather than protective coverage of the assessed resource. \"Not enabled\" and \"explicitly turned off\" both leave the slot unprotected the instant logging is switched on. The deciding value here (the slot's obfuscationSettingType) is fully readable at analysis time, so the unresolvable-value exception does not apply."
+      }
+    },
+    {
+      "id": "REQ-12",
+      "description": "A conversational bot defines no slots at all, or defines locales and intents that contain an empty set of slots",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "pass",
+      "rationale": "With no slot values ever elicited, there is nothing that could be written unobfuscated to conversation logs, so the rule has no subject to evaluate and must not report a finding."
+    }
+  ],
+  "removedRequirements": [
+    {
+      "id": "REQ-07",
+      "description": "A conversational bot slot's obfuscation type is determined entirely by a condition that cannot be resolved at analysis time, where at least one possible outcome enables obfuscation",
+      "conflictedWith": "REQ-04",
+      "reason": "The rule's purpose is to confirm that each Lex V2 slot positively selects an obfuscation type so slot values are masked in conversation logs; the obfuscation type is the sole determinant of that protection. REQ-04 follows directly from that purpose: an obfuscation_setting block with no type value carries no evidence that masking is selected, so it cannot be treated as protective and must be reported. REQ-07 asks the rule to judge a different question — whether a value that is indeterminate at analysis time might resolve to a compliant one — which is a deploy-time property the rule was never meant to adjudicate. Keeping REQ-07 would force the shared Terraform shape (obfuscation_setting = [{ obfuscation_setting_type: null }]) to pass, which also silently exempts every genuinely unset obfuscation setting, turning the rule permissive against its own purpose. Keeping REQ-04 means an unresolved conditional may be over-reported; that failure is visible in review and correctable (e.g. by the CloudFormation path, where unresolved intrinsics remain distinguishable), whereas the missed real misconfiguration under REQ-07 would fail silently and leave unmasked slot values in logs."
+    }
+  ]
+}
