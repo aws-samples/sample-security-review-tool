@@ -14,6 +14,9 @@ import { Apigw004TfAdapterFactory } from '../apigw-004/apigw-004.adapter.tf.js';
 import { apigw005Control } from '../apigw-005/apigw-005.control.js';
 import { Apigw005CfnAdapterFactory } from '../apigw-005/apigw-005.adapter.cfn.js';
 import { Apigw005TfAdapterFactory } from '../apigw-005/apigw-005.adapter.tf.js';
+import { apigw006Control } from '../apigw-006/apigw-006.control.js';
+import { Apigw006CfnAdapterFactory } from '../apigw-006/apigw-006.adapter.cfn.js';
+import { Apigw006TfAdapterFactory } from '../apigw-006/apigw-006.adapter.tf.js';
 
 export const apiGatewayControls: RegisteredControl[] = [
   { control: apigw001Control, cfnAdapter: new Apigw001CfnAdapterFactory(), tfAdapter: new Apigw001TfAdapterFactory() },
@@ -21,4 +24,5 @@ export const apiGatewayControls: RegisteredControl[] = [
   { control: apigw003Control, cfnAdapter: new Apigw003CfnAdapterFactory(), tfAdapter: new Apigw003TfAdapterFactory() },
   { control: apigw004Control, cfnAdapter: new Apigw004CfnAdapterFactory(), tfAdapter: new Apigw004TfAdapterFactory() },
   { control: apigw005Control, cfnAdapter: new Apigw005CfnAdapterFactory(), tfAdapter: new Apigw005TfAdapterFactory() },
+  { control: apigw006Control, cfnAdapter: new Apigw006CfnAdapterFactory(), tfAdapter: new Apigw006TfAdapterFactory() },
 ];

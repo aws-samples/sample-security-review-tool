@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for APIGW-006 - API Gateway stage execution logging remediation scenarios.
+
+Resources:
+  # Shared REST API and deployment used by all fixture stages.
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: apigw-006-fixture-api
+
+  RootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: !GetAtt RestApi.RootResourceId
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: RootMethod
+    Properties:
+      RestApiId: !Ref RestApi
+
+  # Scenario: no-method-logging-configuration
+  # No MethodSettings property at all, so execution logging is effectively off.
+  NoMethodLoggingStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: no-method-logging
+
+  # Scenario: partial-method-logging-coverage
+  # MethodSettings only covers a specific method/path, not a catch-all.
+  PartialCoverageStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: partial-coverage
+      MethodSettings:
+        - HttpMethod: GET
+          ResourcePath: /users
+          LoggingLevel: INFO
+          MetricsEnabled: true
+
+  # Scenario: logging-level-not-accepted
+  # Catch-all coverage exists but uses an unsupported logging level.
+  LoggingLevelNotAcceptedStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: logging-level-not-accepted
+      MethodSettings:
+        - HttpMethod: '*'
+          ResourcePath: '/*'
+          LoggingLevel: DEBUG
+          MetricsEnabled: true
+
+  # Scenario: logging-disabled-for-some-method
+  # Catch-all setting has an accepted logging level, but a narrower
+  # method-level setting explicitly disables execution logging.
+  LoggingDisabledForSomeMethodStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref RestApi
+      DeploymentId: !Ref ApiDeployment
+      StageName: logging-disabled-for-some-method
+      MethodSettings:
+        - HttpMethod: '*'
+          ResourcePath: '/*'
+          LoggingLevel: INFO
+          MetricsEnabled: true
+        - HttpMethod: POST
+          ResourcePath: /admin
+          LoggingLevel: OFF
+          MetricsEnabled: true

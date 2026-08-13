@@ -1,0 +1,117 @@
+{
+  "ruleId": "APIGW-006",
+  "generatedAt": "2026-08-13T14:25:25.984Z",
+  "description": "API Gateway stages must have CloudWatch execution logging enabled, with the logging level set to INFO or ERROR for all methods (or via a catch-all method setting)",
+  "cfnResources": [
+    "AWS::ApiGateway::Stage"
+  ],
+  "tfResources": [
+    "aws_api_gateway_stage",
+    "aws_api_gateway_method_settings"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "API Gateway stage has no method-level logging configuration at all",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "With no execution logging settings, the stage writes no execution logs to CloudWatch Logs (the effective logging level defaults to off), so the requirement that logging be enabled at INFO or ERROR is not met."
+    },
+    {
+      "id": "REQ-02",
+      "description": "Stage has a catch-all method setting (all HTTP methods on all resource paths) with logging level set to INFO",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "A catch-all setting applies to every method of the stage, and INFO is an accepted execution logging level that records error entries plus informational entries, satisfying the rule for all methods."
+    },
+    {
+      "id": "REQ-03",
+      "description": "Stage has a catch-all method setting covering all methods with logging level set to ERROR",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "ERROR is an accepted execution logging level (error-level entries are written to CloudWatch Logs) and the catch-all scope covers every method, so execution logging is enabled stage-wide."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Stage has a catch-all method setting covering all methods but the logging level is explicitly set to off",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "An off logging level means no execution log entries are pushed to CloudWatch Logs, so logging is configured but effectively disabled and neither INFO nor ERROR is in effect."
+    },
+    {
+      "id": "REQ-05",
+      "description": "Stage has a catch-all method setting whose logging level is a value other than the accepted informational or error levels (for example an unrecognized level string)",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Only the informational and error execution logging levels satisfy the rule; any other value cannot be assumed to produce execution logs, so the presence of a logging level alone must not be treated as compliance."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Stage declares a method settings collection that contains no entries",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty settings collection configures no logging level for any method, so the effective execution logging state is the same as having no configuration at all."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Stage configures a valid logging level for one specific method and path only, leaving other methods without any logging configuration",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "The rule requires execution logging for all methods of the stage; a setting scoped to a single method leaves the remaining methods with no execution logging, so coverage is incomplete."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Stage has no catch-all setting, but every method defined for the API in the same template has an individual method setting with a valid logging level",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "AWS guidance requires execution logging to be set for all methods via a method setting with HttpMethod \"*\" and ResourcePath \"/*\", so a list of per-method settings — which only covers the methods that happen to be declared and leaves any method added later unlogged — does not satisfy the requirement.",
+      "ambiguity": {
+        "question": "Should enumerating an individual valid logging setting for each method declared in the template be accepted as covering all methods, or must compliance come only from a catch-all setting that applies to every method?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/controltower/latest/controlreference/api-gateway-rules.html",
+        "evidence": "Searched the AWS documentation for API Gateway stage method settings and execution logging guidance. The AWS Control Tower control reference for Amazon API Gateway controls (api-gateway-rules) states the remediation for this rule explicitly: \"Configure execution logging on Amazon API Gateway stages with a MethodSetting that sets LoggingLevel to ERROR or INFO for all methods (HttpMethod of * and ResourcePath of /*). Ensure that you do not set LoggingLevel to OFF for any method setting,\" and its JSON/YAML examples show only the catch-all form. The CloudFormation reference for AWS::ApiGateway::Stage MethodSetting confirms that the catch-all is the mechanism intended to apply settings to all resources and methods (\"To apply settings to multiple resources and methods, specify an asterisk (*) for the HttpMethod and /* for the ResourcePath\"), whereas other entries are described as \"individual method override[s]\". Enumerating one valid setting per method declared in the template is therefore partial, stage-wide coverage at best: it depends on the scanner correctly correlating every AWS::ApiGateway::Method (and implicit methods created by ANY/proxy resources, Swagger/OpenAPI bodies, or other stacks) to the stage, and any method added afterwards inherits no logging configuration. This aligns with the strict default that partial coverage of a required scope is not sufficient, so the rule flags a stage that lacks a catch-all method setting with LoggingLevel of INFO or ERROR."
+      }
+    },
+    {
+      "id": "REQ-09",
+      "description": "Stage has a catch-all setting with a valid logging level alongside additional method settings that configure unrelated features (such as metrics or throttling) without changing the logging level",
+      "category": "MIXED_CONFIG",
+      "expectedBehavior": "pass",
+      "rationale": "At least one setting establishes an accepted execution logging level for all methods, and settings that do not alter the logging level do not reduce that coverage."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Stage has a catch-all setting with a valid logging level, but a narrower setting for one specific method explicitly turns logging off for that method",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "A method setting with LoggingLevel OFF leaves that method's requests unlogged, and the control requires execution logging for all methods, so any method setting that turns logging off makes the stage non-compliant even when a catch-all setting enables it.",
+      "ambiguity": {
+        "question": "When a more specific method setting explicitly disables logging for one method while the catch-all setting enables it, should the stage be flagged because that method is excluded from logging, or pass because stage-wide logging is configured?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/controltower/latest/controlreference/api-gateway-rules.html",
+        "evidence": "I searched the AWS documentation for how narrower API Gateway method settings interact with the catch-all (`HttpMethod: *`, `ResourcePath: /*`) setting for execution logging. Two documents decide it. The AWS Control Tower / Security Hub control reference for Amazon API Gateway controls (APIGateway.1, execution logging) states the remediation as: \"Configure execution logging on Amazon API Gateway stages with a `MethodSetting` that sets `LoggingLevel` to `ERROR` or `INFO` for all methods (`HttpMethod` of `*` and `ResourcePath` of `/*`). Ensure that you do not set `LoggingLevel` to `OFF` for any method setting.\" That last sentence addresses exactly this scenario: the presence of a compliant catch-all is not sufficient if any method setting sets `OFF`. This is reinforced by the AWS Config managed rule `api-gw-execution-logging-enabled`, which \"Checks if all methods in Amazon API Gateway stages have logging enabled. The rule is NON_COMPLIANT if logging is not enabled, or if `loggingLevel` is neither ERROR nor INFO\" — the scope is all methods, not the stage default. Substantively, API Gateway applies the most specific matching method setting, so the narrower `OFF` override wins for that method and its requests produce no execution logs; the assessed scope is only partially covered. The strict default would reach the same conclusion (partial coverage of a required scope, and an explicitly disabled protective setting), but here the behavior is settled by documentation rather than by default."
+      }
+    },
+    {
+      "id": "REQ-11",
+      "description": "A separate logging-settings resource explicitly references the assessed stage and configures a catch-all method setting with a valid logging level",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "Execution logging coverage may be supplied by a related resource that attaches method settings to this specific stage; because it targets the assessed stage with an accepted level for all methods, the stage is compliant."
+    },
+    {
+      "id": "REQ-12",
+      "description": "A separate logging-settings resource configures a catch-all method setting with a valid logging level, but it targets a different stage or a different API than the assessed stage",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Method settings apply only to the stage they are attached to, so settings pointing at another stage or API provide no execution logging for the assessed stage, which therefore remains unlogged."
+    },
+    {
+      "id": "REQ-13",
+      "description": "The presence or the logging level value of the stage's method settings depends entirely on a condition whose outcome cannot be determined at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the effective logging level is undeterminable at analysis time, the rule cannot assert non-compliance; flagging would produce a false positive for templates that resolve to INFO or ERROR at deployment."
+    }
+  ]
+}
