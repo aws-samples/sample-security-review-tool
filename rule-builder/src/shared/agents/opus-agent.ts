@@ -1,6 +1,7 @@
 import { Agent, AgentConfig, BedrockModel } from "@strands-agents/sdk";
 import { TransientErrorRetryStrategy } from "./transient-error-retry-strategy.js";
 import { DEFAULT_EFFORT, effortRequestFields, type ModelEffort } from "./model-effort.js";
+import { bedrockRequestHandler } from "./bedrock-request-handler.js";
 
 export class OpusAgent extends Agent {
     constructor(config?: AgentConfig | undefined, effort: ModelEffort = DEFAULT_EFFORT) {
@@ -9,6 +10,7 @@ export class OpusAgent extends Agent {
             modelId: 'global.anthropic.claude-opus-5',
             maxTokens: 64000,
             additionalRequestFields: effortRequestFields(effort),
+            clientConfig: { requestHandler: bedrockRequestHandler() },
         });
         config.retryStrategy = new TransientErrorRetryStrategy();
         config.printer = false;
