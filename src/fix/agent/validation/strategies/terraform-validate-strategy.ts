@@ -27,7 +27,7 @@ export class TerraformValidateStrategy implements ValidationStrategy {
 
         const affectedProjects = this.findAffectedProjects(tfChanges, projects);
         for (const project of affectedProjects) {
-            if (await this.isInitialized(project.rootPath)) {
+            if (await this.hasInstalledProviders(project.rootPath)) {
                 const result = await this.terraformValidate(project);
                 results.push(result);
             }
@@ -83,9 +83,9 @@ export class TerraformValidateStrategy implements ValidationStrategy {
         return !rel.startsWith('..') && !path.isAbsolute(rel);
     }
 
-    private async isInitialized(rootPath: string): Promise<boolean> {
+    private async hasInstalledProviders(rootPath: string): Promise<boolean> {
         try {
-            await fs.access(path.join(rootPath, '.terraform'));
+            await fs.access(path.join(rootPath, '.terraform', 'providers'));
             return true;
         } catch {
             return false;

@@ -16,7 +16,7 @@ export class CommandRunner {
                         if (!suppressErrorLogging) {
                             // Error logging removed per requirements
                         }
-                        reject(error);
+                        reject(Object.assign(error, { stdout, stderr }));
                     }
                     return;
                 }

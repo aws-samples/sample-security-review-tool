@@ -95,6 +95,26 @@ describeTerraform('TerraformValidateStrategy', () => {
         expect(fmtResult!.isValid).toBe(false);
     });
 
+    it('does not run terraform validate when only a scanner-created .terraform/modules exists', async () => {
+        const filePath = path.join(workingDir, 'main.tf');
+        await fs.writeFile(filePath, [
+            'resource "aws_s3_bucket" "example" {',
+            '  bucket = "my-bucket"',
+            '}',
+            '',
+        ].join('\n'));
+        await fs.mkdir(path.join(workingDir, '.terraform', 'modules'), { recursive: true });
+
+        const strategy = new TerraformValidateStrategy();
+        const results = await strategy.validate(
+            [change(filePath)],
+            fakeContext([{ name: 'terraform', rootPath: workingDir }]),
+        );
+
+        const semanticResult = results.find(r => r.strategy.startsWith('terraform-validate:validate:'));
+        expect(semanticResult).toBeUndefined();
+    });
+
     it('does not run terraform validate when .terraform dir is absent', async () => {
         const filePath = path.join(workingDir, 'main.tf');
         await fs.writeFile(filePath, [
@@ -114,7 +134,7 @@ describeTerraform('TerraformValidateStrategy', () => {
         expect(semanticResult).toBeUndefined();
     });
 
-    it('runs terraform validate when .terraform dir exists', async () => {
+    it('runs terraform validate when providers are installed', async () => {
         const filePath = path.join(workingDir, 'main.tf');
         await fs.writeFile(filePath, [
             'terraform {',
@@ -124,7 +144,7 @@ describeTerraform('TerraformValidateStrategy', () => {
             'resource "null_resource" "example" {}',
             '',
         ].join('\n'));
-        await fs.mkdir(path.join(workingDir, '.terraform'), { recursive: true });
+        await fs.mkdir(path.join(workingDir, '.terraform', 'providers'), { recursive: true });
 
         const strategy = new TerraformValidateStrategy();
         const results = await strategy.validate(

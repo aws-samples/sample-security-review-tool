@@ -114,7 +114,8 @@ export class FixtureRemediator {
         const { FixCoordinator } = await import('../../../src/fix/coordinator.js');
         const fixer = await FixCoordinator.create(this.fixtureType.outputFolderPath, () => { });
         const fix = await fixer.generateFix(issue);
-        await fixer.applyFix(issue, fix!);
+        if (!fix) throw new Error(`The fix agent produced no edits for ${issue.check_id} on ${issue.resourceName} (${this.fixtureType.label} fixture). Check ~/.srt/logs for the reason it gave up.`);
+        await fixer.applyFix(issue, fix);
     }
 
     private async validateFix(issue: ScanResult): Promise<void> {
