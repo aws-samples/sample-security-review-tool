@@ -61,7 +61,7 @@ export class TemplateCoordinator {
 
 			const scanner = new SecurityMatrixScannerEngine();
 			const filePath = path.join(tfProject.outputFolderPath, 'terraform-matrix.json');
-			const success = await scanner.scanTf(tfProject.name, tfProject.planJsonPath, filePath);
+			const success = await scanner.scanTfSource(tfProject.name, tfProject.rootPath, filePath);
 
 			this.onProgress(`  ✔ Completed terraform matrix scan for ${tfProject.name}`);
 			return success ? filePath : null;

@@ -38,7 +38,6 @@ export class TerraformDetector {
       return {
         name,
         rootPath: dir,
-        planJsonPath: path.join(srtOutputPath, outputFolderName, 'plan.json'),
         outputFolderPath: path.join(srtOutputPath, outputFolderName)
       };
     });

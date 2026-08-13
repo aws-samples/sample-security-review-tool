@@ -2,7 +2,7 @@ import * as path from 'path';
 import { CloudFormationResource, BaseRule } from './security-rule-base.js';
 import { allCloudFormationRules, allTerraformRules } from './rules/index.js';
 import { BaseTerraformRule, TerraformResource } from './terraform-rule-base.js';
-import { readTerraformPlan } from './terraform-plan-reader.js';
+import { readTerraformSource } from './terraform-source-reader.js';
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 import { ScanResult } from '../base-scanner.js';
 import { readCfnFile, parseCfnTemplate } from './cfn-utils.js';
@@ -98,12 +98,12 @@ export class SecurityMatrixScannerEngine {
         return results;
     }
 
-    public async scanTf(projectName: string, planJsonPath: string, outputFilePath: string): Promise<boolean> {
+    public async scanTfSource(projectName: string, tfRootPath: string, outputFilePath: string): Promise<boolean> {
         try {
-            const resources = await readTerraformPlan(planJsonPath);
+            const resources = await readTerraformSource(tfRootPath);
 
             if (!resources || resources.length === 0) {
-                SrtLogger.logError('No resources found in Terraform plan', new Error(planJsonPath));
+                SrtLogger.logError('No Terraform resources found', new Error(tfRootPath));
                 return false;
             }
 
@@ -114,7 +114,7 @@ export class SecurityMatrixScannerEngine {
 
             return true;
         } catch (error) {
-            SrtLogger.logError('Error scanning Terraform plan', error as Error);
+            SrtLogger.logError('Error scanning Terraform', error as Error);
             return false;
         }
     }

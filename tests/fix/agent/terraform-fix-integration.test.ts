@@ -18,7 +18,6 @@ function createTerraformContext(workingDir: string, projectName: string): Projec
         getTerraformPlans: async () => [{
             name: projectName,
             rootPath: path.join(workingDir, projectName),
-            planJsonPath: '',
             outputFolderPath: '',
         }],
         isCdkProject: async () => false,

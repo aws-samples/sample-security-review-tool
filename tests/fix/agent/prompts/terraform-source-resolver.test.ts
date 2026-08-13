@@ -11,7 +11,6 @@ function fakeContext(projects: { name: string; rootPath: string }[]): ProjectCon
         getTerraformPlans: async () => projects.map(p => ({
             name: p.name,
             rootPath: p.rootPath,
-            planJsonPath: '',
             outputFolderPath: '',
         })),
     } as unknown as ProjectContext;
