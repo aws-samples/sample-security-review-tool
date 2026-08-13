@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture template for ATH-001 - Athena workgroups must have query result
+  encryption enabled with appropriate KMS key and configuration enforcement.
+
+Resources:
+  # Scenario: missing-query-result-encryption
+  # No EncryptionOption specified under ResultConfiguration.EncryptionConfiguration.
+  WorkGroupMissingEncryption:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: ath001-missing-encryption
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: s3://ath001-fixture-bucket/results/
+        EnforceWorkGroupConfiguration: true
+
+  # Scenario: missing-kms-key
+  # EncryptionOption is SSE_KMS but no KmsKey is specified.
+  WorkGroupMissingKmsKey:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: ath001-missing-kms-key
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: s3://ath001-fixture-bucket/results/
+          EncryptionConfiguration:
+            EncryptionOption: SSE_KMS
+        EnforceWorkGroupConfiguration: true
+
+  # Scenario: workgroup-configuration-not-enforced
+  # Valid encryption configured (SSE_S3, no KMS key required), but the
+  # workgroup does not force its own settings over client-submitted ones.
+  WorkGroupNotEnforced:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: ath001-not-enforced
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: s3://ath001-fixture-bucket/results/
+          EncryptionConfiguration:
+            EncryptionOption: SSE_S3
+        EnforceWorkGroupConfiguration: false
