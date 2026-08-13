@@ -4,8 +4,10 @@ import { dynamodbControls } from './dynamodb/index.js';
 import { s3Controls } from './s3/index.js';
 import { cloudfrontControls } from './cloudfront/index.js';
 import { apiGatewayControls } from './api-gateway/controls/index.js';
+import { athenaControls } from './athena/controls/index.js';
 
 export const allRegisteredControls: RegisteredControl[] = [
+  ...athenaControls,
   ...apiGatewayControls,
   ...cloudfrontControls,
   ...s3Controls,

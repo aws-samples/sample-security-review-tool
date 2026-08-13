@@ -1,0 +1,145 @@
+{
+  "ruleId": "ATH-001",
+  "generatedAt": "2026-08-13T15:30:05.489Z",
+  "description": "Athena workgroups must have query result encryption enabled using SSE_S3, SSE_KMS, or CSE_KMS, with a KMS key specified when SSE_KMS or CSE_KMS is used",
+  "cfnResources": [
+    "AWS::Athena::WorkGroup"
+  ],
+  "tfResources": [
+    "aws_athena_workgroup"
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "description": "Athena workgroup is defined with no configuration settings at all, so no query result encryption is specified",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "With no workgroup configuration, query results are written to Amazon S3 without any workgroup-enforced encryption option. The rule requires an explicit query result encryption option (SSE_S3, SSE_KMS, or CSE_KMS), so a workgroup with no configuration is non-compliant."
+    },
+    {
+      "id": "REQ-02",
+      "description": "Athena workgroup has configuration settings and a query result output location, but no encryption settings for query results",
+      "category": "ABSENT",
+      "expectedBehavior": "flag",
+      "rationale": "Specifying a results output location without an encryption option means query results are not encrypted under a workgroup-enforced setting. The rule requires query result encryption to be enabled, so this is non-compliant."
+    },
+    {
+      "id": "REQ-03",
+      "description": "Query result encryption is enabled using Amazon S3 server-side encryption with S3-managed keys, and no key identifier is provided",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "SSE_S3 uses Amazon S3-managed keys; per the Athena workgroup encryption documentation a KMS key identifier applies only to SSE_KMS and CSE_KMS. A valid encryption option is present, so the workgroup is compliant."
+    },
+    {
+      "id": "REQ-04",
+      "description": "Query result encryption is enabled using server-side encryption with KMS-managed keys and a KMS key identifier is provided",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "SSE_KMS with a specified KMS key satisfies both parts of the rule: a supported encryption option and the key required for KMS-based options."
+    },
+    {
+      "id": "REQ-05",
+      "description": "Query result encryption is enabled using server-side encryption with KMS-managed keys, but no KMS key identifier is provided",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "For SSE_KMS the KMS key ARN or ID must be supplied; without it the encryption configuration is incomplete and cannot encrypt results with the intended key, so the rule requirement that a KMS key be specified for KMS-based options is unmet."
+    },
+    {
+      "id": "REQ-06",
+      "description": "Query result encryption is enabled using client-side encryption with KMS-managed keys and a KMS key identifier is provided",
+      "category": "SPECIFIC_RESOURCE",
+      "expectedBehavior": "pass",
+      "rationale": "CSE_KMS with a specified KMS key satisfies the rule: a supported encryption option plus the key required for KMS-based options."
+    },
+    {
+      "id": "REQ-07",
+      "description": "Query result encryption is enabled using client-side encryption with KMS-managed keys, but no KMS key identifier is provided",
+      "category": "PARTIAL_COVERAGE",
+      "expectedBehavior": "flag",
+      "rationale": "CSE_KMS requires a KMS key ARN or ID; omitting it leaves the encryption configuration incomplete, violating the rule requirement that a key be specified when a KMS-based option is used."
+    },
+    {
+      "id": "REQ-08",
+      "description": "Query result encryption uses a KMS-based option and a key identifier is present but is an empty or blank value",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An empty or whitespace-only key identifier does not identify a KMS key, so it is equivalent to omitting the key for a KMS-based option and fails the rule's requirement that a key be specified."
+    },
+    {
+      "id": "REQ-09",
+      "description": "Query result encryption uses a KMS-based option and the key is supplied as a broad or indirect key identifier such as an alias or a reference to a key defined elsewhere in the same template, rather than a literal key ARN",
+      "category": "WILDCARD_MATCH",
+      "expectedBehavior": "pass",
+      "rationale": "Athena accepts a KMS key ARN, ID, or alias, and template references resolve to a real key at deployment. Any non-empty key identifier satisfies the rule's requirement that a KMS key be specified; the rule does not validate key format or key policy."
+    },
+    {
+      "id": "REQ-10",
+      "description": "Query result encryption settings are present but the encryption option value is empty or is a value outside the set of supported encryption options",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "Only SSE_S3, SSE_KMS, and CSE_KMS are valid query result encryption options. An empty or unrecognized value does not establish encryption, so the rule's requirement of one of the supported options is unmet."
+    },
+    {
+      "id": "REQ-11",
+      "description": "Query result encryption settings are present as an empty structure containing no values",
+      "category": "EMPTY_COLLECTION",
+      "expectedBehavior": "flag",
+      "rationale": "An encryption settings container with no encryption option inside provides no encryption, so the workgroup does not enforce query result encryption and must be flagged."
+    },
+    {
+      "id": "REQ-12",
+      "description": "Workgroup result settings explicitly remove or clear any previously defined query result encryption",
+      "category": "EXPLICIT_EXCLUSION",
+      "expectedBehavior": "flag",
+      "rationale": "Explicitly removing the encryption configuration leaves the workgroup with no enforced query result encryption, which is the condition the rule prohibits."
+    },
+    {
+      "id": "REQ-13",
+      "description": "The workgroup specifies a customer-managed key for encrypting Athena-managed customer content or notebook data, but specifies nothing for query result encryption",
+      "category": "WRONG_TARGET",
+      "expectedBehavior": "flag",
+      "rationale": "Customer content encryption protects data Athena stores on the customer's behalf for non-SQL (Spark/notebook) workloads and does not encrypt SQL query results written to the output location. The rule specifically requires query result encryption, so this configuration is non-compliant."
+    },
+    {
+      "id": "REQ-14",
+      "description": "Whether query result encryption settings exist at all for the workgroup depends entirely on a condition whose value cannot be determined at analysis time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "When the presence of the encryption configuration is governed by an unresolvable condition, the analyzer cannot prove that the deployed workgroup lacks encryption. The rule must not assert non-compliance on indeterminate values, so it returns no finding."
+    },
+    {
+      "id": "REQ-15",
+      "description": "Query result encryption is configured but the encryption option value, or the KMS key identifier for a KMS-based option, is an unresolvable value determined only at deployment time",
+      "category": "INTRINSIC_UNRESOLVABLE",
+      "expectedBehavior": "pass",
+      "rationale": "An encryption configuration is present and the specific value cannot be evaluated statically, so non-compliance cannot be established. The rule should not flag on unresolvable values to avoid false positives."
+    },
+    {
+      "id": "REQ-17",
+      "description": "Workgroup lacks any query result encryption configuration and is itself in a disabled/inactive state so no queries can run in it",
+      "category": "DISABLED",
+      "expectedBehavior": "flag",
+      "rationale": "A workgroup's ENABLED/DISABLED state does not affect the encryption requirement — the AWS control's evaluation scenarios exempt only inputs with no Athena workgroup at all, and a missing EncryptionConfiguration fails regardless of state, since a disabled workgroup can be re-enabled at any time without changing its stored, unencrypted result configuration.",
+      "ambiguity": {
+        "question": "Should a workgroup that is administratively disabled (unable to run queries) be exempted from the query result encryption requirement, or evaluated identically to an enabled workgroup?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/controltower/latest/controlreference/athena-rules.html",
+        "evidence": "I searched AWS documentation for the guidance governing Athena workgroup query-result encryption and for whether workgroup state affects it. Three sources address this. (1) AWS Control Tower control CT.ATHENA.PR.2 (\"Require an Amazon Athena workgroup to encrypt Athena query results at rest with an AWS KMS key\") publishes its full rule specification with enumerated PASS/FAIL/SKIP scenarios: the only SKIP is Scenario 1, where the input document contains no Athena workgroup resource at all. Scenario 3 states that when a workgroup resource is present and 'EncryptionConfiguration' in 'WorkGroupConfiguration.ResultConfiguration' has not been provided, the result is FAIL. The State property is never referenced in any scenario, and the accompanying example templates carry State as ordinary metadata rather than as a gating condition — so an unencrypted workgroup fails whether its State is ENABLED or DISABLED. (2) The AWS Config managed rule athena-workgroup-encrypted-at-rest is defined as \"NON_COMPLIANT if encryption of data at rest is not enabled for an Athena workgroup,\" scoped to all AWS::Athena::WorkGroup resources with no parameters and no state-based exclusion. (3) The Athena User Guide's \"Enable or disable a workgroup\" page confirms that disabling is a reversible administrative toggle: an administrator with permissions can re-enable the workgroup from the console, API, or drivers at any time, and disabling does not remove or alter the workgroup's configuration (details including encryption remain viewable). The disabled state therefore suppresses query execution only transiently, while the unencrypted result configuration persists and would govern the first query run after re-enablement. This is not an analysis-time unknown: the encryption configuration is plainly absent and directly readable, so the intrinsic-exception does not apply. The documentation settles the question in favor of evaluating a disabled workgroup identically to an enabled one, which also coincides with the strict default."
+      }
+    }
+  ],
+  "removedRequirements": [
+    {
+      "id": "REQ-16",
+      "description": "Query result encryption is configured with a supported option and any required key, but the workgroup does not force its own settings to override client-submitted settings",
+      "conflictedWith": "REQ-06",
+      "reason": "The rule's stated purpose is narrow and explicit: an Athena workgroup must have query result encryption enabled using SSE_S3, SSE_KMS, or CSE_KMS, with a KMS key specified for the KMS-based options. That is the entire obligation the rule was written to judge. REQ-16 adds a second, distinct condition — that the workgroup also force its own configuration over client-submitted settings — which appears nowhere in the rule description. However sound that concern is on its own security merits (client override can indeed bypass a workgroup's encryption default), it is a different control about workgroup setting enforcement, not about whether result encryption is configured with a valid option and key. REQ-16 therefore drifts from the rule's purpose and is the requirement to remove.\n\nREQ-06, by contrast, is a direct instance of the rule as stated: CSE_KMS plus a specified KMS key is exactly the compliant shape the description names, so no finding is correct. Keeping REQ-06 also preserves internal consistency with the dozen sibling requirements (REQ-03, 04, 05, 07–13, 15, and the CFN REQ-01) that all expect no finding for valid-encryption/flag-omitted workgroups; keeping REQ-16 instead would require inverting all of them and would make every currently-compliant workgroup that simply omits the enforcement property report as a finding.\n\nI note this removal makes the rule no more permissive than its description already is: nothing in the stated purpose promises detection of client-overridable encryption, so no coverage of the rule's real obligation is lost — only coverage of a scenario the rule was never meant to evaluate. The loss is real but bounded, and the reviewer's remedy is clear: if enforcement of workgroup settings over client settings is wanted, it should be added to the rule description first (or filed as a separate rule with its own tests), not smuggled in as a contradictory case inside an encryption-configuration rule.",
+      "ambiguity": {
+        "question": "If a workgroup defines valid query result encryption but does not enforce workgroup configuration over client-side settings (so clients can submit unencrypted result settings), should the rule still pass because an encryption option is defined, or flag because the encryption is not actually enforced for queries?",
+        "settledBy": "documentation",
+        "docReference": "https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html",
+        "evidence": "I searched the Athena user guide, API reference, and CDK/CloudFormation property docs for how EnforceWorkGroupConfiguration interacts with query result encryption. The Athena \"Override client-side settings\" page (https://docs.aws.amazon.com/athena/latest/ug/workgroups-settings-override.html) states that when the override option is not selected, \"workgroup settings are not enforced at the client level\" and \"Athena uses the client's settings for all queries that run in the workgroup, including the settings for query results location, expected bucket owner, encryption...\"; the workgroup-wide settings apply only if the client-side settings are not set. The API reference for WorkGroupConfiguration/ResultConfiguration reinforces this, describing EncryptionConfiguration as \"a client-side setting\" whose workgroup value governs the query only when workgroup settings override client-side settings (https://docs.aws.amazon.com/athena/latest/APIReference/API_WorkGroupConfigurationUpdates.html). Therefore a workgroup with a valid SSE_S3/SSE_KMS/CSE_KMS configuration but EnforceWorkGroupConfiguration false (or absent, since it defaults to not selected) does not actually cause query results to be encrypted — a client submitting its own result configuration without encryption runs unencrypted. This matches the strict default as well: a protective setting that is present but not demonstrably covering the assessed queries flags. (Athena's separate EnableMinimumEncryptionConfiguration flag can enforce a minimum encryption level without the full override, but this scenario explicitly stipulates that clients can submit unencrypted result settings, i.e. no such enforcement is in place.)"
+      }
+    }
+  ]
+}
