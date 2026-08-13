@@ -8,10 +8,8 @@ export const lambdaRules = [
 
 import tfRule001 from './002-secrets-manager.tf.js';
 import tfRule004 from './005-least-privilege-roles.tf.js';
-import tfRule007 from './013-secrets-in-env-vars.tf.js';
 
 export const tfLambdaRules = [
   tfRule001,
   tfRule004,
-  tfRule007,
 ];
