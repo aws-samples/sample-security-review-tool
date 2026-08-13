@@ -14,7 +14,7 @@ export class RegistrationWriter {
         this.controlInstanceName = toInstanceName(context.ruleId) + 'Control';
         this.cfnAdapterClassName = toClassName(context.ruleId) + 'CfnAdapterFactory';
         this.tfAdapterClassName = toClassName(context.ruleId) + 'TfAdapterFactory';
-        this.controlImportPath = `../${context.safeRuleId}/${context.safeRuleId}`;
+        this.controlImportPath = `./${context.safeRuleId}/${context.safeRuleId}`;
         this.serviceControlsName = toServiceControlsName(context.service);
     }
 
@@ -35,7 +35,7 @@ export class RegistrationWriter {
         if (isNewFormat) {
             this.appendToServiceIndex(filePath, content);
         } else {
-            this.createServiceIndex(filePath);
+            this.createServiceIndex(filePath, content);
         }
     }
 
@@ -45,9 +45,10 @@ export class RegistrationWriter {
         return content.includes(`from '${this.controlImportPath}.control.js'`);
     }
 
-    private createServiceIndex(filePath: string): void {
+    private createServiceIndex(filePath: string, existingContent: string): void {
         const lines = [
-            `import { RegisteredControl } from '../../../controls/types.js';`,
+            ...(existingContent ? [existingContent.trimEnd(), ``] : []),
+            `import { RegisteredControl } from '../../controls/types.js';`,
             `import { ${this.controlInstanceName} } from '${this.controlImportPath}.control.js';`,
             `import { ${this.cfnAdapterClassName} } from '${this.controlImportPath}.adapter.cfn.js';`,
             `import { ${this.tfAdapterClassName} } from '${this.controlImportPath}.adapter.tf.js';`,
@@ -80,9 +81,9 @@ export class RegistrationWriter {
         const filePath = this.context.controlsRegistryPath;
         const content = fs.readFileSync(filePath, 'utf8');
 
-        if (content.includes(`from './${this.context.service}/controls/index.js'`)) return;
+        if (content.includes(`from './${this.context.service}/index.js'`)) return;
 
-        const importLine = `import { ${this.serviceControlsName} } from './${this.context.service}/controls/index.js';`;
+        const importLine = `import { ${this.serviceControlsName} } from './${this.context.service}/index.js';`;
         const spreadEntry = `  ...${this.serviceControlsName},`;
 
         const updatedContent = content

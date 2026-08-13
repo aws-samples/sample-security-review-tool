@@ -163,7 +163,7 @@ export class RuleContext {
     }
 
     private getServiceControlsIndexPath(): string {
-        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'rules', this.service, 'controls', 'index.ts');
+        return path.join(this.srtRootFolderPath, 'src', 'assess', 'scanning', 'security-matrix', 'rules', this.service, 'index.ts');
     }
 
     private getControlsRegistryPath(): string {
