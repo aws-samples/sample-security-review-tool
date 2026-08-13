@@ -8,9 +8,13 @@ import { Apigw002TfAdapterFactory } from '../apigw-002/apigw-002.adapter.tf.js';
 import { apigw003Control } from '../apigw-003/apigw-003.control.js';
 import { Apigw003CfnAdapterFactory } from '../apigw-003/apigw-003.adapter.cfn.js';
 import { Apigw003TfAdapterFactory } from '../apigw-003/apigw-003.adapter.tf.js';
+import { apigw005Control } from '../apigw-005/apigw-005.control.js';
+import { Apigw005CfnAdapterFactory } from '../apigw-005/apigw-005.adapter.cfn.js';
+import { Apigw005TfAdapterFactory } from '../apigw-005/apigw-005.adapter.tf.js';
 
 export const apiGatewayControls: RegisteredControl[] = [
   { control: apigw001Control, cfnAdapter: new Apigw001CfnAdapterFactory(), tfAdapter: new Apigw001TfAdapterFactory() },
   { control: apigw002Control, cfnAdapter: new Apigw002CfnAdapterFactory(), tfAdapter: new Apigw002TfAdapterFactory() },
   { control: apigw003Control, cfnAdapter: new Apigw003CfnAdapterFactory(), tfAdapter: new Apigw003TfAdapterFactory() },
+  { control: apigw005Control, cfnAdapter: new Apigw005CfnAdapterFactory(), tfAdapter: new Apigw005TfAdapterFactory() },
 ];

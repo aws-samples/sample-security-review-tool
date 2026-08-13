@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture template for APIGW-005 exercising all remediation scenarios:
+  missing-endpoint-configuration, public-endpoint-type, missing-vpc-endpoint,
+  and policy-excludes-private-path.
+
+Resources:
+
+  # Supporting VPC resource. Its mere presence in the template makes the
+  # adapter's hasVpcCallers() return true, which is required for the
+  # public-endpoint-type scenario to fire.
+  CallerVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  # A compliant interface VPC endpoint for execute-api: has subnets,
+  # security groups, and private DNS enabled. Used by RestApiPolicyExcludesPrivatePath
+  # to satisfy hasCompliantVpcEndpoint() so that the policy check can be reached.
+  VpcEndpointCompliant:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: com.amazonaws.us-east-1.execute-api
+      VpcId: !Ref CallerVpc
+      VpcEndpointType: Interface
+      SubnetIds:
+        - subnet-12345678
+      SecurityGroupIds:
+        - sg-12345678
+      PrivateDnsEnabled: true
+
+  # Scenario: missing-endpoint-configuration
+  # No EndpointConfiguration property is present at all, so the endpoint
+  # types list is undefined/empty, defaulting to a public endpoint.
+  RestApiMissingEndpointConfiguration:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: MissingEndpointConfigurationApi
+
+  # Scenario: public-endpoint-type
+  # Endpoint type is explicitly EDGE (public) instead of PRIVATE, and the
+  # template contains VPC-attached callers (CallerVpc above), so this must
+  # be flagged.
+  RestApiPublicEndpointType:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: PublicEndpointTypeApi
+      EndpointConfiguration:
+        Types:
+          - EDGE
+
+  # Scenario: missing-vpc-endpoint
+  # Endpoint type is PRIVATE, but no VpcEndpointIds are associated with the
+  # API, so there is no compliant VPC endpoint providing private access.
+  RestApiMissingVpcEndpoint:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: MissingVpcEndpointApi
+      EndpointConfiguration:
+        Types:
+          - PRIVATE
+
+  # Scenario: policy-excludes-private-path
+  # Endpoint type is PRIVATE and it is associated with the compliant VPC
+  # endpoint above, but its access policy explicitly denies invocations
+  # arriving through that VPC endpoint.
+  RestApiPolicyExcludesPrivatePath:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: PolicyExcludesPrivatePathApi
+      EndpointConfiguration:
+        Types:
+          - PRIVATE
+        VpcEndpointIds:
+          - VpcEndpointCompliant
+      Policy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Deny
+            Principal: "*"
+            Action: execute-api:Invoke
+            Resource: "*"
+            Condition:
+              StringEquals:
+                aws:sourceVpce: VpcEndpointCompliant

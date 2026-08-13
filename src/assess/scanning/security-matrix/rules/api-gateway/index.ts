@@ -1,5 +1,4 @@
 import rule004 from './004-authentication.cf.js';
-import rule005 from './005-vpc-privatelink.cf.js';
 import rule006 from './006-cloudwatch-logs.cf.js';
 import rule007 from './007-access-control.cf.js';
 import rule008 from './008-cache-encryption.cf.js';
@@ -8,7 +7,6 @@ import rule009 from './009-private-endpoints.cf.js';
 
 export const apiGatewayRules = [
   rule004,
-  rule005,
   rule006,
   rule007,
   rule008,
@@ -17,7 +15,6 @@ export const apiGatewayRules = [
 
 export {
   rule004 as authenticationRule,
-  rule005 as vpcPrivateLinkRule,
   rule006 as cloudwatchLogsRule,
   rule007 as accessControlRule,
   rule008 as cacheEncryptionRule,
@@ -25,7 +22,6 @@ export {
 };
 
 import tfRule004 from './004-authentication.tf.js';
-import tfRule005 from './005-vpc-privatelink.tf.js';
 import tfRule006 from './006-cloudwatch-logs.tf.js';
 import tfRule007 from './007-access-control.tf.js';
 import tfRule008 from './008-cache-encryption.tf.js';
@@ -33,7 +29,6 @@ import tfRule009 from './009-private-endpoints.tf.js';
 
 export const tfApiGatewayRules = [
   tfRule004,
-  tfRule005,
   tfRule006,
   tfRule007,
   tfRule008,
