@@ -19,6 +19,8 @@ const TARGETS: Record<string, { bunTarget: string; outfile: string }> = {
     },
 };
 
+const OPTIONAL_EXTERNALS = ["performance", "@aws-sdk/client-s3"];
+
 function main(): void {
     const [target] = process.argv.slice(2);
 
@@ -32,12 +34,13 @@ function main(): void {
     const { bunTarget, outfile } = TARGETS[target];
 
     const command = [
-        "bun build src/index.ts",
+        "bun build scripts/cli-entry.ts",
         "--compile",
         "--minify",
         "--sourcemap",
         `--target=${bunTarget}`,
         `--outfile ${outfile}`,
+        ...OPTIONAL_EXTERNALS.map(module => `--external=${module}`),
     ].join(" ");
 
     const projectRoot = resolve(import.meta.dir, "..");
