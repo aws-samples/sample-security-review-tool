@@ -1,6 +1,6 @@
-import { Template } from 'cloudform-types';
-import { TerraformResource } from '../terraform-rule-base.js';
-import { ScanResult } from '../../types.js';
+import type { Template } from 'cloudform-types';
+import type { TerraformResource } from '../terraform-rule-base.js';
+import type { ScanResult } from '../../types.js';
 
 type Resource = NonNullable<Template['Resources']>[string];
 export type { Resource, Template, TerraformResource, ScanResult };
@@ -22,15 +22,10 @@ export type IacContext = CfnContext | TfContext;
 
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW';
 
-export interface RemediationScenario {
-  readonly scenario: string;
-  readonly intent: string;
+export interface Finding<TAdapter extends ControlAdapter = ControlAdapter> {
+  readonly issue: string | ((adapter: TAdapter) => string);
+  readonly remediation: string;
   readonly manualFixRequired?: boolean;
-}
-
-export interface ControlFinding {
-  readonly scenario: string;
-  readonly issue?: string;
 }
 
 export interface ControlAdapter {

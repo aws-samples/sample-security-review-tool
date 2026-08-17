@@ -1,70 +1,54 @@
 import { SecurityControl } from '../../../controls/security-control.js';
-import { ControlFinding } from '../../../controls/types.js';
-import { Apigw002Adapter } from './apigw-002.adapter.js';
+import type { Finding } from '../../../controls/types.js';
+import type { Apigw002Adapter } from './apigw-002.adapter.js';
 
 const PREFLIGHT_METHOD = 'OPTIONS';
 // Verbs for which a request body has no defined semantics, so declaring a body model is not a fix a
 // reviewer could reasonably ask for.
 const BODYLESS_METHODS = ['GET', 'HEAD', 'DELETE'];
-const NO_VALIDATOR_SCENARIO = 'no-request-validator';
-const VALIDATOR_ENFORCES_NOTHING_SCENARIO = 'request-validator-enforces-nothing';
-const NO_REQUIRED_PARAMETERS_SCENARIO = 'parameter-validation-without-required-parameters';
-const BODY_VALIDATION_WITHOUT_MODEL_SCENARIO = 'body-validation-without-model';
+const NO_VALIDATOR_FINDING = 'no-request-validator';
+const VALIDATOR_ENFORCES_NOTHING_FINDING = 'request-validator-enforces-nothing';
+const NO_REQUIRED_PARAMETERS_FINDING = 'parameter-validation-without-required-parameters';
+const BODY_VALIDATION_WITHOUT_MODEL_FINDING = 'body-validation-without-model';
 
-export class Apigw002Control extends SecurityControl<Apigw002Adapter> {
+const FINDINGS = {
+  [NO_VALIDATOR_FINDING]: {
+    issue: 'API method does not reference any request validator, so request bodies and query/header parameters reach the backend unvalidated',
+    remediation: 'Associate the API method with a request validator that validates the request body and/or the query string and header parameters, so requests are rejected before reaching the backend.',
+  },
+  [VALIDATOR_ENFORCES_NOTHING_FINDING]: {
+    issue: 'The request validator used by the API method validates neither the request body nor query/header parameters, so requests reach the backend unvalidated',
+    remediation: 'Enable body validation and/or query string and header parameter validation on the request validator used by the API method, so requests are rejected before reaching the backend.',
+  },
+  [NO_REQUIRED_PARAMETERS_FINDING]: {
+    issue: 'The API method only validates query/header parameters but declares no required query string or header parameters, so validation enforces nothing',
+    remediation: 'Mark at least one query string or header parameter of the API method as required, or also enable request body validation on the validator it uses, so parameter validation actually rejects invalid requests.',
+  },
+  [BODY_VALIDATION_WITHOUT_MODEL_FINDING]: {
+    issue: 'The API method enables request body validation but declares no request body model, and API Gateway does not validate a payload with no matching model, so validation enforces nothing',
+    remediation: 'Declare a request body model on the API method for the content type it accepts, so the enabled body validation has a schema to validate against, or mark at least one query string or header parameter as required and enable parameter validation instead.',
+  },
+} as const satisfies Record<string, Finding>;
+
+type FindingKey = keyof typeof FINDINGS;
+
+export class Apigw002Control extends SecurityControl<Apigw002Adapter, FindingKey> {
   constructor() {
     super({
       id: 'APIGW-002',
       priority: 'HIGH',
       description: 'API Gateway methods must enforce request validation of the request body or query/header parameters, excluding CORS preflight methods',
-      remediationScenarios: [
-        {
-          scenario: NO_VALIDATOR_SCENARIO,
-          intent: 'Associate the API method with a request validator that validates the request body and/or the query string and header parameters, so requests are rejected before reaching the backend.',
-        },
-        {
-          scenario: VALIDATOR_ENFORCES_NOTHING_SCENARIO,
-          intent: 'Enable body validation and/or query string and header parameter validation on the request validator used by the API method, so requests are rejected before reaching the backend.',
-        },
-        {
-          scenario: NO_REQUIRED_PARAMETERS_SCENARIO,
-          intent: 'Mark at least one query string or header parameter of the API method as required, or also enable request body validation on the validator it uses, so parameter validation actually rejects invalid requests.',
-        },
-        {
-          scenario: BODY_VALIDATION_WITHOUT_MODEL_SCENARIO,
-          intent: 'Declare a request body model on the API method for the content type it accepts, so the enabled body validation has a schema to validate against, or mark at least one query string or header parameter as required and enable parameter validation instead.',
-        },
-      ],
+      findings: FINDINGS,
     });
   }
 
-  protected evaluate(adapter: Apigw002Adapter): ControlFinding | null {
+  protected evaluate(adapter: Apigw002Adapter): FindingKey | null {
     if (this.isPreflight(adapter)) return null;
     if (this.hasNothingToValidate(adapter)) return null;
-    if (!adapter.referencesRequestValidator) {
-      return {
-        scenario: NO_VALIDATOR_SCENARIO,
-        issue: 'API method does not reference any request validator, so request bodies and query/header parameters reach the backend unvalidated',
-      };
-    }
-    if (adapter.referencedValidatorEnforcesNothing) {
-      return {
-        scenario: VALIDATOR_ENFORCES_NOTHING_SCENARIO,
-        issue: 'The request validator used by the API method validates neither the request body nor query/header parameters, so requests reach the backend unvalidated',
-      };
-    }
-    if (this.hasParameterValidationWithNothingRequired(adapter)) {
-      return {
-        scenario: NO_REQUIRED_PARAMETERS_SCENARIO,
-        issue: 'The API method only validates query/header parameters but declares no required query string or header parameters, so validation enforces nothing',
-      };
-    }
-    if (this.hasBodyValidationWithoutModel(adapter)) {
-      return {
-        scenario: BODY_VALIDATION_WITHOUT_MODEL_SCENARIO,
-        issue: 'The API method enables request body validation but declares no request body model, and API Gateway does not validate a payload with no matching model, so validation enforces nothing',
-      };
-    }
+    if (!adapter.referencesRequestValidator) return NO_VALIDATOR_FINDING;
+    if (adapter.referencedValidatorEnforcesNothing) return VALIDATOR_ENFORCES_NOTHING_FINDING;
+    if (this.hasParameterValidationWithNothingRequired(adapter)) return NO_REQUIRED_PARAMETERS_FINDING;
+    if (this.hasBodyValidationWithoutModel(adapter)) return BODY_VALIDATION_WITHOUT_MODEL_FINDING;
     return null;
   }
 

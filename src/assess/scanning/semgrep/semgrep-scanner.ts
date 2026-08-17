@@ -69,7 +69,7 @@ export class SemgrepScanner extends BaseScanner {
       path: relativePath,
       line: result.start?.line,
       issue: result.extra?.message || result.message || 'No message',
-      fix: SemgrepFixes[checkId]?.intent,
+      fix: SemgrepFixes[checkId]?.remediation,
       check_id: checkId,
       priority: SemgrepFixes[checkId]?.priority || ScannerUtils.mapSeverity(result.extra?.metadata?.impact ?? ''),
       references: result.extra?.metadata?.references?.join(' | ') || '',

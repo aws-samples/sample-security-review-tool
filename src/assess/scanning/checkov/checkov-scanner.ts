@@ -114,7 +114,7 @@ export class CheckovScanner {
       issue: check.check_name || 'No message',
       check_id: check.check_id || 'unknown-rule',
       priority: CheckovPolicies[check.check_id]?.priority || 'LOW',
-      fix: CheckovPolicies[check.check_id]?.intent,
+      fix: CheckovPolicies[check.check_id]?.remediation,
       status: "Open",
       stack: stackName,
       resourceType: resourceIdentifier,

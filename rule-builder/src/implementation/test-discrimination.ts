@@ -85,7 +85,7 @@ function runAgainstStub(stub: Stub, workspace: string, testFilePath: string, con
 // control both through the exported singleton and by constructing the class themselves.
 function writeHarness(stub: Stub, workspace: string, controlFilePath: string): string {
     const verdict = stub === 'always-flags'
-        ? `{ scenario: this.remediationScenarios?.[0]?.scenario ?? 'probe', issue: 'discrimination probe' }`
+        ? `(() => { const key = Object.keys(this.findings ?? {})[0]; if (key) return key; this.findings = { probe: { issue: 'discrimination probe', remediation: 'probe' } }; return 'probe'; })()`
         : 'null';
 
     const setupPath = path.join(workspace, `stub-${stub}.ts`);

@@ -5,2272 +5,2272 @@ const CheckovPolicies: Record<string, Omit<Remediation, 'id'>> = {
     "CKV_AWS_343": {
         description: "Amazon Redshift clusters do not have automatic snapshots enabled",
         priority: "HIGH",
-        intent: "Enable automatic snapshots in AWS::Redshift::Cluster resource by setting the 'AutomatedSnapshotRetentionPeriod' property to a positive integer value (number of days to retain snapshots). Example: AutomatedSnapshotRetentionPeriod: 1. This ensures point-in-time recovery capabilities and data protection against accidental deletion or corruption."
+        remediation: "Enable automatic snapshots in AWS::Redshift::Cluster resource by setting the 'AutomatedSnapshotRetentionPeriod' property to a positive integer value (number of days to retain snapshots). Example: AutomatedSnapshotRetentionPeriod: 1. This ensures point-in-time recovery capabilities and data protection against accidental deletion or corruption."
     },
     "CKV_AWS_308": {
         description: "API Gateway method setting is not set to encrypted caching",
         priority: "HIGH",
-        intent: "Configure API Gateway method settings to use encrypted caching by setting 'CacheDataEncrypted: true' in the Settings property of AWS::ApiGateway::Stage resource. This protects sensitive data stored in the cache from unauthorized access."
+        remediation: "Configure API Gateway method settings to use encrypted caching by setting 'CacheDataEncrypted: true' in the Settings property of AWS::ApiGateway::Stage resource. This protects sensitive data stored in the cache from unauthorized access."
     },
     "CKV_AWS_3": {
         description: "AWS EBS volumes are not encrypted",
         priority: "HIGH",
-        intent: "Enable EBS volume encryption by setting 'Encrypted: true' in the AWS::EC2::Volume resource. This ensures data at rest is protected using AWS KMS encryption, reducing risk of data exposure if volumes are accidentally exposed."
+        remediation: "Enable EBS volume encryption by setting 'Encrypted: true' in the AWS::EC2::Volume resource. This ensures data at rest is protected using AWS KMS encryption, reducing risk of data exposure if volumes are accidentally exposed."
     },
     "CKV_AWS_79": {
         description: "AWS EC2 instance not configured with Instance Metadata Service v2 (IMDSv2)",
         priority: "HIGH",
-        intent: "Configure EC2 instances to use IMDSv2 by setting MetadataOptions property with 'HttpTokens: required' and 'HttpEndpoint: enabled' in AWS::EC2::Instance or AWS::EC2::LaunchTemplate resource. IMDSv2 uses session-oriented requests that provide better protection against SSRF vulnerabilities and misconfigurations compared to IMDSv1."
+        remediation: "Configure EC2 instances to use IMDSv2 by setting MetadataOptions property with 'HttpTokens: required' and 'HttpEndpoint: enabled' in AWS::EC2::Instance or AWS::EC2::LaunchTemplate resource. IMDSv2 uses session-oriented requests that provide better protection against SSRF vulnerabilities and misconfigurations compared to IMDSv1."
     },
     "CKV_AWS_99": {
         description: "AWS Glue security configuration encryption is not enabled",
         priority: "HIGH",
-        intent: "Enable encryption in AWS::Glue::SecurityConfiguration resource by configuring EncryptionConfiguration property with appropriate settings for S3Encryptions, CloudWatchEncryption, and JobBookmarksEncryption using AWS KMS keys to protect sensitive data processing workflows."
+        remediation: "Enable encryption in AWS::Glue::SecurityConfiguration resource by configuring EncryptionConfiguration property with appropriate settings for S3Encryptions, CloudWatchEncryption, and JobBookmarksEncryption using AWS KMS keys to protect sensitive data processing workflows."
     },
     "CKV_AWS_272": {
         description: "AWS Lambda function is not configured to validate code-signing",
         priority: "HIGH",
-        intent: "Configure Lambda function code signing by creating an AWS::Lambda::CodeSigningConfig resource and associating it with the Lambda function using 'CodeSigningConfigArn' property in AWS::Lambda::Function. This ensures only trusted code signed by authorized sources can be deployed."
+        remediation: "Configure Lambda function code signing by creating an AWS::Lambda::CodeSigningConfig resource and associating it with the Lambda function using 'CodeSigningConfigArn' property in AWS::Lambda::Function. This ensures only trusted code signed by authorized sources can be deployed."
     },
     "CKV_AWS_103": {
         description: "AWS Load Balancer is not using TLS 1.2",
         priority: "HIGH",
-        intent: "Configure Application Load Balancer listeners to use TLS 1.2 or higher by setting appropriate 'SslPolicy' (e.g., 'ELBSecurityPolicy-TLS-1-2-2017-01') in the AWS::ElasticLoadBalancingV2::Listener resource. This ensures secure communication using modern encryption protocols."
+        remediation: "Configure Application Load Balancer listeners to use TLS 1.2 or higher by setting appropriate 'SslPolicy' (e.g., 'ELBSecurityPolicy-TLS-1-2-2017-01') in the AWS::ElasticLoadBalancingV2::Listener resource. This ensures secure communication using modern encryption protocols."
     },
     "N/A": {
         description: "AWS provisioned resources are manually modified",
         priority: "HIGH",
-        intent: "Prevent manual modifications to AWS provisioned resources by implementing proper Infrastructure as Code practices with CloudFormation, using AWS Config rules to detect drift, enabling CloudTrail for audit logging, and establishing change management processes that require all infrastructure changes to go through CloudFormation templates and automated deployment pipelines."
+        remediation: "Prevent manual modifications to AWS provisioned resources by implementing proper Infrastructure as Code practices with CloudFormation, using AWS Config rules to detect drift, enabling CloudTrail for audit logging, and establishing change management processes that require all infrastructure changes to go through CloudFormation templates and automated deployment pipelines."
     },
     "CKV_AWS_98": {
         description: "AWS SageMaker endpoint data encryption at rest not configured",
         priority: "HIGH",
-        intent: "Enable SageMaker endpoint encryption at rest by setting 'KmsKeyId' property in the AWS::SageMaker::EndpointConfig resource. Use a customer-managed KMS key to encrypt data stored by the endpoint, protecting sensitive ML model data."
+        remediation: "Enable SageMaker endpoint encryption at rest by setting 'KmsKeyId' property in the AWS::SageMaker::EndpointConfig resource. Use a customer-managed KMS key to encrypt data stored by the endpoint, protecting sensitive ML model data."
     },
     "CKV_AWS_311": {
         description: "CodeBuild S3 logs are not encrypted",
         priority: "HIGH",
-        intent: "Enable CodeBuild S3 log encryption by configuring the 'LogsConfig' property in AWS::CodeBuild::Project with S3Logs settings including 'EncryptionDisabled: false' and specifying a KMS key. This protects build logs containing potentially sensitive information."
+        remediation: "Enable CodeBuild S3 log encryption by configuring the 'LogsConfig' property in AWS::CodeBuild::Project with S3Logs settings including 'EncryptionDisabled: false' and specifying a KMS key. This protects build logs containing potentially sensitive information."
     },
     "CKV_AWS_267": {
         description: "Comprehend Entity Recognizer's model is not encrypted by KMS using a customer managed Key (CMK)",
         priority: "HIGH",
-        intent: "Configure Comprehend Entity Recognizer to use customer-managed KMS key for model encryption by setting 'ModelKmsKeyId' property in AWS::Comprehend::EntityRecognizer resource. This provides better control over encryption keys and enhanced security for ML models."
+        remediation: "Configure Comprehend Entity Recognizer to use customer-managed KMS key for model encryption by setting 'ModelKmsKeyId' property in AWS::Comprehend::EntityRecognizer resource. This provides better control over encryption keys and enhanced security for ML models."
     },
     "CKV_AWS_268": {
         description: "Comprehend Entity Recognizer's volume is not encrypted by KMS using a customer managed Key (CMK)",
         priority: "HIGH",
-        intent: "Enable customer-managed KMS encryption for Comprehend Entity Recognizer volumes by setting 'VolumeKmsKeyId' property in the VpcConfig of AWS::Comprehend::EntityRecognizer resource. This encrypts temporary storage used during model training."
+        remediation: "Enable customer-managed KMS encryption for Comprehend Entity Recognizer volumes by setting 'VolumeKmsKeyId' property in the VpcConfig of AWS::Comprehend::EntityRecognizer resource. This encrypts temporary storage used during model training."
     },
     "CKV_AWS_295": {
         description: "DataSync Location Object Storage exposes secrets",
         priority: "HIGH",
-        intent: "Secure DataSync Object Storage location by using AWS Secrets Manager or encrypted parameters instead of hardcoding credentials. Configure the AWS::DataSync::LocationObjectStorage resource to reference secrets through SecretKey property rather than exposing them in plain text configuration."
+        remediation: "Secure DataSync Object Storage location by using AWS Secrets Manager or encrypted parameters instead of hardcoding credentials. Configure the AWS::DataSync::LocationObjectStorage resource to reference secrets through SecretKey property rather than exposing them in plain text configuration."
     },
     "CKV_AWS_296": {
         description: "DMS endpoint is not using a Customer Managed Key (CMK)",
         priority: "HIGH",
-        intent: "Configure DMS endpoint to use customer-managed KMS key by setting 'KmsKeyId' property in AWS::DMS::Endpoint resource. This provides enhanced control over encryption keys and better security for database migration data."
+        remediation: "Configure DMS endpoint to use customer-managed KMS key by setting 'KmsKeyId' property in AWS::DMS::Endpoint resource. This provides enhanced control over encryption keys and better security for database migration data."
     },
     "CKV_AWS_292": {
         description: "DocDB Global Cluster is not encrypted at rest",
         priority: "HIGH",
-        intent: "Enable DocumentDB Global Cluster encryption at rest by setting 'StorageEncrypted: true' in AWS::DocDB::DBCluster resource. Optionally specify a customer-managed KMS key using 'KmsKeyId' property for enhanced security control."
+        remediation: "Enable DocumentDB Global Cluster encryption at rest by setting 'StorageEncrypted: true' in AWS::DocDB::DBCluster resource. Optionally specify a customer-managed KMS key using 'KmsKeyId' property for enhanced security control."
     },
     "CKV_AWS_28": {
         description: "DynamoDB PITR is disabled",
         priority: "HIGH",
-        intent: "Enable DynamoDB Point-in-Time Recovery by setting 'PointInTimeRecovery: true' in the PointInTimeRecoverySpecification property of AWS::DynamoDB::Table resource."
+        remediation: "Enable DynamoDB Point-in-Time Recovery by setting 'PointInTimeRecovery: true' in the PointInTimeRecoverySpecification property of AWS::DynamoDB::Table resource."
     },
     "CKV_AWS_271": {
         description: "DynamoDB table replica does not use CMK KMS encryption",
         priority: "HIGH",
-        intent: "Configure DynamoDB table replicas to use customer-managed KMS keys by setting appropriate KMS key ARNs in the Replicas property of AWS::DynamoDB::GlobalTable resource. This ensures consistent encryption across all table replicas."
+        remediation: "Configure DynamoDB table replicas to use customer-managed KMS keys by setting appropriate KMS key ARNs in the Replicas property of AWS::DynamoDB::GlobalTable resource. This ensures consistent encryption across all table replicas."
     },
     "CKV_AWS_163": {
         description: "ECR image scan on push is not enabled",
         priority: "HIGH",
-        intent: "Enable ECR image scanning on push by setting 'ScanOnPush: true' in the ImageScanningConfiguration property of AWS::ECR::Repository resource. This automatically scans container images for vulnerabilities when they are pushed to the repository, enhancing container security."
+        remediation: "Enable ECR image scanning on push by setting 'ScanOnPush: true' in the ImageScanningConfiguration property of AWS::ECR::Repository resource. This automatically scans container images for vulnerabilities when they are pushed to the repository, enhancing container security."
     },
     "CKV_AWS_329": {
         description: "EFS Access Points are not enforcing a root directory",
         priority: "HIGH",
-        intent: "Configure EFS Access Points to enforce root directory restrictions by setting 'RootDirectory' property with appropriate Path and CreationInfo in AWS::EFS::AccessPoint resource. This limits file system access to specific directories and enhances security isolation."
+        remediation: "Configure EFS Access Points to enforce root directory restrictions by setting 'RootDirectory' property with appropriate Path and CreationInfo in AWS::EFS::AccessPoint resource. This limits file system access to specific directories and enhances security isolation."
     },
     "CKV_AWS_97": {
         description: "EFS volumes in ECS task definitions do not have encryption in transit enabled",
         priority: "HIGH",
-        intent: "Enable EFS encryption in transit for ECS task definitions by setting 'TransitEncryption: ENABLED' in the EFSVolumeConfiguration of AWS::ECS::TaskDefinition resource. This encrypts data flowing between ECS tasks and EFS file systems."
+        remediation: "Enable EFS encryption in transit for ECS task definitions by setting 'TransitEncryption: ENABLED' in the EFSVolumeConfiguration of AWS::ECS::TaskDefinition resource. This encrypts data flowing between ECS tasks and EFS file systems."
     },
     "CKV_AWS_312": {
         description: "Elastic Beanstalk environments do not have enhanced health reporting enabled",
         priority: "HIGH",
-        intent: "Enable Elastic Beanstalk enhanced health reporting by adding OptionSettings in AWS::ElasticBeanstalk::Environment with Namespace 'aws:elasticbeanstalk:healthreporting:system' and OptionName 'SystemType' set to 'enhanced'. This provides detailed health metrics and faster failure detection."
+        remediation: "Enable Elastic Beanstalk enhanced health reporting by adding OptionSettings in AWS::ElasticBeanstalk::Environment with Namespace 'aws:elasticbeanstalk:healthreporting:system' and OptionName 'SystemType' set to 'enhanced'. This provides detailed health metrics and faster failure detection."
     },
     "CKV_AWS_127": {
         description: "Elastic load balancers do not use SSL Certificates provided by AWS Certificate Manager",
         priority: "HIGH",
-        intent: "Configure ELB to use SSL certificates from AWS Certificate Manager by setting 'CertificateArn' property in the Certificates of AWS::ElasticLoadBalancingV2::Listener resource. This ensures proper SSL/TLS termination with managed certificate lifecycle."
+        remediation: "Configure ELB to use SSL certificates from AWS Certificate Manager by setting 'CertificateArn' property in the Certificates of AWS::ElasticLoadBalancingV2::Listener resource. This ensures proper SSL/TLS termination with managed certificate lifecycle."
     },
     "CKV_AWS_297": {
         description: "EventBridge Scheduler Schedule is not using a Customer Managed Key (CMK)",
         priority: "HIGH",
-        intent: "Configure EventBridge Scheduler to use customer-managed KMS key by setting 'KmsKeyArn' property in AWS::Scheduler::Schedule resource. This encrypts schedule data using keys under your control, providing enhanced security and compliance."
+        remediation: "Configure EventBridge Scheduler to use customer-managed KMS key by setting 'KmsKeyArn' property in AWS::Scheduler::Schedule resource. This encrypts schedule data using keys under your control, providing enhanced security and compliance."
     },
     "CKV_AWS_94": {
         description: "Glue Data Catalog encryption is not enabled",
         priority: "HIGH",
-        intent: "Enable Glue Data Catalog encryption by configuring AWS::Glue::DataCatalogEncryptionSettings resource with EncryptionAtRest and ConnectionPasswordEncryption properties using appropriate KMS keys for both metadata and connection passwords."
+        remediation: "Enable Glue Data Catalog encryption by configuring AWS::Glue::DataCatalogEncryptionSettings resource with EncryptionAtRest and ConnectionPasswordEncryption properties using appropriate KMS keys for both metadata and connection passwords."
     },
     "CKV_AWS_278": {
         description: "MemoryDB snapshot is not encrypted by KMS using a customer managed Key (CMK)",
         priority: "HIGH",
-        intent: "Configure MemoryDB snapshot encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::MemoryDB::Snapshot resource. This ensures snapshot data is encrypted with keys under your control."
+        remediation: "Configure MemoryDB snapshot encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::MemoryDB::Snapshot resource. This ensures snapshot data is encrypted with keys under your control."
     },
     "CKV_AWS_102": {
         description: "Neptune cluster instance is publicly available",
         priority: "HIGH",
-        intent: "Ensure Neptune cluster instances are not publicly accessible by setting 'PubliclyAccessible: false' in AWS::Neptune::DBInstance resource. Deploy Neptune instances within a VPC with appropriate security group configurations for controlled access."
+        remediation: "Ensure Neptune cluster instances are not publicly accessible by setting 'PubliclyAccessible: false' in AWS::Neptune::DBInstance resource. Deploy Neptune instances within a VPC with appropriate security group configurations for controlled access."
     },
     "CKV_AWS_347": {
         description: "Neptune is not encrypted with KMS using a customer managed Key (CMK)",
         priority: "HIGH",
-        intent: "Configure Neptune cluster encryption using customer-managed KMS key by setting 'KmsKeyId' and 'StorageEncrypted: true' properties in AWS::Neptune::DBCluster resource. This provides enhanced control over encryption keys for graph database data."
+        remediation: "Configure Neptune cluster encryption using customer-managed KMS key by setting 'KmsKeyId' and 'StorageEncrypted: true' properties in AWS::Neptune::DBCluster resource. This provides enhanced control over encryption keys for graph database data."
     },
     "CKV_AWS_280": {
         description: "Neptune snapshot is encrypted by KMS using a customer managed Key (CMK)",
         priority: "HIGH",
-        intent: "Ensure Neptune snapshots use customer-managed KMS keys for encryption. When creating snapshots from encrypted clusters, verify the snapshot inherits proper encryption settings or explicitly specify 'KmsKeyId' in AWS::Neptune::DBClusterSnapshot resource."
+        remediation: "Ensure Neptune snapshots use customer-managed KMS keys for encryption. When creating snapshots from encrypted clusters, verify the snapshot inherits proper encryption settings or explicitly specify 'KmsKeyId' in AWS::Neptune::DBClusterSnapshot resource."
     },
     "CKV_AWS_279": {
         description: "Neptune snapshot is not securely encrypted",
         priority: "HIGH",
-        intent: "Enable Neptune snapshot encryption by ensuring the source cluster has 'StorageEncrypted: true' configured in AWS::Neptune::DBCluster. Snapshots automatically inherit encryption from the source cluster. For manual snapshots, verify encryption settings are properly configured."
+        remediation: "Enable Neptune snapshot encryption by ensuring the source cluster has 'StorageEncrypted: true' configured in AWS::Neptune::DBCluster. Snapshots automatically inherit encryption from the source cluster. For manual snapshots, verify encryption settings are properly configured."
     },
     "CKV_AWS_345": {
         description: "Network firewall encryption does not use a CMK",
         priority: "HIGH",
-        intent: "Configure Network Firewall to use customer-managed KMS key for encryption by setting 'EncryptionConfiguration' property with appropriate KeyId in AWS::NetworkFirewall::Firewall resource. This encrypts firewall configuration and logs with your managed keys."
+        remediation: "Configure Network Firewall to use customer-managed KMS key for encryption by setting 'EncryptionConfiguration' property with appropriate KeyId in AWS::NetworkFirewall::Firewall resource. This encrypts firewall configuration and logs with your managed keys."
     },
     "CKV_AWS_346": {
         description: "Network Firewall Policy does not define an encryption configuration that uses a CMK",
         priority: "HIGH",
-        intent: "Configure Network Firewall Policy with customer-managed KMS encryption by defining appropriate encryption settings in the policy configuration of AWS::NetworkFirewall::FirewallPolicy resource. Set appropriate KMS key references for encrypting policy data and associated resources."
+        remediation: "Configure Network Firewall Policy with customer-managed KMS encryption by defining appropriate encryption settings in the policy configuration of AWS::NetworkFirewall::FirewallPolicy resource. Set appropriate KMS key references for encrypting policy data and associated resources."
     },
     "CKV_AWS_344": {
         description: "Network firewalls do not have deletion protection enabled",
         priority: "HIGH",
-        intent: "Enable Network Firewall deletion protection by setting 'DeleteProtection: true' property in AWS::NetworkFirewall::Firewall resource. This prevents accidental deletion of critical network security infrastructure."
+        remediation: "Enable Network Firewall deletion protection by setting 'DeleteProtection: true' property in AWS::NetworkFirewall::Firewall resource. This prevents accidental deletion of critical network security infrastructure."
     },
     "CKV_AWS_96": {
         description: "Not all data stored in Aurora is securely encrypted at rest",
         priority: "HIGH",
-        intent: "Enable Aurora cluster encryption at rest by setting 'StorageEncrypted: true' in AWS::RDS::DBCluster resource. Optionally specify 'KmsKeyId' property to use a customer-managed KMS key for enhanced control over encryption keys."
+        remediation: "Enable Aurora cluster encryption at rest by setting 'StorageEncrypted: true' in AWS::RDS::DBCluster resource. Optionally specify 'KmsKeyId' property to use a customer-managed KMS key for enhanced control over encryption keys."
     },
     "CKV_AWS_354": {
         description: "RDS Performance Insights are not encrypted using KMS CMKs",
         priority: "HIGH",
-        intent: "Configure RDS Performance Insights encryption using customer-managed KMS key by setting 'PerformanceInsightsKMSKeyId' property in AWS::RDS::DBInstance resource when 'EnablePerformanceInsights: true'. This encrypts performance data with your managed keys."
+        remediation: "Configure RDS Performance Insights encryption using customer-managed KMS key by setting 'PerformanceInsightsKMSKeyId' property in AWS::RDS::DBInstance resource when 'EnablePerformanceInsights: true'. This encrypts performance data with your managed keys."
     },
     "CKV_AWS_282": {
         description: "Redshift Serverless namespace is not encrypted by KMS using a customer managed key (CMK)",
         priority: "HIGH",
-        intent: "Configure Redshift Serverless namespace encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::RedshiftServerless::Namespace resource. This encrypts serverless data warehouse data with keys under your control."
+        remediation: "Configure Redshift Serverless namespace encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::RedshiftServerless::Namespace resource. This encrypts serverless data warehouse data with keys under your control."
     },
     "CKV_AWS_281": {
         description: "RedShift snapshot copy is not encrypted by KMS using a customer managed Key (CMK)",
         priority: "HIGH",
-        intent: "Configure Redshift snapshot copy encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::Redshift::ClusterParameterGroup and ensure the snapshot copy operation references appropriate KMS grants for proper encryption."
+        remediation: "Configure Redshift snapshot copy encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::Redshift::ClusterParameterGroup and ensure the snapshot copy operation references appropriate KMS grants for proper encryption."
     },
     "CKV_AWS_304": {
         description: "Secrets Manager secrets are not rotated within 90 days",
         priority: "HIGH",
-        intent: "Configure automatic rotation for Secrets Manager secrets by setting 'RotationRules' property with 'AutomaticallyAfterDays' <= 90 in AWS::SecretsManager::Secret resource. Implement rotation Lambda function using AWS::SecretsManager::RotationSchedule to ensure regular credential updates."
+        remediation: "Configure automatic rotation for Secrets Manager secrets by setting 'RotationRules' property with 'AutomaticallyAfterDays' <= 90 in AWS::SecretsManager::Secret resource. Implement rotation Lambda function using AWS::SecretsManager::RotationSchedule to ensure regular credential updates."
     },
     "CKV_AWS_350": {
         description: "Security configuration of the EMR Cluster does not ensure the encryption of EBS disks",
         priority: "HIGH",
-        intent: "Configure EMR security configuration to encrypt EBS volumes by setting appropriate encryption settings in AWS::EMR::SecurityConfiguration resource, then reference this configuration using 'SecurityConfiguration' property in AWS::EMR::Cluster resource."
+        remediation: "Configure EMR security configuration to encrypt EBS volumes by setting appropriate encryption settings in AWS::EMR::SecurityConfiguration resource, then reference this configuration using 'SecurityConfiguration' property in AWS::EMR::Cluster resource."
     },
     "CKV_AWS_168": {
         description: "SQS queue policy is public and access is not restricted to specific services or principals",
         priority: "HIGH",
-        intent: "Restrict SQS queue access by configuring queue policy to allow only specific principals or services. Replace wildcard principals (*) with specific AWS account IDs, service principals, or IAM roles in the PolicyDocument of AWS::SQS::QueuePolicy resource."
+        remediation: "Restrict SQS queue access by configuring queue policy to allow only specific principals or services. Replace wildcard principals (*) with specific AWS account IDs, service principals, or IAM roles in the PolicyDocument of AWS::SQS::QueuePolicy resource."
     },
     "CKV_AWS_337": {
         description: "SSM parameters are not utilizing KMS CMK",
         priority: "HIGH",
-        intent: "Configure SSM parameters to use customer-managed KMS keys by setting 'Type: SecureString' and 'KeyId' property to your KMS key ARN in AWS::SSM::Parameter resource. This provides enhanced control over parameter encryption keys."
+        remediation: "Configure SSM parameters to use customer-managed KMS keys by setting 'Type: SecureString' and 'KeyId' property to your KMS key ARN in AWS::SSM::Parameter resource. This provides enhanced control over parameter encryption keys."
     },
     "CKV_AWS_270": {
         description: "The Connect Instance S3 Storage Configuration utilizes Customer Managed Key",
         priority: "HIGH",
-        intent: "Configure Amazon Connect instance S3 storage to use customer-managed KMS key by setting 'KmsKeyId' property in the StorageConfig of AWS::Connect::Instance resource. This encrypts stored call recordings and other data with your managed keys."
+        remediation: "Configure Amazon Connect instance S3 storage to use customer-managed KMS key by setting 'KmsKeyId' property in the StorageConfig of AWS::Connect::Instance resource. This encrypts stored call recordings and other data with your managed keys."
     },
     "CKV_AWS_298": {
         description: "The DMS S3 does not use a Customer Managed Key (CMK)",
         priority: "HIGH",
-        intent: "Configure DMS S3 endpoint to use customer-managed KMS key by setting 'ServerSideEncryptionKmsKeyId' property in the S3Settings of AWS::DMS::Endpoint resource. This encrypts data migration files stored in S3 with keys under your control."
+        remediation: "Configure DMS S3 endpoint to use customer-managed KMS key by setting 'ServerSideEncryptionKmsKeyId' property in the S3Settings of AWS::DMS::Endpoint resource. This encrypts data migration files stored in S3 with keys under your control."
     },
     "CKV_AWS_357": {
         description: "Transfer server does not force secure protocols",
         priority: "HIGH",
-        intent: "Configure AWS Transfer server to enforce secure protocols by setting 'Protocols' property to only include secure options like 'SFTP' or 'FTPS', excluding insecure 'FTP' protocol in AWS::Transfer::Server resource. Enable proper security policies for secure file transfer."
+        remediation: "Configure AWS Transfer server to enforce secure protocols by setting 'Protocols' property to only include secure options like 'SFTP' or 'FTPS', excluding insecure 'FTP' protocol in AWS::Transfer::Server resource. Enable proper security policies for secure file transfer."
     },
     "CKV_AWS_77": {
         description: "Athena Database is not encrypted at rest",
         priority: "MEDIUM",
-        intent: "Configure Athena database encryption at rest by setting 'EncryptionConfiguration' property with 'EncryptionOption' (SSE_S3, SSE_KMS, or CSE_KMS) and 'KmsKey' if using KMS encryption in AWS::Athena::DataCatalog resource. This protects query results stored in S3 from unauthorized access."
+        remediation: "Configure Athena database encryption at rest by setting 'EncryptionConfiguration' property with 'EncryptionOption' (SSE_S3, SSE_KMS, or CSE_KMS) and 'KmsKey' if using KMS encryption in AWS::Athena::DataCatalog resource. This protects query results stored in S3 from unauthorized access."
     },
     "CKV_AWS_82": {
         description: "Athena workgroup does not prevent disabling encryption",
         priority: "MEDIUM",
-        intent: "Configure Athena workgroup to enforce encryption by setting 'EnforceWorkGroupConfiguration: true' and defining encryption settings in the 'WorkGroupConfiguration' property of AWS::Athena::WorkGroup resource. This prevents users from disabling encryption for query results."
+        remediation: "Configure Athena workgroup to enforce encryption by setting 'EnforceWorkGroupConfiguration: true' and defining encryption settings in the 'WorkGroupConfiguration' property of AWS::Athena::WorkGroup resource. This prevents users from disabling encryption for query results."
     },
     "CKV_AWS_159": {
         description: "Athena Workgroup is not encrypted",
         priority: "MEDIUM",
-        intent: "Enable Athena workgroup encryption by configuring 'ResultConfiguration' property with 'EncryptionConfiguration' specifying 'EncryptionOption' and appropriate KMS key in AWS::Athena::WorkGroup resource. This ensures all query results are encrypted at rest."
+        remediation: "Enable Athena workgroup encryption by configuring 'ResultConfiguration' property with 'EncryptionConfiguration' specifying 'EncryptionOption' and appropriate KMS key in AWS::Athena::WorkGroup resource. This ensures all query results are encrypted at rest."
     },
     "CKV_AWS_341": {
         description: "AWS Auto Scaling group launch configuration configured with Instance Metadata Service hop count greater than 1",
         priority: "MEDIUM",
-        intent: "Configure Auto Scaling group launch template with 'HttpPutResponseHopLimit: 1' in MetadataOptions property of AWS::EC2::LaunchTemplate resource. This restricts IMDS access to the instance itself, preventing potential SSRF attacks through network intermediaries."
+        remediation: "Configure Auto Scaling group launch template with 'HttpPutResponseHopLimit: 1' in MetadataOptions property of AWS::EC2::LaunchTemplate resource. This restricts IMDS access to the instance itself, preventing potential SSRF attacks through network intermediaries."
     },
     "CKV2_AWS_47": {
         description: "AWS CloudFront attached WAFv2 WebACL is not configured with AMR for Log4j Vulnerability",
         priority: "MEDIUM",
-        intent: "Configure CloudFront distribution's associated WAFv2 WebACL with AWS Managed Rules (AMR) that include Log4j vulnerability protection. Add appropriate managed rule groups in AWS::WAFv2::WebACL resource to detect and block Log4j exploit attempts."
+        remediation: "Configure CloudFront distribution's associated WAFv2 WebACL with AWS Managed Rules (AMR) that include Log4j vulnerability protection. Add appropriate managed rule groups in AWS::WAFv2::WebACL resource to detect and block Log4j exploit attempts."
     },
     "CKV_AWS_305": {
         description: "AWS CloudFront distributions does not have a default root object configured",
         priority: "MEDIUM",
-        intent: "Configure CloudFront distribution with a default root object by setting 'DefaultRootObject' property (e.g., 'index.html') in AWS::CloudFront::Distribution resource. This ensures proper handling of root path requests."
+        remediation: "Configure CloudFront distribution with a default root object by setting 'DefaultRootObject' property (e.g., 'index.html') in AWS::CloudFront::Distribution resource. This ensures proper handling of root path requests."
     },
     "CKV_AWS_316": {
         description: "AWS CodeBuild project environment privileged mode is enabled",
         priority: "MEDIUM",
-        intent: "Disable CodeBuild privileged mode by setting 'PrivilegedMode: false' in the Environment property of AWS::CodeBuild::Project resource unless Docker-in-Docker functionality is specifically required. This reduces the attack surface of build environments."
+        remediation: "Disable CodeBuild privileged mode by setting 'PrivilegedMode: false' in the Environment property of AWS::CodeBuild::Project resource unless Docker-in-Docker functionality is specifically required. This reduces the attack surface of build environments."
     },
     "CKV_AWS_293": {
         description: "AWS database instances do not have deletion protection enabled",
         priority: "MEDIUM",
-        intent: "Enable RDS instance deletion protection by setting 'DeletionProtection: true' property in AWS::RDS::DBInstance resource. This prevents accidental deletion of critical database instances through API calls or console actions."
+        remediation: "Enable RDS instance deletion protection by setting 'DeletionProtection: true' property in AWS::RDS::DBInstance resource. This prevents accidental deletion of critical database instances through API calls or console actions."
     },
     "CKV_AWS_334": {
         description: "AWS ECS task definition elevated privileges enabled",
         priority: "MEDIUM",
-        intent: "Disable ECS container privileged mode by setting 'Privileged: false' in ContainerDefinitions of AWS::ECS::TaskDefinition resource unless elevated privileges are specifically required. This follows the principle of least privilege."
+        remediation: "Disable ECS container privileged mode by setting 'Privileged: false' in ContainerDefinitions of AWS::ECS::TaskDefinition resource unless elevated privileges are specifically required. This follows the principle of least privilege."
     },
     "CKV_AWS_258": {
         description: "AWS Lambda function URL AuthType set to NONE",
         priority: "MEDIUM",
-        intent: "Configure Lambda function URL with proper authentication by setting 'AuthType: AWS_IAM' in AWS::Lambda::Url resource instead of 'NONE'. This ensures only authenticated requests can invoke the function."
+        remediation: "Configure Lambda function URL with proper authentication by setting 'AuthType: AWS_IAM' in AWS::Lambda::Url resource instead of 'NONE'. This ensures only authenticated requests can invoke the function."
     },
     "CKV_AWS_81": {
         description: "AWS MSK cluster encryption in transit is not enabled",
         priority: "MEDIUM",
-        intent: "Enable MSK cluster encryption in transit by configuring 'EncryptionInfo' property with 'EncryptionInTransit' settings in AWS::MSK::Cluster resource. Set appropriate TLS encryption options for client-broker and inter-broker communication."
+        remediation: "Enable MSK cluster encryption in transit by configuring 'EncryptionInfo' property with 'EncryptionInTransit' settings in AWS::MSK::Cluster resource. Set appropriate TLS encryption options for client-broker and inter-broker communication."
     },
     "CKV_AWS_250": {
         description: "AWS RDS PostgreSQL exposed to local file read vulnerability",
         priority: "MEDIUM",
-        intent: "Secure RDS PostgreSQL instances by ensuring log_fdw extension is not enabled or is properly configured with restricted access. Review and limit database extensions in AWS::RDS::DBParameterGroup that can access local files to prevent unauthorized file system access."
+        remediation: "Secure RDS PostgreSQL instances by ensuring log_fdw extension is not enabled or is properly configured with restricted access. Review and limit database extensions in AWS::RDS::DBParameterGroup that can access local files to prevent unauthorized file system access."
     },
     "CKV_AWS_302": {
         description: "AWS RDS snapshots are accessible to public",
         priority: "MEDIUM",
-        intent: "Ensure RDS snapshots are private by not setting public access parameters in AWS::RDS::DBSnapshot resource. Review snapshot sharing settings to ensure they're only shared with authorized accounts using specific AWS account IDs."
+        remediation: "Ensure RDS snapshots are private by not setting public access parameters in AWS::RDS::DBSnapshot resource. Review snapshot sharing settings to ensure they're only shared with authorized accounts using specific AWS account IDs."
     },
     "CKV_AWS_371": {
         description: "AWS SageMaker Notebook Instance allows for IMDSv1",
         priority: "MEDIUM",
-        intent: "Configure SageMaker notebook instance to use IMDSv2 by ensuring the underlying instance is configured with appropriate metadata service settings. Set InstanceMetadataServiceConfiguration properties for enhanced security."
+        remediation: "Configure SageMaker notebook instance to use IMDSv2 by ensuring the underlying instance is configured with appropriate metadata service settings. Set InstanceMetadataServiceConfiguration properties for enhanced security."
     },
     "CKV_AWS_26": {
         description: "AWS SNS topic has SSE disabled",
         priority: "MEDIUM",
-        intent: "Enable SNS topic server-side encryption by setting 'KmsMasterKeyId' property in AWS::SNS::Topic resource. Use either AWS managed keys or customer-managed KMS keys to encrypt messages at rest."
+        remediation: "Enable SNS topic server-side encryption by setting 'KmsMasterKeyId' property in AWS::SNS::Topic resource. Use either AWS managed keys or customer-managed KMS keys to encrypt messages at rest."
     },
     "CKV_AWS_303": {
         description: "AWS SSM documents are public",
         priority: "MEDIUM",
-        intent: "Restrict SSM document access by setting 'DocumentType' and 'Permissions' properties appropriately in AWS::SSM::Document resource. Ensure documents are not publicly accessible unless specifically required for your use case."
+        remediation: "Restrict SSM document access by setting 'DocumentType' and 'Permissions' properties appropriately in AWS::SSM::Document resource. Ensure documents are not publicly accessible unless specifically required for your use case."
     },
     "CKV_AWS_166": {
         description: "Backup Vault is not encrypted at rest using KMS CMK",
         priority: "MEDIUM",
-        intent: "Configure AWS Backup vault encryption using customer-managed KMS key by setting 'EncryptionKeyArn' property in AWS::Backup::BackupVault resource. This ensures backup data is encrypted with keys under your control."
+        remediation: "Configure AWS Backup vault encryption using customer-managed KMS key by setting 'EncryptionKeyArn' property in AWS::Backup::BackupVault resource. This ensures backup data is encrypted with keys under your control."
     },
     "CKV_AWS_373": {
         description: "Bedrock Agent not encrypted with Customer Master Key (CMK)",
         priority: "MEDIUM",
-        intent: "Configure Bedrock Agent encryption using customer-managed KMS key by setting appropriate KMS key references in AWS::Bedrock::Agent resource. This ensures AI agent data is encrypted with keys under your control."
+        remediation: "Configure Bedrock Agent encryption using customer-managed KMS key by setting appropriate KMS key references in AWS::Bedrock::Agent resource. This ensures AI agent data is encrypted with keys under your control."
     },
     "CKV_AWS_310": {
         description: "CloudFront distributions do not have origin failover configured",
         priority: "MEDIUM",
-        intent: "Configure CloudFront distribution with origin failover by setting up 'OriginGroups' with primary and failover origins in AWS::CloudFront::Distribution resource. This ensures high availability and automatic failover capabilities."
+        remediation: "Configure CloudFront distribution with origin failover by setting up 'OriginGroups' with primary and failover origins in AWS::CloudFront::Distribution resource. This ensures high availability and automatic failover capabilities."
     },
     "CKV_AWS_319": {
         description: "CloudWatch alarm actions are not enabled",
         priority: "MEDIUM",
-        intent: "Enable CloudWatch alarm actions by configuring 'AlarmActions', 'OKActions', and 'InsufficientDataActions' properties in AWS::CloudWatch::Alarm resource. This ensures automated responses to alarm state changes for proper incident management."
+        remediation: "Enable CloudWatch alarm actions by configuring 'AlarmActions', 'OKActions', and 'InsufficientDataActions' properties in AWS::CloudWatch::Alarm resource. This ensures automated responses to alarm state changes for proper incident management."
     },
     "CKV_AWS_78": {
         description: "CodeBuild project encryption is disabled",
         priority: "MEDIUM",
-        intent: "Enable CodeBuild project encryption by setting 'EncryptionKey' property in the Artifacts configuration of AWS::CodeBuild::Project resource. This encrypts build artifacts stored in S3 with specified KMS key for enhanced security."
+        remediation: "Enable CodeBuild project encryption by setting 'EncryptionKey' property in the Artifacts configuration of AWS::CodeBuild::Project resource. This encrypts build artifacts stored in S3 with specified KMS key for enhanced security."
     },
     "CKV_AWS_147": {
         description: "CodeBuild projects are not encrypted",
         priority: "MEDIUM",
-        intent: "Configure CodeBuild project encryption by enabling encryption for artifacts, cache, and logs. Set appropriate KMS keys in LogsConfig and Artifacts properties of AWS::CodeBuild::Project resource."
+        remediation: "Configure CodeBuild project encryption by enabling encryption for artifacts, cache, and logs. Set appropriate KMS keys in LogsConfig and Artifacts properties of AWS::CodeBuild::Project resource."
     },
     "CKV_AWS_269": {
         description: "Connect Instance Kinesis Video Stream Storage Config is not using CMK for encryption",
         priority: "MEDIUM",
-        intent: "Configure Amazon Connect instance Kinesis Video Stream storage to use customer-managed KMS key by setting appropriate encryption configuration in the InstanceStorageConfig of AWS::Connect::Instance resource. This ensures video call recordings are encrypted with keys under your control."
+        remediation: "Configure Amazon Connect instance Kinesis Video Stream storage to use customer-managed KMS key by setting appropriate encryption configuration in the InstanceStorageConfig of AWS::Connect::Instance resource. This ensures video call recordings are encrypted with keys under your control."
     },
     "CKV_AWS_113": {
         description: "Session Manager data is not encrypted in transit / Deletion protection disabled for load balancer",
         priority: "MEDIUM",
-        intent: "For Session Manager: Enable encryption in transit by configuring appropriate encryption settings in AWS::SSM::Document for Session Manager preferences. For Load Balancer: Enable deletion protection by setting 'DeletionProtection: true' in AWS::ElasticLoadBalancingV2::LoadBalancer resource."
+        remediation: "For Session Manager: Enable encryption in transit by configuring appropriate encryption settings in AWS::SSM::Document for Session Manager preferences. For Load Balancer: Enable deletion protection by setting 'DeletionProtection: true' in AWS::ElasticLoadBalancingV2::LoadBalancer resource."
     },
     "CKV_AWS_74": {
         description: "DocumentDB is not encrypted at rest",
         priority: "MEDIUM",
-        intent: "Enable DocumentDB cluster encryption at rest by setting 'StorageEncrypted: true' in AWS::DocDB::DBCluster resource. Optionally specify 'KmsKeyId' property to use customer-managed KMS key for enhanced control."
+        remediation: "Enable DocumentDB cluster encryption at rest by setting 'StorageEncrypted: true' in AWS::DocDB::DBCluster resource. Optionally specify 'KmsKeyId' property to use customer-managed KMS key for enhanced control."
     },
     "CKV_AWS_165": {
         description: "Dynamodb point in time recovery is not enabled for global tables",
         priority: "MEDIUM",
-        intent: "Enable Point-in-Time Recovery for DynamoDB global tables by setting 'PointInTimeRecoveryEnabled: true' in the PointInTimeRecoverySpecification of AWS::DynamoDB::GlobalTable resource for all regions where the global table exists."
+        remediation: "Enable Point-in-Time Recovery for DynamoDB global tables by setting 'PointInTimeRecoveryEnabled: true' in the PointInTimeRecoverySpecification of AWS::DynamoDB::GlobalTable resource for all regions where the global table exists."
     },
     "CKV_AWS_315": {
         description: "EC2 Auto Scaling groups are not utilizing EC2 launch templates",
         priority: "MEDIUM",
-        intent: "Configure Auto Scaling groups to use launch templates instead of launch configurations by setting 'LaunchTemplate' property in AWS::AutoScaling::AutoScalingGroup resource. Launch templates provide more features and better versioning capabilities."
+        remediation: "Configure Auto Scaling groups to use launch templates instead of launch configurations by setting 'LaunchTemplate' property in AWS::AutoScaling::AutoScalingGroup resource. Launch templates provide more features and better versioning capabilities."
     },
     "CKV_AWS_332": {
         description: "ECS Fargate services are not ensured to run on the latest Fargate platform version",
         priority: "MEDIUM",
-        intent: "Configure ECS Fargate services to use latest platform version by setting 'PlatformVersion: LATEST' or specifying the most recent platform version in AWS::ECS::Service resource for enhanced security and features."
+        remediation: "Configure ECS Fargate services to use latest platform version by setting 'PlatformVersion: LATEST' or specifying the most recent platform version in AWS::ECS::Service resource for enhanced security and features."
     },
     "CKV_AWS_335": {
         description: "ECS task definitions have their own unique process namespace or share the host's process namespace",
         priority: "MEDIUM",
-        intent: "Configure ECS task definitions with proper process namespace isolation by setting 'PidMode' property appropriately in AWS::ECS::TaskDefinition. Avoid 'host' mode unless specifically required, and ensure proper container isolation."
+        remediation: "Configure ECS task definitions with proper process namespace isolation by setting 'PidMode' property appropriately in AWS::ECS::TaskDefinition. Avoid 'host' mode unless specifically required, and ensure proper container isolation."
     },
     "CKV_AWS_318": {
         description: "Elasticsearch domains are not configured with a minimum of three dedicated master nodes",
         priority: "MEDIUM",
-        intent: "Configure Elasticsearch domain with dedicated master nodes by setting 'DedicatedMasterEnabled: true' and 'DedicatedMasterCount' >= 3 in ElasticsearchClusterConfig of AWS::Elasticsearch::Domain resource for high availability."
+        remediation: "Configure Elasticsearch domain with dedicated master nodes by setting 'DedicatedMasterEnabled: true' and 'DedicatedMasterCount' >= 3 in ElasticsearchClusterConfig of AWS::Elasticsearch::Domain resource for high availability."
     },
     "CKV_AWS_167": {
         description: "Glacier Vault access policy is public and not restricted to specific services or principals",
         priority: "MEDIUM",
-        intent: "Restrict Glacier vault access by configuring vault access policy to allow only specific principals instead of wildcard (*) access. Use appropriate AccessPolicy in AWS::Glacier::Vault resource with properly scoped permissions."
+        remediation: "Restrict Glacier vault access by configuring vault access policy to allow only specific principals instead of wildcard (*) access. Use appropriate AccessPolicy in AWS::Glacier::Vault resource with properly scoped permissions."
     },
     "CKV_AWS_384": {
         description: "Hard-coded secrets found in Parameter Store values",
         priority: "MEDIUM",
-        intent: "Remove hard-coded secrets from Parameter Store values and use proper secret management. Reference secrets from AWS Secrets Manager or use dynamic parameter generation in AWS::SSM::Parameter resource. Avoid storing plaintext secrets in CloudFormation templates."
+        remediation: "Remove hard-coded secrets from Parameter Store values and use proper secret management. Reference secrets from AWS Secrets Manager or use dynamic parameter generation in AWS::SSM::Parameter resource. Avoid storing plaintext secrets in CloudFormation templates."
     },
     "CKV_AWS_44": {
         description: "Neptune storage is not securely encrypted",
         priority: "MEDIUM",
-        intent: "Enable Neptune cluster storage encryption by setting 'StorageEncrypted: true' in AWS::Neptune::DBCluster resource. This encrypts the underlying storage volumes protecting data at rest."
+        remediation: "Enable Neptune cluster storage encryption by setting 'StorageEncrypted: true' in AWS::Neptune::DBCluster resource. This encrypts the underlying storage volumes protecting data at rest."
     },
     "CKV_AWS_CUSTOM_3": {
         description: "Not all data stored in the EBS snapshot is securely encrypted",
         priority: "MEDIUM",
-        intent: "Ensure EBS snapshots are encrypted by creating snapshots from encrypted EBS volumes or by encrypting existing snapshots. Set 'Encrypted: true' when creating AWS::EC2::Snapshot resource or copy unencrypted snapshots with encryption enabled."
+        remediation: "Ensure EBS snapshots are encrypted by creating snapshots from encrypted EBS volumes or by encrypting existing snapshots. Set 'Encrypted: true' when creating AWS::EC2::Snapshot resource or copy unencrypted snapshots with encryption enabled."
     },
     "CKV_AWS_170": {
         description: "QLDB ledger permissions mode is not set to STANDARD",
         priority: "MEDIUM",
-        intent: "Configure QLDB ledger with STANDARD permissions mode by setting 'PermissionsMode: STANDARD' in AWS::QLDB::Ledger resource. This provides proper access control and follows security best practices."
+        remediation: "Configure QLDB ledger with STANDARD permissions mode by setting 'PermissionsMode: STANDARD' in AWS::QLDB::Ledger resource. This provides proper access control and follows security best practices."
     },
     "CKV_AWS_326": {
         description: "RDS Aurora Clusters do not have backtracking enabled",
         priority: "MEDIUM",
-        intent: "Enable Aurora cluster backtracking by setting 'BacktrackWindow' property to a value greater than 0 (up to 259200 seconds/72 hours) in AWS::RDS::DBCluster resource. This allows point-in-time recovery without using snapshots."
+        remediation: "Enable Aurora cluster backtracking by setting 'BacktrackWindow' property to a value greater than 0 (up to 259200 seconds/72 hours) in AWS::RDS::DBCluster resource. This allows point-in-time recovery without using snapshots."
     },
     "CKV_AWS_321": {
         description: "Redshift clusters are not using enhanced VPC routing",
         priority: "MEDIUM",
-        intent: "Enable Redshift enhanced VPC routing by setting 'EnhancedVpcRouting: true' in AWS::Redshift::Cluster resource. This forces all traffic between cluster and data repositories through your VPC for better network control."
+        remediation: "Enable Redshift enhanced VPC routing by setting 'EnhancedVpcRouting: true' in AWS::Redshift::Cluster resource. This forces all traffic between cluster and data repositories through your VPC for better network control."
     },
     "CKV_AWS_320": {
         description: "Redshift clusters are not using the default database name",
         priority: "MEDIUM",
-        intent: "Configure Redshift cluster with explicit database name by setting 'DBName' property in AWS::Redshift::Cluster resource instead of relying on defaults. This provides better clarity and intentional configuration."
+        remediation: "Configure Redshift cluster with explicit database name by setting 'DBName' property in AWS::Redshift::Cluster resource instead of relying on defaults. This provides better clarity and intentional configuration."
     },
     "CKV2_AWS_23": {
         description: "Route53 A Record does not have Attached Resource",
         priority: "MEDIUM",
-        intent: "Ensure Route53 A records point to valid AWS resources by configuring proper 'AliasTarget' or valid IP addresses in AWS::Route53::RecordSet resource. Avoid creating orphaned DNS records that don't resolve to actual resources."
+        remediation: "Ensure Route53 A records point to valid AWS resources by configuring proper 'AliasTarget' or valid IP addresses in AWS::Route53::RecordSet resource. Avoid creating orphaned DNS records that don't resolve to actual resources."
     },
     "CKV_AWS_363": {
         description: "Runtime of Lambda is deprecated",
         priority: "MEDIUM",
-        intent: "Update Lambda function runtime to a supported version by changing 'Runtime' property in AWS::Lambda::Function resource to a current runtime (e.g., python3.9, nodejs18.x, java17, etc.). Deprecated runtimes pose security risks."
+        remediation: "Update Lambda function runtime to a supported version by changing 'Runtime' property in AWS::Lambda::Function resource to a current runtime (e.g., python3.9, nodejs18.x, java17, etc.). Deprecated runtimes pose security risks."
     },
     "CKV_AWS_300": {
         description: "S3 lifecycle configuration does not set a period for aborting failed uploads",
         priority: "MEDIUM",
-        intent: "Configure S3 bucket lifecycle to abort incomplete multipart uploads by adding 'AbortIncompleteMultipartUpload' rule in AWS::S3::Bucket LifecycleConfiguration. This prevents storage costs from failed uploads."
+        remediation: "Configure S3 bucket lifecycle to abort incomplete multipart uploads by adding 'AbortIncompleteMultipartUpload' rule in AWS::S3::Bucket LifecycleConfiguration. This prevents storage costs from failed uploads."
     },
     "CKV_AWS_112": {
         description: "Session Manager data is not encrypted in transit",
         priority: "MEDIUM",
-        intent: "Enable Session Manager encryption in transit by configuring appropriate encryption settings with proper KMS key settings in AWS::SSM::Document resource for Session Manager logging preferences."
+        remediation: "Enable Session Manager encryption in transit by configuring appropriate encryption settings with proper KMS key settings in AWS::SSM::Document resource for Session Manager logging preferences."
     },
     "CKV_AWS_169": {
         description: "SNS topic policy is public and access is not restricted to specific services or principals",
         priority: "MEDIUM",
-        intent: "Restrict SNS topic access by configuring topic policy to allow only specific principals instead of wildcard (*) access. Use appropriate PolicyDocument in AWS::SNS::TopicPolicy resource with properly scoped permissions for authorized entities only."
+        remediation: "Restrict SNS topic access by configuring topic policy to allow only specific principals instead of wildcard (*) access. Use appropriate PolicyDocument in AWS::SNS::TopicPolicy resource with properly scoped permissions for authorized entities only."
     },
     "CKV_AWS_160": {
         description: "Timestream database is not encrypted with KMS CMK",
         priority: "MEDIUM",
-        intent: "Configure Timestream database encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::Timestream::Database resource. This provides enhanced control over encryption keys for time-series data."
+        remediation: "Configure Timestream database encryption using customer-managed KMS key by setting 'KmsKeyId' property in AWS::Timestream::Database resource. This provides enhanced control over encryption keys for time-series data."
     },
     "CKV_AWS_330": {
         description: "User identity should be enforced by EFS access points",
         priority: "MEDIUM",
-        intent: "Configure EFS access points to enforce user identity by setting 'PosixUser' property with specific Uid and Gid in AWS::EFS::AccessPoint resource. This ensures consistent user identity enforcement across EFS access."
+        remediation: "Configure EFS access points to enforce user identity by setting 'PosixUser' property with specific Uid and Gid in AWS::EFS::AccessPoint resource. This ensures consistent user identity enforcement across EFS access."
     },
     "CKV_AWS_156": {
         description: "Workspace root volumes are not encrypted",
         priority: "MEDIUM",
-        intent: "Enable WorkSpace root volume encryption by setting 'RootVolumeEncryptionEnabled: true' in AWS::WorkSpaces::Workspace resource. This encrypts the operating system and installed applications data."
+        remediation: "Enable WorkSpace root volume encryption by setting 'RootVolumeEncryptionEnabled: true' in AWS::WorkSpaces::Workspace resource. This encrypts the operating system and installed applications data."
     },
     "CKV_AWS_155": {
         description: "Workspace user volumes are not encrypted",
         priority: "MEDIUM",
-        intent: "Enable WorkSpace user volume encryption by setting 'UserVolumeEncryptionEnabled: true' in AWS::WorkSpaces::Workspace resource. This encrypts user data and documents stored on the workspace."
+        remediation: "Enable WorkSpace user volume encryption by setting 'UserVolumeEncryptionEnabled: true' in AWS::WorkSpaces::Workspace resource. This encrypts user data and documents stored on the workspace."
     },
     "CKV_ALI_41": {
         description: "Alibaba Cloud MongoDB is not deployed inside a VPC",
         priority: "LOW",
-        intent: "Deploy MongoDB instance inside a VPC by setting the 'VpcId' property in AWS::DocDB::DBCluster or ensure proper network isolation. Configure the DBSubnetGroupName to reference a subnet group within your VPC to protect your database from unauthorized access."
+        remediation: "Deploy MongoDB instance inside a VPC by setting the 'VpcId' property in AWS::DocDB::DBCluster or ensure proper network isolation. Configure the DBSubnetGroupName to reference a subnet group within your VPC to protect your database from unauthorized access."
     },
     "CKV2_AWS_18": {
         description: "Amazon EFS does not have an AWS Backup backup plan",
         priority: "LOW",
-        intent: "Create an AWS Backup plan and associate it with your EFS file system using AWS::Backup::BackupPlan and AWS::Backup::BackupSelection resources. Configure backup frequency, retention period, and lifecycle policies to ensure data protection and recovery capabilities."
+        remediation: "Create an AWS Backup plan and associate it with your EFS file system using AWS::Backup::BackupPlan and AWS::Backup::BackupSelection resources. Configure backup frequency, retention period, and lifecycle policies to ensure data protection and recovery capabilities."
     },
     "CKV_AWS_153": {
         description: "Autoscaling groups did not supply tags to launch configurations",
         priority: "LOW",
-        intent: "Configure tag propagation in AWS::AutoScaling::AutoScalingGroup by setting 'PropagateAtLaunch: true' in the Tags property. This enables tag-based access control through IAM policies and helps with resource organization and management."
+        remediation: "Configure tag propagation in AWS::AutoScaling::AutoScalingGroup by setting 'PropagateAtLaunch: true' in the Tags property. This enables tag-based access control through IAM policies and helps with resource organization and management."
     },
     "CKV_AWS_234": {
         description: "AWS ACM certificates does not have logging preference",
         priority: "LOW",
-        intent: "Enable certificate transparency logging in AWS::CertificateManager::Certificate by setting 'CertificateTransparencyLoggingPreference: ENABLED' in the Options property. This ensures certificates are recorded in public transparency logs for security monitoring."
+        remediation: "Enable certificate transparency logging in AWS::CertificateManager::Certificate by setting 'CertificateTransparencyLoggingPreference: ENABLED' in the Options property. This ensures certificates are recorded in public transparency logs for security monitoring."
     },
     "CKV_AWS_247": {
         description: "AWS all data stored in the Elasticsearch domain is not encrypted using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::Elasticsearch::Domain with customer-managed KMS encryption by setting 'KMSKeyId' property in the EncryptionAtRestOptions. Reference an AWS::KMS::Key resource to maintain full control over encryption keys and data access."
+        remediation: "Configure AWS::Elasticsearch::Domain with customer-managed KMS encryption by setting 'KMSKeyId' property in the EncryptionAtRestOptions. Reference an AWS::KMS::Key resource to maintain full control over encryption keys and data access."
     },
     "CKV_AWS_236": {
         description: "AWS AMI copying does not use a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "When copying AMIs, specify a customer-managed KMS key in the copy operation. Use the 'KmsKeyId' parameter when calling CopyImage API or configure AMI copying tools to use customer-managed keys instead of default AWS-managed keys for enhanced security control."
+        remediation: "When copying AMIs, specify a customer-managed KMS key in the copy operation. Use the 'KmsKeyId' parameter when calling CopyImage API or configure AMI copying tools to use customer-managed keys instead of default AWS-managed keys for enhanced security control."
     },
     "CKV_AWS_205": {
         description: "AWS AMI launch permissions are not limited",
         priority: "LOW",
-        intent: "Restrict AMI launch permissions by removing overly permissive launch permissions. Use AWS::EC2::AMI resource with limited LaunchPermissions or remove aws_ami_launch_permission resources that grant broad access to prevent unauthorized AMI usage across accounts."
+        remediation: "Restrict AMI launch permissions by removing overly permissive launch permissions. Use AWS::EC2::AMI resource with limited LaunchPermissions or remove aws_ami_launch_permission resources that grant broad access to prevent unauthorized AMI usage across accounts."
     },
     "CKV_AWS_204": {
         description: "AWS AMIs are not encrypted by Key Management Service (KMS) using Customer Managed Keys (CMKs)",
         priority: "LOW",
-        intent: "Ensure AMI block devices are encrypted with customer-managed KMS keys in AWS::EC2::Instance or AWS::ImageBuilder::ImageRecipe. Set 'Encrypted: true' and 'KmsKeyId' properties in EBS block device mappings to use customer-managed keys instead of default encryption."
+        remediation: "Ensure AMI block devices are encrypted with customer-managed KMS keys in AWS::EC2::Instance or AWS::ImageBuilder::ImageRecipe. Set 'Encrypted: true' and 'KmsKeyId' properties in EBS block device mappings to use customer-managed keys instead of default encryption."
     },
     "CKV_AWS_217": {
         description: "AWS API deployments do not enable Create before Destroy",
         priority: "LOW",
-        intent: "Configure AWS::ApiGateway::Deployment with create-before-destroy lifecycle management. While CloudFormation handles this automatically, ensure deployment recreation doesn't cause service interruption by properly managing stage dependencies and deployment timing."
+        remediation: "Configure AWS::ApiGateway::Deployment with create-before-destroy lifecycle management. While CloudFormation handles this automatically, ensure deployment recreation doesn't cause service interruption by properly managing stage dependencies and deployment timing."
     },
     "CKV_AWS_120": {
         description: "AWS API Gateway caching is disabled",
         priority: "LOW",
-        intent: "Enable API Gateway caching in AWS::ApiGateway::Stage by setting 'CacheClusterEnabled: true' and configuring appropriate 'CacheClusterSize'. This improves API performance, reduces backend load, and can lower costs by serving cached responses."
+        remediation: "Enable API Gateway caching in AWS::ApiGateway::Stage by setting 'CacheClusterEnabled: true' and configuring appropriate 'CacheClusterSize'. This improves API performance, reduces backend load, and can lower costs by serving cached responses."
     },
     "CKV_AWS_206": {
         description: "AWS API Gateway Domain does not use a modern security policy",
         priority: "LOW",
-        intent: "Configure AWS::ApiGateway::DomainName with a modern TLS security policy by setting 'SecurityPolicy' to 'TLS_1_2' or higher. This ensures secure communication and prevents use of vulnerable older TLS versions that expose security risks."
+        remediation: "Configure AWS::ApiGateway::DomainName with a modern TLS security policy by setting 'SecurityPolicy' to 'TLS_1_2' or higher. This ensures secure communication and prevents use of vulnerable older TLS versions that expose security risks."
     },
     "CKV2_AWS_51": {
         description: "AWS API Gateway endpoints without client certificate authentication",
         priority: "LOW",
-        intent: "Enable client certificate authentication in AWS::ApiGateway::Stage by setting 'ClientCertificateId' property. Create an AWS::ApiGateway::ClientCertificate resource and reference it to provide additional authentication layer and enhanced security for API access."
+        remediation: "Enable client certificate authentication in AWS::ApiGateway::Stage by setting 'ClientCertificateId' property. Create an AWS::ApiGateway::ClientCertificate resource and reference it to provide additional authentication layer and enhanced security for API access."
     },
     "CKV_AWS_225": {
         description: "AWS API Gateway method settings do not enable caching",
         priority: "LOW",
-        intent: "Configure caching in AWS::ApiGateway::MethodSettings by setting 'CachingEnabled: true' and 'CacheDataEncrypted: true'. Specify appropriate TTL values and cache key parameters to improve API performance while ensuring cached data is encrypted."
+        remediation: "Configure caching in AWS::ApiGateway::MethodSettings by setting 'CachingEnabled: true' and 'CacheDataEncrypted: true'. Specify appropriate TTL values and cache key parameters to improve API performance while ensuring cached data is encrypted."
     },
     "CKV2_AWS_53": {
         description: "AWS API gateway request parameter is not validated",
         priority: "LOW",
-        intent: "Enable request validation in AWS::ApiGateway::Method by setting 'RequestValidatorId' property. Create an AWS::ApiGateway::RequestValidator resource to validate request parameters and body, preventing malformed requests from reaching your backend."
+        remediation: "Enable request validation in AWS::ApiGateway::Method by setting 'RequestValidatorId' property. Create an AWS::ApiGateway::RequestValidator resource to validate request parameters and body, preventing malformed requests from reaching your backend."
     },
     "CKV_AWS_264": {
         description: "AWS App Flow connector profile does not use Customer Managed Keys (CMKs)",
         priority: "LOW",
-        intent: "Configure AWS::AppFlow::ConnectorProfile with customer-managed KMS encryption by setting 'KMSArn' property to reference an AWS::KMS::Key resource. This provides full control over encryption keys used for data in transit and at rest."
+        remediation: "Configure AWS::AppFlow::ConnectorProfile with customer-managed KMS encryption by setting 'KMSArn' property to reference an AWS::KMS::Key resource. This provides full control over encryption keys used for data in transit and at rest."
     },
     "CKV_AWS_263": {
         description: "AWS App Flow flow does not use Customer Managed Keys (CMKs)",
         priority: "LOW",
-        intent: "Configure AWS::AppFlow::Flow with customer-managed KMS encryption by setting 'KMSArn' property to reference an AWS::KMS::Key resource. This ensures all data processed by the flow is encrypted using keys under your control."
+        remediation: "Configure AWS::AppFlow::Flow with customer-managed KMS encryption by setting 'KMSArn' property to reference an AWS::KMS::Key resource. This ensures all data processed by the flow is encrypted using keys under your control."
     },
     "CKV_AWS_214": {
         description: "AWS Appsync API Cache is not encrypted at rest",
         priority: "LOW",
-        intent: "Enable at-rest encryption for AWS::AppSync::ApiCache by setting 'AtRestEncryptionEnabled: true'. This protects cached GraphQL query results and resolver data using AWS KMS encryption when stored in the cache layer."
+        remediation: "Enable at-rest encryption for AWS::AppSync::ApiCache by setting 'AtRestEncryptionEnabled: true'. This protects cached GraphQL query results and resolver data using AWS KMS encryption when stored in the cache layer."
     },
     "CKV_AWS_215": {
         description: "AWS Appsync API Cache is not encrypted in transit",
         priority: "LOW",
-        intent: "Enable in-transit encryption for AWS::AppSync::ApiCache by setting 'TransitEncryptionEnabled: true'. This ensures all communication between AppSync and the cache layer is encrypted using TLS to protect data during transmission."
+        remediation: "Enable in-transit encryption for AWS::AppSync::ApiCache by setting 'TransitEncryptionEnabled: true'. This ensures all communication between AppSync and the cache layer is encrypted using TLS to protect data during transmission."
     },
     "CKV2_AWS_33": {
         description: "AWS AppSync is not protected by WAF",
         priority: "LOW",
-        intent: "Associate AWS::AppSync::GraphQLApi with AWS::WAFv2::WebACL using AWS::WAFv2::WebACLAssociation resource. Configure the WebACL with appropriate rules to protect against common web attacks, DDoS, and malicious requests to your GraphQL API."
+        remediation: "Associate AWS::AppSync::GraphQLApi with AWS::WAFv2::WebACL using AWS::WAFv2::WebACLAssociation resource. Configure the WebACL with appropriate rules to protect against common web attacks, DDoS, and malicious requests to your GraphQL API."
     },
     "CKV_AWS_193": {
         description: "AWS AppSync's logging is disabled",
         priority: "LOW",
-        intent: "Enable logging for AWS::AppSync::GraphQLApi by configuring the LogConfig property with 'CloudWatchLogsRoleArn' and 'FieldLogLevel'. Create an IAM role with CloudWatch Logs permissions to capture API activity for monitoring and troubleshooting."
+        remediation: "Enable logging for AWS::AppSync::GraphQLApi by configuring the LogConfig property with 'CloudWatchLogsRoleArn' and 'FieldLogLevel'. Create an IAM role with CloudWatch Logs permissions to capture API activity for monitoring and troubleshooting."
     },
     "CKV_AWS_210": {
         description: "AWS Batch Job is defined as a privileged container",
         priority: "LOW",
-        intent: "Configure AWS::Batch::JobDefinition container properties to set 'privileged: false' in the ContainerProperties. Remove unnecessary privileged access to reduce security risks and follow principle of least privilege for batch job containers."
+        remediation: "Configure AWS::Batch::JobDefinition container properties to set 'privileged: false' in the ContainerProperties. Remove unnecessary privileged access to reduce security risks and follow principle of least privilege for batch job containers."
     },
     "CKV_AWS_383": {
         description: "AWS Bedrock agent is not associated with Bedrock guardrails",
         priority: "LOW",
-        intent: "Associate AWS::Bedrock::Agent with guardrails by configuring GuardrailConfiguration property with a valid GuardrailIdentifier. This ensures responsible AI usage and prevents harmful or inappropriate content generation."
+        remediation: "Associate AWS::Bedrock::Agent with guardrails by configuring GuardrailConfiguration property with a valid GuardrailIdentifier. This ensures responsible AI usage and prevents harmful or inappropriate content generation."
     },
     "CKV_AWS_216": {
         description: "AWS Cloudfront distribution is disabled",
         priority: "LOW",
-        intent: "Enable AWS::CloudFront::Distribution by setting 'Enabled: true' in the DistributionConfig. Ensure the distribution is actively serving content and not incurring unnecessary costs while remaining disabled."
+        remediation: "Enable AWS::CloudFront::Distribution by setting 'Enabled: true' in the DistributionConfig. Ensure the distribution is actively serving content and not incurring unnecessary costs while remaining disabled."
     },
     "CKV_AWS_259": {
         description: "AWS CloudFront response header policy does not enforce Strict Transport Security",
         priority: "LOW",
-        intent: "Configure AWS::CloudFront::ResponseHeadersPolicy with Strict Transport Security by setting 'StrictTransportSecurity' in SecurityHeadersConfig. Include 'AccessControlMaxAgeSec', 'IncludeSubdomains: true', and 'Override: true' to enforce HTTPS-only communication."
+        remediation: "Configure AWS::CloudFront::ResponseHeadersPolicy with Strict Transport Security by setting 'StrictTransportSecurity' in SecurityHeadersConfig. Include 'AccessControlMaxAgeSec', 'IncludeSubdomains: true', and 'Override: true' to enforce HTTPS-only communication."
     },
     "CKV_AWS_220": {
         description: "AWS Cloudsearch does not use HTTPs",
         priority: "LOW",
-        intent: "Configure AWS::CloudSearch::Domain to enforce HTTPS by setting 'EnforceHTTPS: true' in the DomainEndpointOptions. This encrypts all search requests and responses, protecting data in transit from interception."
+        remediation: "Configure AWS::CloudSearch::Domain to enforce HTTPS by setting 'EnforceHTTPS: true' in the DomainEndpointOptions. This encrypts all search requests and responses, protecting data in transit from interception."
     },
     "CKV_AWS_218": {
         description: "AWS Cloudsearch does not use the latest (Transport Layer Security) TLS",
         priority: "LOW",
-        intent: "Configure AWS::CloudSearch::Domain with modern TLS policy by setting 'TLSSecurityPolicy' to 'Policy-Min-TLS-1-2-2019-07' or later in DomainEndpointOptions. This ensures secure communication using modern encryption standards."
+        remediation: "Configure AWS::CloudSearch::Domain with modern TLS policy by setting 'TLSSecurityPolicy' to 'Policy-Min-TLS-1-2-2019-07' or later in DomainEndpointOptions. This ensures secure communication using modern encryption standards."
     },
     "CKV_AWS_252": {
         description: "AWS CloudTrail does not define an SNS Topic",
         priority: "LOW",
-        intent: "Configure AWS::CloudTrail::Trail with 'SnsTopicName' property referencing an AWS::SNS::Topic resource. This enables real-time notifications for CloudTrail events, improving monitoring and incident response capabilities."
+        remediation: "Configure AWS::CloudTrail::Trail with 'SnsTopicName' property referencing an AWS::SNS::Topic resource. This enables real-time notifications for CloudTrail events, improving monitoring and incident response capabilities."
     },
     "CKV_AWS_158": {
         description: "AWS CloudWatch Log groups encrypted using default encryption key instead of KMS CMK",
         priority: "LOW",
-        intent: "Configure AWS::Logs::LogGroup with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over log encryption and access management."
+        remediation: "Configure AWS::Logs::LogGroup with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over log encryption and access management."
     },
     "CKV_AWS_224": {
         description: "AWS cluster logging is not enabled or client to container communication not encrypted using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::ECS::Cluster with encrypted logging by setting ExecuteCommandConfiguration with 'KmsKeyId' property referencing a customer-managed KMS key. Enable LogConfiguration with encrypted CloudWatch logs or S3 bucket encryption."
+        remediation: "Configure AWS::ECS::Cluster with encrypted logging by setting ExecuteCommandConfiguration with 'KmsKeyId' property referencing a customer-managed KMS key. Enable LogConfiguration with encrypted CloudWatch logs or S3 bucket encryption."
     },
     "CKV_AWS_221": {
         description: "AWS Code Artifact Domain is not encrypted by KMS using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::CodeArtifact::Domain with customer-managed KMS encryption by setting 'EncryptionKey' property to reference an AWS::KMS::Key resource. This ensures all artifacts and metadata are encrypted using keys under your control."
+        remediation: "Configure AWS::CodeArtifact::Domain with customer-managed KMS encryption by setting 'EncryptionKey' property to reference an AWS::KMS::Key resource. This ensures all artifacts and metadata are encrypted using keys under your control."
     },
     "CKV_AWS_257": {
         description: "AWS Codecommit branch changes has less than 2 approvals",
         priority: "LOW",
-        intent: "Configure AWS::CodeCommit::Repository with approval rule template requiring minimum 2 approvals. Create an approval rule with 'NumberOfApprovalsNeeded: 2' in the rule content to enforce code review standards and improve code quality."
+        remediation: "Configure AWS::CodeCommit::Repository with approval rule template requiring minimum 2 approvals. Create an approval rule with 'NumberOfApprovalsNeeded: 2' in the rule content to enforce code review standards and improve code quality."
     },
     "CKV2_AWS_37": {
         description: "AWS Codecommit is not associated with an approval rule",
         priority: "LOW",
-        intent: "Associate AWS::CodeCommit::Repository with approval rules by creating AWS::CodeCommit::ApprovalRuleTemplate and linking it to the repository. This enforces code review processes and ensures changes meet quality standards before merging."
+        remediation: "Associate AWS::CodeCommit::Repository with approval rules by creating AWS::CodeCommit::ApprovalRuleTemplate and linking it to the repository. This enforces code review processes and ensures changes meet quality standards before merging."
     },
     "CKV_AWS_381": {
         description: "AWS CodeGuru Reviewer repository association does not use a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::CodeGuruReviewer::RepositoryAssociation with customer-managed KMS encryption by setting appropriate KMS key properties. This ensures code analysis results and associated data are encrypted using keys under your control."
+        remediation: "Configure AWS::CodeGuruReviewer::RepositoryAssociation with customer-managed KMS encryption by setting appropriate KMS key properties. This ensures code analysis results and associated data are encrypted using keys under your control."
     },
     "CKV_AWS_219": {
         description: "AWS CodePipeline artifactStore is not encrypted by Key Management Service (KMS) using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::CodePipeline::Pipeline ArtifactStore with customer-managed KMS encryption by setting 'EncryptionKey' with 'Id' and 'Type: KMS' properties. Reference an AWS::KMS::Key resource to encrypt pipeline artifacts using customer-managed keys."
+        remediation: "Configure AWS::CodePipeline::Pipeline ArtifactStore with customer-managed KMS encryption by setting 'EncryptionKey' with 'Id' and 'Type: KMS' properties. Reference an AWS::KMS::Key resource to encrypt pipeline artifacts using customer-managed keys."
     },
     "CKV_AWS_235": {
         description: "AWS copied AMIs are not encrypted",
         priority: "LOW",
-        intent: "Ensure AMI copies are encrypted by setting 'Encrypted: true' when using CopyImage API or AMI copying operations. Configure KmsKeyId parameter to use customer-managed keys for enhanced security control over copied AMI encryption."
+        remediation: "Ensure AMI copies are encrypted by setting 'Encrypted: true' when using CopyImage API or AMI copying operations. Configure KmsKeyId parameter to use customer-managed keys for enhanced security control over copied AMI encryption."
     },
     "CKV_AWS_239": {
         description: "AWS DAX cluster endpoint does not use TLS (Transport Layer Security)",
         priority: "LOW",
-        intent: "Configure AWS::DAX::Cluster to use TLS encryption by setting 'SSESpecification' with 'SSEEnabled: true' and appropriate encryption settings. This ensures all client-to-cluster communication is encrypted using TLS protocols."
+        remediation: "Configure AWS::DAX::Cluster to use TLS encryption by setting 'SSESpecification' with 'SSEEnabled: true' and appropriate encryption settings. This ensures all client-to-cluster communication is encrypted using TLS protocols."
     },
     "CKV_AWS_226": {
         description: "AWS DB instance does not get all minor upgrades automatically",
         priority: "LOW",
-        intent: "Enable automatic minor version upgrades in AWS::RDS::DBInstance by setting 'AutoMinorVersionUpgrade: true'. This ensures the database receives security patches and bug fixes automatically during maintenance windows."
+        remediation: "Enable automatic minor version upgrades in AWS::RDS::DBInstance by setting 'AutoMinorVersionUpgrade: true'. This ensures the database receives security patches and bug fixes automatically during maintenance windows."
     },
     "CKV_AWS_253": {
         description: "AWS DLM cross-region events are not encrypted",
         priority: "LOW",
-        intent: "Configure AWS::DLM::LifecyclePolicy with cross-region encryption by setting 'Encrypted: true' in the CrossRegionCopyRule. This ensures snapshot copies to other regions are encrypted for data protection during replication."
+        remediation: "Configure AWS::DLM::LifecyclePolicy with cross-region encryption by setting 'Encrypted: true' in the CrossRegionCopyRule. This ensures snapshot copies to other regions are encrypted for data protection during replication."
     },
     "CKV_AWS_254": {
         description: "AWS DLM cross-region events are not encrypted with a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::DLM::LifecyclePolicy CrossRegionCopyRule with customer-managed KMS encryption by setting 'CmkArn' property to reference an AWS::KMS::Key resource. This provides full control over encryption keys used for cross-region snapshot copies."
+        remediation: "Configure AWS::DLM::LifecyclePolicy CrossRegionCopyRule with customer-managed KMS encryption by setting 'CmkArn' property to reference an AWS::KMS::Key resource. This provides full control over encryption keys used for cross-region snapshot copies."
     },
     "CKV_AWS_256": {
         description: "AWS DLM cross-region schedules are not encrypted using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::DLM::LifecyclePolicy schedule with customer-managed KMS encryption by setting 'CmkArn' in CrossRegionCopyRule. Reference an AWS::KMS::Key resource to ensure snapshot scheduling data is encrypted using customer-controlled keys."
+        remediation: "Configure AWS::DLM::LifecyclePolicy schedule with customer-managed KMS encryption by setting 'CmkArn' in CrossRegionCopyRule. Reference an AWS::KMS::Key resource to ensure snapshot scheduling data is encrypted using customer-controlled keys."
     },
     "CKV_AWS_255": {
         description: "AWS DLM-cross region schedules are not encrypted",
         priority: "LOW",
-        intent: "Enable encryption for AWS::DLM::LifecyclePolicy cross-region schedules by setting 'Encrypted: true' in the CrossRegionCopyRule. This protects scheduled snapshot operations and associated metadata during cross-region replication."
+        remediation: "Enable encryption for AWS::DLM::LifecyclePolicy cross-region schedules by setting 'Encrypted: true' in the CrossRegionCopyRule. This protects scheduled snapshot operations and associated metadata during cross-region replication."
     },
     "CKV_AWS_222": {
         description: "AWS DMS replication instance automatic version upgrade disabled",
         priority: "LOW",
-        intent: "Enable automatic minor version upgrades in AWS::DMS::ReplicationInstance by setting 'AutoMinorVersionUpgrade: true'. This ensures the replication instance receives security patches and bug fixes automatically."
+        remediation: "Enable automatic minor version upgrades in AWS::DMS::ReplicationInstance by setting 'AutoMinorVersionUpgrade: true'. This ensures the replication instance receives security patches and bug fixes automatically."
     },
     "CKV_AWS_182": {
         description: "AWS Doc DB not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::DocDB::DBCluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over database encryption keys and access management."
+        remediation: "Configure AWS::DocDB::DBCluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over database encryption keys and access management."
     },
     "CKV_AWS_360": {
         description: "AWS DocumentDB clusters have backup retention period less than 7 days",
         priority: "LOW",
-        intent: "Configure AWS::DocDB::DBCluster with adequate backup retention by setting 'BackupRetentionPeriod' to 7 or higher (up to 35 days). This ensures sufficient point-in-time recovery capabilities for data protection and compliance requirements."
+        remediation: "Configure AWS::DocDB::DBCluster with adequate backup retention by setting 'BackupRetentionPeriod' to 7 or higher (up to 35 days). This ensures sufficient point-in-time recovery capabilities for data protection and compliance requirements."
     },
     "CKV_AWS_183": {
         description: "AWS EBS Snapshot Copy not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Ensure EBS snapshot copies use customer-managed KMS encryption by specifying 'KmsKeyId' parameter when copying snapshots. Reference an AWS::KMS::Key resource to maintain control over encryption keys used for snapshot copies."
+        remediation: "Ensure EBS snapshot copies use customer-managed KMS encryption by specifying 'KmsKeyId' parameter when copying snapshots. Reference an AWS::KMS::Key resource to maintain control over encryption keys used for snapshot copies."
     },
     "CKV_AWS_212": {
         description: "AWS EBS Volume is not encrypted by Key Management Service (KMS) using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::EC2::Volume with customer-managed KMS encryption by setting 'Encrypted: true' and 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures EBS volumes use customer-controlled encryption keys."
+        remediation: "Configure AWS::EC2::Volume with customer-managed KMS encryption by setting 'Encrypted: true' and 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures EBS volumes use customer-controlled encryption keys."
     },
     "CKV_AWS_189": {
         description: "AWS EBS Volume not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::EC2::Volume with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource instead of using default AWS-managed keys. This provides enhanced control over data encryption."
+        remediation: "Configure AWS::EC2::Volume with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource instead of using default AWS-managed keys. This provides enhanced control over data encryption."
     },
     "CKV_AWS_106": {
         description: "AWS EBS volume region with encryption is disabled",
         priority: "LOW",
-        intent: "Enable EBS default encryption for the region using AWS CLI or console. Configure the account to encrypt all new EBS volumes by default using 'aws ec2 enable-ebs-encryption-by-default' or enable it in the EC2 console settings."
+        remediation: "Enable EBS default encryption for the region using AWS CLI or console. Configure the account to encrypt all new EBS volumes by default using 'aws ec2 enable-ebs-encryption-by-default' or enable it in the EC2 console settings."
     },
     "CKV_AWS_223": {
         description: "AWS ECS Cluster does not enable logging of ECS Exec",
         priority: "LOW",
-        intent: "Configure AWS::ECS::Cluster with ECS Exec logging by setting ExecuteCommandConfiguration with LogConfiguration. Specify CloudWatch log group or S3 bucket for audit trail of execute command sessions for security monitoring."
+        remediation: "Configure AWS::ECS::Cluster with ECS Exec logging by setting ExecuteCommandConfiguration with LogConfiguration. Specify CloudWatch log group or S3 bucket for audit trail of execute command sessions for security monitoring."
     },
     "CKV_AWS_184": {
         description: "AWS Elastic File System (EFS) is not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::EFS::FileSystem with customer-managed KMS encryption by setting 'KmsKeyId' property in EncryptionConfiguration to reference an AWS::KMS::Key resource. This provides full control over file system encryption keys."
+        remediation: "Configure AWS::EFS::FileSystem with customer-managed KMS encryption by setting 'KmsKeyId' property in EncryptionConfiguration to reference an AWS::KMS::Key resource. This provides full control over file system encryption keys."
     },
     "CKV_AWS_42": {
         description: "AWS Elastic File System (EFS) with encryption for data at rest is disabled",
         priority: "LOW",
-        intent: "Enable encryption at rest for AWS::EFS::FileSystem by setting 'Encrypted: true' in the EncryptionConfiguration property. This protects stored file data using AWS KMS encryption to prevent unauthorized access."
+        remediation: "Enable encryption at rest for AWS::EFS::FileSystem by setting 'Encrypted: true' in the EncryptionConfiguration property. This protects stored file data using AWS KMS encryption to prevent unauthorized access."
     },
     "CKV_AWS_150": {
         description: "AWS Elastic Load Balancer v2 with deletion protection feature disabled",
         priority: "LOW",
-        intent: "Enable deletion protection for AWS::ElasticLoadBalancingV2::LoadBalancer by setting 'DeletionProtection: true' in the LoadBalancerAttributes. This prevents accidental deletion of critical load balancers."
+        remediation: "Enable deletion protection for AWS::ElasticLoadBalancingV2::LoadBalancer by setting 'DeletionProtection: true' in the LoadBalancerAttributes. This prevents accidental deletion of critical load balancers."
     },
     "CKV_AWS_29": {
         description: "AWS ElastiCache Redis cluster with encryption for data at rest disabled",
         priority: "LOW",
-        intent: "Enable at-rest encryption for AWS::ElastiCache::ReplicationGroup by setting 'AtRestEncryptionEnabled: true'. This protects cached data using AWS KMS encryption when stored on disk."
+        remediation: "Enable at-rest encryption for AWS::ElastiCache::ReplicationGroup by setting 'AtRestEncryptionEnabled: true'. This protects cached data using AWS KMS encryption when stored on disk."
     },
     "CKV_AWS_30": {
         description: "AWS ElastiCache Redis cluster with in-transit encryption disabled (Replication group)",
         priority: "LOW",
-        intent: "Enable in-transit encryption for AWS::ElastiCache::ReplicationGroup by setting 'TransitEncryptionEnabled: true'. This encrypts all communication between clients and the Redis cluster using TLS."
+        remediation: "Enable in-transit encryption for AWS::ElastiCache::ReplicationGroup by setting 'TransitEncryptionEnabled: true'. This encrypts all communication between clients and the Redis cluster using TLS."
     },
     "CKV_AWS_31": {
         description: "AWS ElastiCache Redis cluster with Redis AUTH feature disabled",
         priority: "LOW",
-        intent: "Enable Redis AUTH for AWS::ElastiCache::ReplicationGroup by setting 'AuthToken' property with a secure token. This requires clients to authenticate before accessing the Redis cluster, enhancing access control."
+        remediation: "Enable Redis AUTH for AWS::ElastiCache::ReplicationGroup by setting 'AuthToken' property with a secure token. This requires clients to authenticate before accessing the Redis cluster, enhancing access control."
     },
     "CKV_AWS_191": {
         description: "AWS Elasticache replication group not configured with CMK key",
         priority: "LOW",
-        intent: "Configure AWS::ElastiCache::ReplicationGroup with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource for both at-rest and in-transit encryption configurations."
+        remediation: "Configure AWS::ElastiCache::ReplicationGroup with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource for both at-rest and in-transit encryption configurations."
     },
     "CKV_AWS_228": {
         description: "AWS Elasticsearch domain does not use an updated TLS policy",
         priority: "LOW",
-        intent: "Configure AWS::Elasticsearch::Domain with modern TLS policy by setting 'TLSSecurityPolicy' to 'Policy-Min-TLS-1-2-2019-07' or later in DomainEndpointOptions. This ensures secure communication using current encryption standards."
+        remediation: "Configure AWS::Elasticsearch::Domain with modern TLS policy by setting 'TLSSecurityPolicy' to 'Policy-Min-TLS-1-2-2019-07' or later in DomainEndpointOptions. This ensures secure communication using current encryption standards."
     },
     "CKV2_AWS_59": {
         description: "AWS Elasticsearch domain has Dedicated master set to disabled",
         priority: "LOW",
-        intent: "Enable dedicated master nodes for AWS::Elasticsearch::Domain by setting 'DedicatedMasterEnabled: true' and 'DedicatedMasterCount: 3' (minimum) in ElasticsearchClusterConfig. This improves cluster stability and performance."
+        remediation: "Enable dedicated master nodes for AWS::Elasticsearch::Domain by setting 'DedicatedMasterEnabled: true' and 'DedicatedMasterCount: 3' (minimum) in ElasticsearchClusterConfig. This improves cluster stability and performance."
     },
     "CKV_AWS_114": {
         description: "AWS EMR cluster is not configured with Kerberos Authentication",
         priority: "LOW",
-        intent: "Configure AWS::EMR::Cluster with Kerberos authentication by setting KerberosAttributes in the cluster configuration. Include 'Realm', 'KdcAdminPassword', and appropriate Kerberos settings to enhance cluster security."
+        remediation: "Configure AWS::EMR::Cluster with Kerberos authentication by setting KerberosAttributes in the cluster configuration. Include 'Realm', 'KdcAdminPassword', and appropriate Kerberos settings to enhance cluster security."
     },
     "CKV_AWS_171": {
         description: "AWS EMR cluster is not configured with SSE KMS for data at rest encryption (Amazon S3 with EMRFS)",
         priority: "LOW",
-        intent: "Configure AWS::EMR::SecurityConfiguration with S3 encryption using SSE-KMS. Set EncryptionConfiguration for S3 with 'EncryptionMode: SSE-KMS' and specify a KMS key to encrypt data stored in S3 through EMRFS."
+        remediation: "Configure AWS::EMR::SecurityConfiguration with S3 encryption using SSE-KMS. Set EncryptionConfiguration for S3 with 'EncryptionMode: SSE-KMS' and specify a KMS key to encrypt data stored in S3 through EMRFS."
     },
     "CKV_AWS_351": {
         description: "AWS EMR cluster is not enabled with data encryption in transit",
         priority: "LOW",
-        intent: "Configure AWS::EMR::SecurityConfiguration with in-transit encryption by setting EncryptionConfiguration with 'EnableInTransitEncryption: true'. This encrypts data movement between EMR cluster nodes and services."
+        remediation: "Configure AWS::EMR::SecurityConfiguration with in-transit encryption by setting EncryptionConfiguration with 'EnableInTransitEncryption: true'. This encrypts data movement between EMR cluster nodes and services."
     },
     "CKV_AWS_349": {
         description: "AWS EMR cluster is not enabled with local disk encryption",
         priority: "LOW",
-        intent: "Configure AWS::EMR::SecurityConfiguration with local disk encryption by setting EncryptionConfiguration with 'EnableAtRestEncryption: true' for LocalDiskEncryptionConfiguration. This encrypts data stored on cluster instance local disks."
+        remediation: "Configure AWS::EMR::SecurityConfiguration with local disk encryption by setting EncryptionConfiguration with 'EnableAtRestEncryption: true' for LocalDiskEncryptionConfiguration. This encrypts data stored on cluster instance local disks."
     },
     "CKV_AWS_203": {
         description: "AWS FSX openzfs is not encrypted by AWS' Key Management Service (KMS) using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::FSx::FileSystem (OpenZFS) with customer-managed KMS encryption by setting 'KmsKeyId' property in the OpenZFSConfiguration to reference an AWS::KMS::Key resource. This provides control over file system encryption keys."
+        remediation: "Configure AWS::FSx::FileSystem (OpenZFS) with customer-managed KMS encryption by setting 'KmsKeyId' property in the OpenZFSConfiguration to reference an AWS::KMS::Key resource. This provides control over file system encryption keys."
     },
     "CKV_AWS_179": {
         description: "AWS FSX Windows filesystem not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::FSx::FileSystem (Windows) with customer-managed KMS encryption by setting 'KmsKeyId' property in WindowsConfiguration to reference an AWS::KMS::Key resource. This ensures Windows file system data is encrypted with customer-controlled keys."
+        remediation: "Configure AWS::FSx::FileSystem (Windows) with customer-managed KMS encryption by setting 'KmsKeyId' property in WindowsConfiguration to reference an AWS::KMS::Key resource. This ensures Windows file system data is encrypted with customer-controlled keys."
     },
     "CKV_AWS_178": {
         description: "AWS fx ontap file system not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::FSx::FileSystem (ONTAP) with customer-managed KMS encryption by setting 'KmsKeyId' property in OntapConfiguration to reference an AWS::KMS::Key resource. This provides control over NetApp ONTAP file system encryption."
+        remediation: "Configure AWS::FSx::FileSystem (ONTAP) with customer-managed KMS encryption by setting 'KmsKeyId' property in OntapConfiguration to reference an AWS::KMS::Key resource. This provides control over NetApp ONTAP file system encryption."
     },
     "CKV_AWS_195": {
         description: "AWS Glue component is not associated with a security configuration",
         priority: "LOW",
-        intent: "Associate AWS::Glue::Job, AWS::Glue::Crawler, or AWS::Glue::DevEndpoint with a security configuration by setting 'SecurityConfiguration' property to reference an AWS::Glue::SecurityConfiguration resource for encryption and security settings."
+        remediation: "Associate AWS::Glue::Job, AWS::Glue::Crawler, or AWS::Glue::DevEndpoint with a security configuration by setting 'SecurityConfiguration' property to reference an AWS::Glue::SecurityConfiguration resource for encryption and security settings."
     },
     "CKV_AWS_261": {
         description: "AWS HTTP and HTTPS target groups do not define health check",
         priority: "LOW",
-        intent: "Configure health checks for AWS::ElasticLoadBalancingV2::TargetGroup by setting HealthCheckProtocol, HealthCheckPath, HealthCheckIntervalSeconds, HealthCheckTimeoutSeconds, and HealthyThresholdCount properties to ensure target health monitoring."
+        remediation: "Configure health checks for AWS::ElasticLoadBalancingV2::TargetGroup by setting HealthCheckProtocol, HealthCheckPath, HealthCheckIntervalSeconds, HealthCheckTimeoutSeconds, and HealthyThresholdCount properties to ensure target health monitoring."
     },
     "CKV_AWS_180": {
         description: "AWS Image Builder component not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::ImageBuilder::Component with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures component artifacts and build processes use customer-controlled encryption."
+        remediation: "Configure AWS::ImageBuilder::Component with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures component artifacts and build processes use customer-controlled encryption."
     },
     "CKV_AWS_199": {
         description: "AWS Image Builder Distribution Configuration is not encrypting AMI by Key Management Service (KMS) using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::ImageBuilder::DistributionConfiguration AmiDistributionConfiguration with customer-managed KMS encryption by setting 'KmsKeyId' in AmiDistributionConfiguration to reference an AWS::KMS::Key resource."
+        remediation: "Configure AWS::ImageBuilder::DistributionConfiguration AmiDistributionConfiguration with customer-managed KMS encryption by setting 'KmsKeyId' in AmiDistributionConfiguration to reference an AWS::KMS::Key resource."
     },
     "CKV_AWS_200": {
         description: "AWS Image Recipe EBS Disk are not encrypted using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::ImageBuilder::ImageRecipe BlockDeviceMappings with customer-managed KMS encryption by setting 'KmsKeyId' property in Ebs configuration to reference an AWS::KMS::Key resource for encrypted EBS volumes."
+        remediation: "Configure AWS::ImageBuilder::ImageRecipe BlockDeviceMappings with customer-managed KMS encryption by setting 'KmsKeyId' property in Ebs configuration to reference an AWS::KMS::Key resource for encrypted EBS volumes."
     },
     "CKV_AWS_262": {
         description: "AWS Kendra index Server side encryption does not use Customer Managed Keys (CMKs)",
         priority: "LOW",
-        intent: "Configure AWS::Kendra::Index with customer-managed KMS encryption by setting 'ServerSideEncryptionConfiguration' with 'KmsKeyId' property referencing an AWS::KMS::Key resource. This ensures search index data is encrypted with customer-controlled keys."
+        remediation: "Configure AWS::Kendra::Index with customer-managed KMS encryption by setting 'ServerSideEncryptionConfiguration' with 'KmsKeyId' property referencing an AWS::KMS::Key resource. This ensures search index data is encrypted with customer-controlled keys."
     },
     "CKV_AWS_227": {
         description: "AWS Key Management Service (KMS) key is disabled",
         priority: "LOW",
-        intent: "Enable AWS::KMS::Key by setting 'Enabled: true' in the key properties or ensure the key is not disabled. Verify key status and re-enable if necessary to maintain encryption capabilities for dependent services."
+        remediation: "Enable AWS::KMS::Key by setting 'Enabled: true' in the key properties or ensure the key is not disabled. Verify key status and re-enable if necessary to maintain encryption capabilities for dependent services."
     },
     "CKV_AWS_265": {
         description: "AWS Keyspace Table does not use Customer Managed Keys (CMKs)",
         priority: "LOW",
-        intent: "Configure AWS::Cassandra::Table with customer-managed KMS encryption by setting 'KmsKeyId' property in EncryptionSpecification to reference an AWS::KMS::Key resource. This provides control over Keyspace table encryption keys."
+        remediation: "Configure AWS::Cassandra::Table with customer-managed KMS encryption by setting 'KmsKeyId' property in EncryptionSpecification to reference an AWS::KMS::Key resource. This provides control over Keyspace table encryption keys."
     },
     "CKV_AWS_241": {
         description: "AWS Kinesis Firehose Delivery Streams are not encrypted with CMK",
         priority: "LOW",
-        intent: "Configure AWS::KinesisFirehose::DeliveryStream with customer-managed KMS encryption by setting 'KMSEncryptionConfig' with 'AWSKMSKeyARN' property referencing an AWS::KMS::Key resource for delivery stream encryption."
+        remediation: "Configure AWS::KinesisFirehose::DeliveryStream with customer-managed KMS encryption by setting 'KMSEncryptionConfig' with 'AWSKMSKeyARN' property referencing an AWS::KMS::Key resource for delivery stream encryption."
     },
     "CKV_AWS_240": {
         description: "AWS Kinesis Firehose's delivery stream is not encrypted",
         priority: "LOW",
-        intent: "Enable encryption for AWS::KinesisFirehose::DeliveryStream by configuring DeliveryStreamEncryptionConfigurationInput with 'KeyType: CUSTOMER_MANAGED_CMK' and 'KeyARN' referencing an AWS::KMS::Key resource to encrypt data in transit."
+        remediation: "Enable encryption for AWS::KinesisFirehose::DeliveryStream by configuring DeliveryStreamEncryptionConfigurationInput with 'KeyType: CUSTOMER_MANAGED_CMK' and 'KeyARN' referencing an AWS::KMS::Key resource to encrypt data in transit."
     },
     "CKV_AWS_43": {
         description: "AWS Kinesis streams are not encrypted using Server Side Encryption",
         priority: "LOW",
-        intent: "Enable server-side encryption for AWS::Kinesis::Stream by setting 'ShardLevelMetrics' and 'StreamEncryption' with 'EncryptionType: KMS' and 'KeyId' referencing an AWS::KMS::Key resource to encrypt stream data at rest."
+        remediation: "Enable server-side encryption for AWS::Kinesis::Stream by setting 'ShardLevelMetrics' and 'StreamEncryption' with 'EncryptionType: KMS' and 'KeyId' referencing an AWS::KMS::Key resource to encrypt stream data at rest."
     },
     "CKV_AWS_185": {
         description: "AWS Kinesis streams encryption is using default KMS keys instead of Customer's Managed Master Keys",
         priority: "LOW",
-        intent: "Configure AWS::Kinesis::Stream with customer-managed KMS encryption by setting 'StreamEncryption' with 'KeyId' property referencing an AWS::KMS::Key resource instead of using default AWS-managed keys for enhanced control."
+        remediation: "Configure AWS::Kinesis::Stream with customer-managed KMS encryption by setting 'StreamEncryption' with 'KeyId' property referencing an AWS::KMS::Key resource instead of using default AWS-managed keys for enhanced control."
     },
     "CKV_AWS_177": {
         description: "AWS Kinesis Video Stream not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::KinesisVideo::Stream with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures video stream data is encrypted using customer-controlled keys."
+        remediation: "Configure AWS::KinesisVideo::Stream with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures video stream data is encrypted using customer-controlled keys."
     },
     "CKV_AWS_117": {
         description: "AWS Lambda Function is not assigned to access within VPC",
         priority: "LOW",
-        intent: "Configure AWS::Lambda::Function to run within VPC by setting 'VpcConfig' with 'SubnetIds' and 'SecurityGroupIds' properties. This provides network isolation and enables access to VPC-only resources like RDS instances."
+        remediation: "Configure AWS::Lambda::Function to run within VPC by setting 'VpcConfig' with 'SubnetIds' and 'SecurityGroupIds' properties. This provides network isolation and enables access to VPC-only resources like RDS instances."
     },
     "CKV_AWS_116": {
         description: "AWS Lambda function is not configured for a DLQ",
         priority: "LOW",
-        intent: "Configure AWS::Lambda::Function with Dead Letter Queue by setting 'DeadLetterConfig' with 'TargetArn' referencing an AWS::SQS::Queue or AWS::SNS::Topic resource. This captures failed function invocations for debugging and reprocessing."
+        remediation: "Configure AWS::Lambda::Function with Dead Letter Queue by setting 'DeadLetterConfig' with 'TargetArn' referencing an AWS::SQS::Queue or AWS::SNS::Topic resource. This captures failed function invocations for debugging and reprocessing."
     },
     "CKV_AWS_115": {
         description: "AWS Lambda function is not configured for function-level concurrent execution Limit",
         priority: "LOW",
-        intent: "Configure AWS::Lambda::Function with concurrent execution limit by setting 'ReservedConcurrencyLimit' property to an appropriate value. This prevents the function from consuming all available concurrent executions in your account."
+        remediation: "Configure AWS::Lambda::Function with concurrent execution limit by setting 'ReservedConcurrencyLimit' property to an appropriate value. This prevents the function from consuming all available concurrent executions in your account."
     },
     "CKV_AWS_301": {
         description: "AWS Lambda Function resource-based policy is overly permissive",
         priority: "LOW",
-        intent: "Review and restrict AWS::Lambda::Permission resources by limiting 'Principal' to specific services or accounts instead of using wildcards. Remove overly broad permissions and implement least-privilege access control for function invocations."
+        remediation: "Review and restrict AWS::Lambda::Permission resources by limiting 'Principal' to specific services or accounts instead of using wildcards. Remove overly broad permissions and implement least-privilege access control for function invocations."
     },
     "CKV_AWS_190": {
         description: "AWS lustre file system not configured with CMK key",
         priority: "LOW",
-        intent: "Configure AWS::FSx::FileSystem (Lustre) with customer-managed KMS encryption by setting 'KmsKeyId' property in LustreConfiguration to reference an AWS::KMS::Key resource for file system encryption."
+        remediation: "Configure AWS::FSx::FileSystem (Lustre) with customer-managed KMS encryption by setting 'KmsKeyId' property in LustreConfiguration to reference an AWS::KMS::Key resource for file system encryption."
     },
     "CKV_AWS_202": {
         description: "AWS MemoryDB data is not encrypted in transit",
         priority: "LOW",
-        intent: "Enable in-transit encryption for AWS::MemoryDB::Cluster by setting 'TLSEnabled: true'. This encrypts all client-to-cluster and node-to-node communication using TLS protocols to protect data during transmission."
+        remediation: "Enable in-transit encryption for AWS::MemoryDB::Cluster by setting 'TLSEnabled: true'. This encrypts all client-to-cluster and node-to-node communication using TLS protocols to protect data during transmission."
     },
     "CKV_AWS_201": {
         description: "AWS MemoryDB is not encrypted at rest by AWS' Key Management Service KMS using CMKs",
         priority: "LOW",
-        intent: "Configure AWS::MemoryDB::Cluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures in-memory data is encrypted using customer-controlled keys."
+        remediation: "Configure AWS::MemoryDB::Cluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures in-memory data is encrypted using customer-controlled keys."
     },
     "CKV_AWS_209": {
         description: "AWS MQ Broker is not encrypted by Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::AmazonMQ::Broker with customer-managed KMS encryption by setting 'KmsKeyId' property in EncryptionOptions to reference an AWS::KMS::Key resource for message encryption."
+        remediation: "Configure AWS::AmazonMQ::Broker with customer-managed KMS encryption by setting 'KmsKeyId' property in EncryptionOptions to reference an AWS::KMS::Key resource for message encryption."
     },
     "CKV_AWS_197": {
         description: "AWS MQBroker audit logging is disabled",
         priority: "LOW",
-        intent: "Enable audit logging for AWS::AmazonMQ::Broker by setting 'Audit: true' in the Logs configuration. This captures broker activity for security monitoring and compliance requirements."
+        remediation: "Enable audit logging for AWS::AmazonMQ::Broker by setting 'Audit: true' in the Logs configuration. This captures broker activity for security monitoring and compliance requirements."
     },
     "CKV_AWS_208": {
         description: "AWS MQBroker version is not up to date",
         priority: "LOW",
-        intent: "Update AWS::AmazonMQ::Broker to use the latest version by setting 'EngineVersion' property to the most recent supported version for your engine type. This ensures security patches and feature updates are applied."
+        remediation: "Update AWS::AmazonMQ::Broker to use the latest version by setting 'EngineVersion' property to the most recent supported version for your engine type. This ensures security patches and feature updates are applied."
     },
     "CKV_AWS_207": {
         description: "AWS MQBroker's minor version updates are disabled",
         priority: "LOW",
-        intent: "Enable automatic minor version updates for AWS::AmazonMQ::Broker by setting 'AutoMinorVersionUpgrade: true'. This ensures the broker receives security patches and bug fixes automatically."
+        remediation: "Enable automatic minor version updates for AWS::AmazonMQ::Broker by setting 'AutoMinorVersionUpgrade: true'. This ensures the broker receives security patches and bug fixes automatically."
     },
     "CKV_AWS_242": {
         description: "AWS MWAA environment has scheduler logs disabled",
         priority: "LOW",
-        intent: "Enable scheduler logging for AWS::MWAA::Environment by setting 'SchedulerLogsConfiguration' with 'Enabled: true' and appropriate 'LogLevel'. This captures Airflow scheduler activity for monitoring and troubleshooting."
+        remediation: "Enable scheduler logging for AWS::MWAA::Environment by setting 'SchedulerLogsConfiguration' with 'Enabled: true' and appropriate 'LogLevel'. This captures Airflow scheduler activity for monitoring and troubleshooting."
     },
     "CKV_AWS_244": {
         description: "AWS MWAA environment has webserver logs disabled",
         priority: "LOW",
-        intent: "Enable webserver logging for AWS::MWAA::Environment by setting 'WebserverLogsConfiguration' with 'Enabled: true' and appropriate 'LogLevel'. This captures Airflow webserver activity for monitoring and debugging."
+        remediation: "Enable webserver logging for AWS::MWAA::Environment by setting 'WebserverLogsConfiguration' with 'Enabled: true' and appropriate 'LogLevel'. This captures Airflow webserver activity for monitoring and debugging."
     },
     "CKV_AWS_243": {
         description: "AWS MWAA environment has worker logs disabled",
         priority: "LOW",
-        intent: "Enable worker logging for AWS::MWAA::Environment by setting 'WorkerLogsConfiguration' with 'Enabled: true' and appropriate 'LogLevel'. This captures Airflow worker task execution logs for monitoring and troubleshooting."
+        remediation: "Enable worker logging for AWS::MWAA::Environment by setting 'WorkerLogsConfiguration' with 'Enabled: true' and appropriate 'LogLevel'. This captures Airflow worker task execution logs for monitoring and troubleshooting."
     },
     "CKV2_AWS_30": {
         description: "AWS Postgres RDS have Query Logging disabled",
         priority: "LOW",
-        intent: "Enable query logging for PostgreSQL AWS::RDS::DBInstance by setting appropriate database parameters in AWS::RDS::DBParameterGroup. Configure 'log_statement: all' and 'log_min_duration_statement: 0' to capture SQL query activity."
+        remediation: "Enable query logging for PostgreSQL AWS::RDS::DBInstance by setting appropriate database parameters in AWS::RDS::DBParameterGroup. Configure 'log_statement: all' and 'log_min_duration_statement: 0' to capture SQL query activity."
     },
     "CKV_AWS_172": {
         description: "AWS QLDB ledger has deletion protection is disabled",
         priority: "LOW",
-        intent: "Enable deletion protection for AWS::QLDB::Ledger by setting 'DeletionProtection: true'. This prevents accidental deletion of the quantum ledger database and its immutable transaction history."
+        remediation: "Enable deletion protection for AWS::QLDB::Ledger by setting 'DeletionProtection: true'. This prevents accidental deletion of the quantum ledger database and its immutable transaction history."
     },
     "CKV_AWS_246": {
         description: "AWS RDS Cluster activity streams are not encrypted by Key Management Service (KMS) using Customer Managed Keys (CMKs)",
         priority: "LOW",
-        intent: "Configure AWS::RDS::DBClusterActivityStream with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This encrypts database activity stream data using customer-controlled keys."
+        remediation: "Configure AWS::RDS::DBClusterActivityStream with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This encrypts database activity stream data using customer-controlled keys."
     },
     "CKV_AWS_16": {
         description: "AWS RDS DB cluster encryption is disabled",
         priority: "LOW",
-        intent: "Enable encryption for AWS::RDS::DBCluster by setting 'StorageEncrypted: true' and optionally 'KmsKeyId' to reference an AWS::KMS::Key resource. This encrypts the database cluster storage to protect data at rest."
+        remediation: "Enable encryption for AWS::RDS::DBCluster by setting 'StorageEncrypted: true' and optionally 'KmsKeyId' to reference an AWS::KMS::Key resource. This encrypts the database cluster storage to protect data at rest."
     },
     "CKV_AWS_266": {
         description: "AWS RDS DB snapshot does not use Customer Managed Keys (CMKs)",
         priority: "LOW",
-        intent: "Configure AWS::RDS::DBClusterSnapshot with customer-managed KMS encryption by ensuring the source cluster uses customer-managed keys, or specify 'KmsKeyId' when creating manual snapshots to use customer-controlled encryption keys."
+        remediation: "Configure AWS::RDS::DBClusterSnapshot with customer-managed KMS encryption by ensuring the source cluster uses customer-managed keys, or specify 'KmsKeyId' when creating manual snapshots to use customer-controlled encryption keys."
     },
     "CKV_AWS_146": {
         description: "AWS RDS DB snapshot is not encrypted",
         priority: "LOW",
-        intent: "Ensure AWS::RDS::DBClusterSnapshot is encrypted by creating snapshots from encrypted database clusters or enabling encryption on the source cluster with 'StorageEncrypted: true' to automatically encrypt all snapshots."
+        remediation: "Ensure AWS::RDS::DBClusterSnapshot is encrypted by creating snapshots from encrypted database clusters or enabling encryption on the source cluster with 'StorageEncrypted: true' to automatically encrypt all snapshots."
     },
     "CKV_AWS_211": {
         description: "AWS RDS does not use a modern CaCert",
         priority: "LOW",
-        intent: "Update AWS::RDS::DBInstance to use a modern CA certificate by setting 'CACertificateIdentifier' to a recent certificate bundle like 'rds-ca-2019' or later. This ensures secure SSL/TLS connections using current certificate authorities."
+        remediation: "Update AWS::RDS::DBInstance to use a modern CA certificate by setting 'CACertificateIdentifier' to a recent certificate bundle like 'rds-ca-2019' or later. This ensures secure SSL/TLS connections using current certificate authorities."
     },
     "CKV_AWS_133": {
         description: "AWS RDS instance without Automatic Backup setting",
         priority: "LOW",
-        intent: "Enable automatic backups for AWS::RDS::DBInstance by setting 'BackupRetentionPeriod' to 1 or higher (up to 35 days). This ensures point-in-time recovery capabilities and automated backup management."
+        remediation: "Enable automatic backups for AWS::RDS::DBInstance by setting 'BackupRetentionPeriod' to 1 or higher (up to 35 days). This ensures point-in-time recovery capabilities and automated backup management."
     },
     "CKV_AWS_105": {
         description: "AWS Redshift does not have require_ssl configured",
         priority: "LOW",
-        intent: "Configure AWS::Redshift::Cluster to require SSL by creating an AWS::Redshift::ClusterParameterGroup with 'require_ssl: true' parameter and associating it with the cluster using 'ClusterParameterGroupName' property."
+        remediation: "Configure AWS::Redshift::Cluster to require SSL by creating an AWS::Redshift::ClusterParameterGroup with 'require_ssl: true' parameter and associating it with the cluster using 'ClusterParameterGroupName' property."
     },
     "CKV_AWS_64": {
         description: "AWS Redshift instances are not encrypted",
         priority: "LOW",
-        intent: "Enable encryption for AWS::Redshift::Cluster by setting 'Encrypted: true' and optionally 'KmsKeyId' to reference an AWS::KMS::Key resource. This encrypts the cluster storage to protect data at rest using KMS encryption."
+        remediation: "Enable encryption for AWS::Redshift::Cluster by setting 'Encrypted: true' and optionally 'KmsKeyId' to reference an AWS::KMS::Key resource. This encrypts the cluster storage to protect data at rest using KMS encryption."
     },
     "CKV_AWS_245": {
         description: "AWS replicated backups are not encrypted at rest by Key Management Service (KMS) using a Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::RDS::DBInstance automated backups with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures backup encryption uses customer-controlled keys."
+        remediation: "Configure AWS::RDS::DBInstance automated backups with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures backup encryption uses customer-controlled keys."
     },
     "CKV_AWS_CUSTOM_1": {
         description: "AWS resources that support tags do not have Tags",
         priority: "LOW",
-        intent: "Add appropriate tags to AWS resources using the 'Tags' property. Include tags for resource identification, cost allocation, access control, and compliance. Common tags include Environment, Owner, Project, and CostCenter for better resource management."
+        remediation: "Add appropriate tags to AWS resources using the 'Tags' property. Include tags for resource identification, cost allocation, access control, and compliance. Common tags include Environment, Owner, Project, and CostCenter for better resource management."
     },
     "CKV2_AWS_65": {
         description: "AWS S3 bucket access control lists (ACLs) in use",
         priority: "LOW",
-        intent: "Disable S3 bucket ACLs in AWS::S3::Bucket by setting 'OwnershipControls' with 'BucketOwnerEnforced' rule. Use bucket policies and IAM policies instead of ACLs for more secure and manageable access control."
+        remediation: "Disable S3 bucket ACLs in AWS::S3::Bucket by setting 'OwnershipControls' with 'BucketOwnerEnforced' rule. Use bucket policies and IAM policies instead of ACLs for more secure and manageable access control."
     },
     "CKV_AWS_186": {
         description: "AWS S3 bucket Object not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::S3::Bucket server-side encryption with customer-managed KMS keys by setting 'BucketEncryption' with 'SSEAlgorithm: aws:kms' and 'KMSMasterKeyID' referencing an AWS::KMS::Key resource for object encryption."
+        remediation: "Configure AWS::S3::Bucket server-side encryption with customer-managed KMS keys by setting 'BucketEncryption' with 'SSEAlgorithm: aws:kms' and 'KMSMasterKeyID' referencing an AWS::KMS::Key resource for object encryption."
     },
     "CKV_AWS_181": {
         description: "AWS S3 Object Copy not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Ensure S3 object copies use customer-managed KMS encryption by configuring source and destination buckets with customer-managed keys, or specify SSE-KMS parameters with customer-managed key ARN during copy operations."
+        remediation: "Ensure S3 object copies use customer-managed KMS encryption by configuring source and destination buckets with customer-managed keys, or specify SSE-KMS parameters with customer-managed key ARN during copy operations."
     },
     "CKV_AWS_369": {
         description: "AWS Sagemaker Data Quality Job not encrypting communications between instances used for monitoring jobs",
         priority: "LOW",
-        intent: "Configure AWS::SageMaker::DataQualityJobDefinition with inter-container traffic encryption by setting 'EnableInterContainerTrafficEncryption: true' in NetworkConfig. This encrypts communication between monitoring job instances."
+        remediation: "Configure AWS::SageMaker::DataQualityJobDefinition with inter-container traffic encryption by setting 'EnableInterContainerTrafficEncryption: true' in NetworkConfig. This encrypts communication between monitoring job instances."
     },
     "CKV_AWS_367": {
         description: "AWS Sagemaker data quality job not encrypting model artifacts with KMS",
         priority: "LOW",
-        intent: "Configure AWS::SageMaker::DataQualityJobDefinition with KMS encryption for model artifacts by setting 'KmsKeyId' property in DataQualityJobOutputConfig to reference an AWS::KMS::Key resource for output encryption."
+        remediation: "Configure AWS::SageMaker::DataQualityJobDefinition with KMS encryption for model artifacts by setting 'KmsKeyId' property in DataQualityJobOutputConfig to reference an AWS::KMS::Key resource for output encryption."
     },
     "CKV_AWS_368": {
         description: "AWS Sagemaker Data Quality Job not using KMS to encrypt data on attached storage volume",
         priority: "LOW",
-        intent: "Configure AWS::SageMaker::DataQualityJobDefinition with storage volume encryption by setting 'VolumeKmsKeyId' property in DataQualityJobResources to reference an AWS::KMS::Key resource for attached EBS volume encryption."
+        remediation: "Configure AWS::SageMaker::DataQualityJobDefinition with storage volume encryption by setting 'VolumeKmsKeyId' property in DataQualityJobResources to reference an AWS::KMS::Key resource for attached EBS volume encryption."
     },
     "CKV_AWS_187": {
         description: "AWS Sagemaker domain not encrypted using Customer Managed Key",
         priority: "LOW",
-        intent: "Configure AWS::SageMaker::Domain with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures SageMaker domain storage and user profiles are encrypted with customer-controlled keys."
+        remediation: "Configure AWS::SageMaker::Domain with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This ensures SageMaker domain storage and user profiles are encrypted with customer-controlled keys."
     },
     "CKV_AWS_372": {
         description: "AWS SageMaker Flow Definition does not use KMS for output configurations",
         priority: "LOW",
-        intent: "Configure AWS::SageMaker::FlowDefinition with KMS encryption for outputs by setting 'KmsKeyId' property in OutputConfig to reference an AWS::KMS::Key resource. This encrypts human review workflow outputs and results."
+        remediation: "Configure AWS::SageMaker::FlowDefinition with KMS encryption for outputs by setting 'KmsKeyId' property in OutputConfig to reference an AWS::KMS::Key resource. This encrypts human review workflow outputs and results."
     },
     "CKV_AWS_22": {
         description: "AWS SageMaker notebook instance not configured with data encryption at rest using KMS key",
         priority: "LOW",
-        intent: "Configure AWS::SageMaker::NotebookInstance with KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This encrypts the notebook instance storage volume to protect data at rest."
+        remediation: "Configure AWS::SageMaker::NotebookInstance with KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This encrypts the notebook instance storage volume to protect data at rest."
     },
     "CKV2_AWS_57": {
         description: "AWS Secret Manager Automatic Key Rotation is not enabled",
         priority: "LOW",
-        intent: "Enable automatic rotation for AWS::SecretsManager::Secret by configuring AWS::SecretsManager::RotationSchedule with appropriate 'RotationRules' including 'AutomaticallyAfterDays' property to regularly rotate secret values."
+        remediation: "Enable automatic rotation for AWS::SecretsManager::Secret by configuring AWS::SecretsManager::RotationSchedule with appropriate 'RotationRules' including 'AutomaticallyAfterDays' property to regularly rotate secret values."
     },
     "CKV_AWS_149": {
         description: "AWS Secrets Manager secret not encrypted by Customer Managed Key (CMK)",
         priority: "LOW",
-        intent: "Configure AWS::SecretsManager::Secret with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over secret encryption keys and access management."
+        remediation: "Configure AWS::SecretsManager::Secret with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over secret encryption keys and access management."
     },
     "CKV_AWS_27": {
         description: "AWS SQS Queue not configured with server side encryption",
         priority: "LOW",
-        intent: "Enable server-side encryption for AWS::SQS::Queue by setting 'KmsMasterKeyId' property to reference an AWS::KMS::Key resource or use 'SqsManagedSseEnabled: true' for SQS-managed encryption to protect queue messages."
+        remediation: "Enable server-side encryption for AWS::SQS::Queue by setting 'KmsMasterKeyId' property to reference an AWS::KMS::Key resource or use 'SqsManagedSseEnabled: true' for SQS-managed encryption to protect queue messages."
     },
     "CKV2_AWS_34": {
         description: "AWS SSM Parameter is not encrypted",
         priority: "LOW",
-        intent: "Configure AWS::SSM::Parameter with encryption by setting 'Type: SecureString' and optionally 'KeyId' to reference an AWS::KMS::Key resource. This encrypts parameter values using KMS to protect sensitive configuration data."
+        remediation: "Configure AWS::SSM::Parameter with encryption by setting 'Type: SecureString' and optionally 'KeyId' to reference an AWS::KMS::Key resource. This encrypts parameter values using KMS to protect sensitive configuration data."
     },
     "CKV2_AWS_36": {
         description: "AWS Terraform sends SSM secrets to untrusted domains over HTTP",
         priority: "LOW",
-        intent: "Ensure SSM parameters containing secrets are only accessed over HTTPS endpoints. Review data source configurations and external integrations to prevent transmission of sensitive parameter values over unencrypted HTTP connections."
+        remediation: "Ensure SSM parameters containing secrets are only accessed over HTTPS endpoints. Review data source configurations and external integrations to prevent transmission of sensitive parameter values over unencrypted HTTP connections."
     },
     "CKV_AWS_331": {
         description: "AWS Transit Gateway auto accept vpc attachment is enabled",
         priority: "LOW",
-        intent: "Disable auto-accept for AWS::EC2::TransitGateway by setting 'AutoAcceptSharedAttachments: disable' and 'DefaultRouteTableAssociation: disable'. Manually review and approve VPC attachments to maintain network security boundaries."
+        remediation: "Disable auto-accept for AWS::EC2::TransitGateway by setting 'AutoAcceptSharedAttachments: disable' and 'DefaultRouteTableAssociation: disable'. Manually review and approve VPC attachments to maintain network security boundaries."
     },
     "CKV_AWS_362": {
         description: "Clusters of Neptune DB do not replicate tags to snapshots",
         priority: "LOW",
-        intent: "Enable tag copying for AWS::Neptune::DBCluster by setting 'CopyTagsToSnapshot: true'. This ensures cluster tags are automatically applied to snapshots for consistent resource management and cost allocation."
+        remediation: "Enable tag copying for AWS::Neptune::DBCluster by setting 'CopyTagsToSnapshot: true'. This ensures cluster tags are automatically applied to snapshots for consistent resource management and cost allocation."
     },
     "CKV_AWS_104": {
         description: "DocDB does not have audit logs enabled",
         priority: "LOW",
-        intent: "Enable audit logging for AWS::DocDB::DBCluster by setting 'EnableCloudwatchLogsExports' to include 'audit' in the list. This captures database activity for security monitoring and compliance auditing."
+        remediation: "Enable audit logging for AWS::DocDB::DBCluster by setting 'EnableCloudwatchLogsExports' to include 'audit' in the list. This captures database activity for security monitoring and compliance auditing."
     },
     "CKV2_AWS_9": {
         description: "EBS does not have an AWS Backup backup plan",
         priority: "LOW",
-        intent: "Create AWS::Backup::BackupPlan and associate EBS volumes using AWS::Backup::BackupSelection with appropriate resource selection criteria. Configure backup frequency, retention, and lifecycle policies for EBS volume protection."
+        remediation: "Create AWS::Backup::BackupPlan and associate EBS volumes using AWS::Backup::BackupSelection with appropriate resource selection criteria. Configure backup frequency, retention, and lifecycle policies for EBS volume protection."
     },
     "CKV_AWS_135": {
         description: "EC2 EBS is not optimized",
         priority: "LOW",
-        intent: "Enable EBS optimization for AWS::EC2::Instance by setting 'EbsOptimized: true'. This provides dedicated bandwidth for EBS I/O operations, improving storage performance for instances that support this feature."
+        remediation: "Enable EBS optimization for AWS::EC2::Instance by setting 'EbsOptimized: true'. This provides dedicated bandwidth for EBS I/O operations, improving storage performance for instances that support this feature."
     },
     "CKV_AWS_51": {
         description: "ECR image tags are not immutable",
         priority: "LOW",
-        intent: "Configure AWS::ECR::Repository with immutable tags by setting 'ImageTagMutability: IMMUTABLE'. This prevents image tag overwriting, ensuring container image integrity and preventing accidental deployment of modified images."
+        remediation: "Configure AWS::ECR::Repository with immutable tags by setting 'ImageTagMutability: IMMUTABLE'. This prevents image tag overwriting, ensuring container image integrity and preventing accidental deployment of modified images."
     },
     "CKV_AWS_237": {
         description: "Ensure AWS API gateway enables Create before Destroy",
         priority: "LOW",
-        intent: "Configure AWS::ApiGateway::RestApi with create-before-destroy behavior. While CloudFormation handles this automatically, ensure proper deployment sequencing and avoid breaking changes that could cause API unavailability during updates."
+        remediation: "Configure AWS::ApiGateway::RestApi with create-before-destroy behavior. While CloudFormation handles this automatically, ensure proper deployment sequencing and avoid breaking changes that could cause API unavailability during updates."
     },
     "CKV2_AWS_3": {
         description: "GuardDuty is not enabled to specific org/region",
         priority: "LOW",
-        intent: "Enable AWS::GuardDuty::Detector by setting 'Enable: true' for the region. Configure FindingPublishingFrequency and enable appropriate data sources (S3Logs, KubernetesLogs, MalwareProtection) for comprehensive threat detection."
+        remediation: "Enable AWS::GuardDuty::Detector by setting 'Enable: true' for the region. Configure FindingPublishingFrequency and enable appropriate data sources (S3Logs, KubernetesLogs, MalwareProtection) for comprehensive threat detection."
     },
     "CKV2_AWS_2": {
         description: "Not only encrypted EBS volumes are attached to EC2 instances",
         priority: "LOW",
-        intent: "Ensure all EBS volumes attached to AWS::EC2::Instance are encrypted by setting 'Encrypted: true' in AWS::EC2::Volume resources or EBS block device mappings. Use KMS keys for encryption to protect data at rest."
+        remediation: "Ensure all EBS volumes attached to AWS::EC2::Instance are encrypted by setting 'Encrypted: true' in AWS::EC2::Volume resources or EBS block device mappings. Use KMS keys for encryption to protect data at rest."
     },
     "CKV_AWS_313": {
         description: "RDS cluster is not configured to copy tags to snapshots",
         priority: "LOW",
-        intent: "Enable tag copying for AWS::RDS::DBCluster by setting 'CopyTagsToSnapshot: true'. This ensures cluster tags are automatically applied to snapshots for consistent resource management and cost tracking."
+        remediation: "Enable tag copying for AWS::RDS::DBCluster by setting 'CopyTagsToSnapshot: true'. This ensures cluster tags are automatically applied to snapshots for consistent resource management and cost tracking."
     },
     "CKV2_AWS_8": {
         description: "RDS clusters do not have an AWS Backup backup plan",
         priority: "LOW",
-        intent: "Create AWS::Backup::BackupPlan and associate RDS clusters using AWS::Backup::BackupSelection with appropriate resource ARN patterns. Configure backup schedules, retention policies, and cross-region copying for comprehensive database protection."
+        remediation: "Create AWS::Backup::BackupPlan and associate RDS clusters using AWS::Backup::BackupSelection with appropriate resource ARN patterns. Configure backup schedules, retention policies, and cross-region copying for comprehensive database protection."
     },
     "CKV_AWS_157": {
         description: "RDS instances do not have Multi-AZ enabled",
         priority: "LOW",
-        intent: "Enable Multi-AZ deployment for AWS::RDS::DBInstance by setting 'MultiAZ: true'. This provides high availability, automatic failover capabilities, and enhanced data durability across multiple Availability Zones."
+        remediation: "Enable Multi-AZ deployment for AWS::RDS::DBInstance by setting 'MultiAZ: true'. This provides high availability, automatic failover capabilities, and enhanced data durability across multiple Availability Zones."
     },
     "CKV_AWS_141": {
         description: "Redshift clusters version upgrade is not default",
         priority: "LOW",
-        intent: "Enable automatic version upgrades for AWS::Redshift::Cluster by setting 'AllowVersionUpgrade: true'. This ensures the cluster receives security patches, performance improvements, and new features automatically."
+        remediation: "Enable automatic version upgrades for AWS::Redshift::Cluster by setting 'AllowVersionUpgrade: true'. This ensures the cluster receives security patches, performance improvements, and new features automatically."
     },
     "CKV_AWS_144": {
         description: "S3 bucket cross-region replication disabled",
         priority: "LOW",
-        intent: "Configure cross-region replication for AWS::S3::Bucket by setting 'ReplicationConfiguration' with appropriate rules, destination bucket, and IAM role. This provides data redundancy and disaster recovery capabilities across regions."
+        remediation: "Configure cross-region replication for AWS::S3::Bucket by setting 'ReplicationConfiguration' with appropriate rules, destination bucket, and IAM role. This provides data redundancy and disaster recovery capabilities across regions."
     },
     "CKV_AWS_143": {
         description: "S3 bucket lock configuration disabled",
         priority: "LOW",
-        intent: "Enable Object Lock for AWS::S3::Bucket by setting 'ObjectLockEnabled: true' and configuring ObjectLockConfiguration with appropriate retention rules. This prevents object deletion or modification for compliance and data protection."
+        remediation: "Enable Object Lock for AWS::S3::Bucket by setting 'ObjectLockEnabled: true' and configuring ObjectLockConfiguration with appropriate retention rules. This prevents object deletion or modification for compliance and data protection."
     },
     "CKV_AWS_145": {
         description: "S3 buckets are not encrypted with KMS",
         priority: "LOW",
-        intent: "Configure AWS::S3::Bucket server-side encryption by setting 'BucketEncryption' with SSEAlgorithm: 'aws:kms' and 'KMSMasterKeyID' referencing an AWS::KMS::Key resource to encrypt objects using customer-managed keys."
+        remediation: "Configure AWS::S3::Bucket server-side encryption by setting 'BucketEncryption' with SSEAlgorithm: 'aws:kms' and 'KMSMasterKeyID' referencing an AWS::KMS::Key resource to encrypt objects using customer-managed keys."
     },
     "CKV_AWS_136": {
         description: "Unencrypted ECR repositories",
         priority: "LOW",
-        intent: "Enable encryption for AWS::ECR::Repository by setting 'EncryptionConfiguration' with 'EncryptionType: KMS' and optionally 'KmsKey' to reference an AWS::KMS::Key resource. This encrypts container images at rest in the registry."
+        remediation: "Enable encryption for AWS::ECR::Repository by setting 'EncryptionConfiguration' with 'EncryptionType: KMS' and optionally 'KmsKey' to reference an AWS::KMS::Key resource. This encrypts container images at rest in the registry."
     },
     "CKV_AWS_140": {
         description: "Unencrypted RDS global clusters",
         priority: "LOW",
-        intent: "Enable encryption for AWS::RDS::GlobalCluster by setting 'StorageEncrypted: true' when creating the global cluster. Ensure all regional clusters in the global cluster are also encrypted for comprehensive data protection."
+        remediation: "Enable encryption for AWS::RDS::GlobalCluster by setting 'StorageEncrypted: true' when creating the global cluster. Ensure all regional clusters in the global cluster are also encrypted for comprehensive data protection."
     },
     "CKV_AWS_342": {
         description: "WAF rule does not have any actions",
         priority: "LOW",
-        intent: "Configure AWS::WAFv2::WebACL rules with appropriate actions by setting 'Action' property to 'Allow', 'Block', or 'Count'. Ensure each rule has a defined action to properly handle matching requests and provide effective web application protection."
+        remediation: "Configure AWS::WAFv2::WebACL rules with appropriate actions by setting 'Action' property to 'Allow', 'Block', or 'Count'. Ensure each rule has a defined action to properly handle matching requests and provide effective web application protection."
     },
     "CKV_AWS_194": {
         description: "AWS AppSync has field-level logging disabled",
         priority: "INFO",
-        intent: "Enable field-level logging for AWS::AppSync::GraphQLApi by configuring LogConfig with 'CloudWatchLogsRoleArn' and setting 'FieldLogLevel: ALL'. This captures detailed GraphQL field resolver execution for monitoring, debugging, and security analysis."
+        remediation: "Enable field-level logging for AWS::AppSync::GraphQLApi by configuring LogConfig with 'CloudWatchLogsRoleArn' and setting 'FieldLogLevel: ALL'. This captures detailed GraphQL field resolver execution for monitoring, debugging, and security analysis."
     },
     "CKV_AWS_68": {
         description: "AWS CloudFront web distribution with AWS Web Application Firewall (AWS WAF) service disabled",
         priority: "INFO",
-        intent: "Associate AWS::CloudFront::Distribution with AWS::WAFv2::WebACL by setting 'WebACLId' property in DistributionConfig to reference a WebACL ARN. This protects your CDN against common web attacks, SQL injection, and cross-site scripting."
+        remediation: "Associate AWS::CloudFront::Distribution with AWS::WAFv2::WebACL by setting 'WebACLId' property in DistributionConfig to reference a WebACL ARN. This protects your CDN against common web attacks, SQL injection, and cross-site scripting."
     },
     "CKV_AWS_251": {
         description: "AWS CloudTrail logging is disabled",
         priority: "INFO",
-        intent: "Enable logging for AWS::CloudTrail::Trail by setting 'IsLogging: true'. This ensures API activity tracking is active and events are being recorded for security monitoring, compliance, and audit trail purposes."
+        remediation: "Enable logging for AWS::CloudTrail::Trail by setting 'IsLogging: true'. This ensures API activity tracking is active and events are being recorded for security monitoring, compliance, and audit trail purposes."
     },
     "CKV2_AWS_48": {
         description: "AWS Config must record all possible resources",
         priority: "INFO",
-        intent: "Configure AWS::Config::ConfigurationRecorder to record all supported resources by setting RecordingGroup with 'AllSupported: true' and 'IncludeGlobalResourceTypes: true'. Enable AWS::Config::ConfigurationRecorderStatus with 'IsEnabled: true' for comprehensive resource tracking."
+        remediation: "Configure AWS::Config::ConfigurationRecorder to record all supported resources by setting RecordingGroup with 'AllSupported: true' and 'IncludeGlobalResourceTypes: true'. Enable AWS::Config::ConfigurationRecorderStatus with 'IsEnabled: true' for comprehensive resource tracking."
     },
     "CKV2_AWS_45": {
         description: "AWS Config Recording is disabled",
         priority: "INFO",
-        intent: "Enable AWS Config recording by creating AWS::Config::ConfigurationRecorder and AWS::Config::ConfigurationRecorderStatus with 'IsEnabled: true'. This provides configuration history and change tracking for AWS resources in your account."
+        remediation: "Enable AWS Config recording by creating AWS::Config::ConfigurationRecorder and AWS::Config::ConfigurationRecorderStatus with 'IsEnabled: true'. This provides configuration history and change tracking for AWS resources in your account."
     },
     "CKV_AWS_47": {
         description: "AWS DAX cluster not configured with encryption at rest",
         priority: "INFO",
-        intent: "Enable encryption at rest for AWS::DAX::Cluster by setting 'SSESpecification' with 'SSEEnabled: true'. This encrypts cached DynamoDB data using AWS KMS with 256-bit AES encryption to protect data stored on disk."
+        remediation: "Enable encryption at rest for AWS::DAX::Cluster by setting 'SSESpecification' with 'SSEEnabled: true'. This encrypts cached DynamoDB data using AWS KMS with 256-bit AES encryption to protect data stored on disk."
     },
     "CKV_AWS_119": {
         description: "AWS DynamoDB encrypted using AWS owned CMK instead of AWS managed CMK",
         priority: "INFO",
-        intent: "Configure AWS::DynamoDB::Table with customer-managed KMS encryption by setting 'SSESpecification' with 'SSEEnabled: true' and 'KMSMasterKeyId' referencing an AWS::KMS::Key resource instead of using default AWS-owned keys for enhanced control."
+        remediation: "Configure AWS::DynamoDB::Table with customer-managed KMS encryption by setting 'SSESpecification' with 'SSEEnabled: true' and 'KMSMasterKeyId' referencing an AWS::KMS::Key resource instead of using default AWS-owned keys for enhanced control."
     },
     "CKV2_AWS_16": {
         description: "AWS DynamoDB table Auto Scaling not enabled",
         priority: "INFO",
-        intent: "Enable auto scaling for AWS::DynamoDB::Table by creating AWS::ApplicationAutoScaling::ScalableTarget and AWS::ApplicationAutoScaling::ScalingPolicy resources for read/write capacity. Configure target tracking policies to automatically adjust capacity based on utilization metrics."
+        remediation: "Enable auto scaling for AWS::DynamoDB::Table by creating AWS::ApplicationAutoScaling::ScalableTarget and AWS::ApplicationAutoScaling::ScalingPolicy resources for read/write capacity. Configure target tracking policies to automatically adjust capacity based on utilization metrics."
     },
     "CKV_AWS_8": {
         description: "AWS EC2 Auto Scaling Launch Configuration is not using encrypted EBS volumes",
         priority: "INFO",
-        intent: "Configure AWS::AutoScaling::LaunchConfiguration with encrypted EBS volumes by setting 'Encrypted: true' in BlockDeviceMappings Ebs properties. This ensures all EBS volumes attached to Auto Scaling instances are encrypted for data protection."
+        remediation: "Configure AWS::AutoScaling::LaunchConfiguration with encrypted EBS volumes by setting 'Encrypted: true' in BlockDeviceMappings Ebs properties. This ensures all EBS volumes attached to Auto Scaling instances are encrypted for data protection."
     },
     "CKV_AWS_336": {
         description: "AWS ECS task definition is not configured with read-only access to container root filesystems",
         priority: "INFO",
-        intent: "Configure AWS::ECS::TaskDefinition containers with read-only root filesystem by setting 'readonlyRootFilesystem: true' in ContainerDefinitions. This prevents containers from modifying the root filesystem, reducing security risks from compromised containers."
+        remediation: "Configure AWS::ECS::TaskDefinition containers with read-only root filesystem by setting 'readonlyRootFilesystem: true' in ContainerDefinitions. This prevents containers from modifying the root filesystem, reducing security risks from compromised containers."
     },
     "CKV_AWS_340": {
         description: "AWS Elastic Beanstalk environment managed platform updates are not enabled",
         priority: "INFO",
-        intent: "Enable managed platform updates for AWS::ElasticBeanstalk::Environment by configuring OptionSettings with namespace 'aws:elasticbeanstalk:managedactions' and setting 'ManagedActionsEnabled: true'. This ensures automatic platform updates and security patches."
+        remediation: "Enable managed platform updates for AWS::ElasticBeanstalk::Environment by configuring OptionSettings with namespace 'aws:elasticbeanstalk:managedactions' and setting 'ManagedActionsEnabled: true'. This ensures automatic platform updates and security patches."
     },
     "CKV_AWS_322": {
         description: "AWS ElastiCache Redis cluster automatic version upgrade disabled",
         priority: "INFO",
-        intent: "Enable automatic minor version upgrades for AWS::ElastiCache::CacheCluster by setting 'AutoMinorVersionUpgrade: true'. This ensures the cluster receives security patches and bug fixes automatically during maintenance windows."
+        remediation: "Enable automatic minor version upgrades for AWS::ElastiCache::CacheCluster by setting 'AutoMinorVersionUpgrade: true'. This ensures the cluster receives security patches and bug fixes automatically during maintenance windows."
     },
     "CKV_AWS_134": {
         description: "AWS ElastiCache Redis cluster is not configured with automatic backup",
         priority: "INFO",
-        intent: "Enable automatic backups for AWS::ElastiCache::CacheCluster by setting 'SnapshotRetentionLimit' to a value greater than 0 (up to 35 days). This creates daily automated backups for data recovery and cluster restoration capabilities."
+        remediation: "Enable automatic backups for AWS::ElastiCache::CacheCluster by setting 'SnapshotRetentionLimit' to a value greater than 0 (up to 35 days). This creates daily automated backups for data recovery and cluster restoration capabilities."
     },
     "CKV2_AWS_50": {
         description: "AWS ElastiCache Redis cluster with Multi-AZ Automatic Failover feature set to disabled",
         priority: "INFO",
-        intent: "Enable Multi-AZ automatic failover for AWS::ElastiCache::ReplicationGroup by setting 'AutomaticFailoverEnabled: true' and 'NumCacheClusters' to at least 2. Configure 'PreferredCacheClusterAZs' across multiple availability zones for high availability."
+        remediation: "Enable Multi-AZ automatic failover for AWS::ElastiCache::ReplicationGroup by setting 'AutomaticFailoverEnabled: true' and 'NumCacheClusters' to at least 2. Configure 'PreferredCacheClusterAZs' across multiple availability zones for high availability."
     },
     "CKV2_AWS_55": {
         description: "AWS EMR cluster is not configured with security configuration",
         priority: "INFO",
-        intent: "Associate AWS::EMR::Cluster with a security configuration by setting 'SecurityConfiguration' property to reference an AWS::EMR::SecurityConfiguration resource. This applies encryption, authentication, and authorization settings to the cluster."
+        remediation: "Associate AWS::EMR::Cluster with a security configuration by setting 'SecurityConfiguration' property to reference an AWS::EMR::SecurityConfiguration resource. This applies encryption, authentication, and authorization settings to the cluster."
     },
     "CKV_AWS_238": {
         description: "AWS GuardDuty detector is not enabled",
         priority: "INFO",
-        intent: "Enable AWS::GuardDuty::Detector by setting 'Enable: true'. Configure FindingPublishingFrequency and enable data sources like S3Logs, KubernetesLogs, and MalwareProtection for comprehensive threat detection across your AWS environment."
+        remediation: "Enable AWS::GuardDuty::Detector by setting 'Enable: true'. Configure FindingPublishingFrequency and enable data sources like S3Logs, KubernetesLogs, and MalwareProtection for comprehensive threat detection across your AWS environment."
     },
     "CKV2_AWS_58": {
         description: "AWS Neptune cluster deletion protection is disabled",
         priority: "INFO",
-        intent: "Enable deletion protection for AWS::Neptune::DBCluster by setting 'DeletionProtection: true'. This prevents accidental deletion of the Neptune database cluster and protects against data loss from unintended cluster removal."
+        remediation: "Enable deletion protection for AWS::Neptune::DBCluster by setting 'DeletionProtection: true'. This prevents accidental deletion of the Neptune database cluster and protects against data loss from unintended cluster removal."
     },
     "CKV_AWS_361": {
         description: "AWS Neptune DB clusters have backup retention period less than 7 days",
         priority: "INFO",
-        intent: "Configure AWS::Neptune::DBCluster with adequate backup retention by setting 'BackupRetentionPeriod' to 7 or higher (up to 35 days). This ensures sufficient point-in-time recovery capabilities for data protection and compliance requirements."
+        remediation: "Configure AWS::Neptune::DBCluster with adequate backup retention by setting 'BackupRetentionPeriod' to 7 or higher (up to 35 days). This ensures sufficient point-in-time recovery capabilities for data protection and compliance requirements."
     },
     "CKV_AWS_139": {
         description: "AWS RDS cluster delete protection is disabled",
         priority: "INFO",
-        intent: "Enable deletion protection for AWS::RDS::DBCluster by setting 'DeletionProtection: true'. This prevents accidental deletion of the RDS cluster and protects against data loss from unintended cluster removal operations."
+        remediation: "Enable deletion protection for AWS::RDS::DBCluster by setting 'DeletionProtection: true'. This prevents accidental deletion of the RDS cluster and protects against data loss from unintended cluster removal operations."
     },
     "CKV_AWS_327": {
         description: "AWS RDS DB cluster is encrypted using default KMS key instead of CMK",
         priority: "INFO",
-        intent: "Configure AWS::RDS::DBCluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource instead of using default AWS-managed keys for enhanced encryption control and key management."
+        remediation: "Configure AWS::RDS::DBCluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource instead of using default AWS-managed keys for enhanced encryption control and key management."
     },
     "CKV2_AWS_60": {
         description: "AWS RDS instance with copy tags to snapshots disabled",
         priority: "INFO",
-        intent: "Enable tag copying for AWS::RDS::DBInstance by setting 'CopyTagsToSnapshot: true'. This ensures instance tags are automatically applied to automated and manual snapshots for consistent resource management and cost allocation tracking."
+        remediation: "Enable tag copying for AWS::RDS::DBInstance by setting 'CopyTagsToSnapshot: true'. This ensures instance tags are automatically applied to automated and manual snapshots for consistent resource management and cost allocation tracking."
     },
     "CKV2_AWS_27": {
         description: "AWS RDS Postgres Cluster does not have query logging enabled",
         priority: "INFO",
-        intent: "Enable PostgreSQL query logging for AWS::RDS::DBCluster by creating AWS::RDS::DBClusterParameterGroup with 'log_statement: all' and 'log_min_duration_statement: 1' parameters. Associate the parameter group with the cluster using 'DBClusterParameterGroupName' property."
+        remediation: "Enable PostgreSQL query logging for AWS::RDS::DBCluster by creating AWS::RDS::DBClusterParameterGroup with 'log_statement: all' and 'log_min_duration_statement: 1' parameters. Associate the parameter group with the cluster using 'DBClusterParameterGroupName' property."
     },
     "CKV_AWS_142": {
         description: "AWS Redshift Cluster not encrypted using Customer Managed Key",
         priority: "INFO",
-        intent: "Configure AWS::Redshift::Cluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over cluster encryption keys and enables detailed audit capabilities."
+        remediation: "Configure AWS::Redshift::Cluster with customer-managed KMS encryption by setting 'KmsKeyId' property to reference an AWS::KMS::Key resource. This provides full control over cluster encryption keys and enables detailed audit capabilities."
     },
     "CKV_AWS_307": {
         description: "AWS SageMaker notebook instance with root access enabled",
         priority: "INFO",
-        intent: "Disable root access for AWS::SageMaker::NotebookInstance by setting 'RootAccess: Disabled'. This follows the principle of least privilege and prevents unauthorized system-level modifications that could compromise security."
+        remediation: "Disable root access for AWS::SageMaker::NotebookInstance by setting 'RootAccess: Disabled'. This follows the principle of least privilege and prevents unauthorized system-level modifications that could compromise security."
     },
     "CKV_AWS_387": {
         description: "AWS SQS queue access policy is overly permissive",
         priority: "INFO",
-        intent: "Restrict AWS::SQS::Queue access policy by replacing wildcard principals ('*') with specific IAM principals, accounts, or services. Use condition statements to further limit access based on IP addresses, time, or other security criteria for least-privilege access."
+        remediation: "Restrict AWS::SQS::Queue access policy by replacing wildcard principals ('*') with specific IAM principals, accounts, or services. Use condition statements to further limit access based on IP addresses, time, or other security criteria for least-privilege access."
     },
     "CKV2_AWS_73": {
         description: "AWS SQS queue encryption using default KMS key instead of CMK",
         priority: "INFO",
-        intent: "Configure AWS::SQS::Queue with customer-managed KMS encryption by setting 'KmsMasterKeyId' property to reference an AWS::KMS::Key resource ARN instead of using default AWS-managed keys for enhanced encryption control and key management."
+        remediation: "Configure AWS::SQS::Queue with customer-managed KMS encryption by setting 'KmsMasterKeyId' property to reference an AWS::KMS::Key resource ARN instead of using default AWS-managed keys for enhanced encryption control and key management."
     },
     "CKV_AWS_294": {
         description: "CloudTrail Event Data Store does not use Customer Managed Keys (CMKs)",
         priority: "INFO",
-        intent: "Configure AWS::CloudTrail::EventDataStore with customer-managed KMS encryption by setting 'KMSKeyId' property to reference an AWS::KMS::Key resource. This provides full control over encryption keys used for storing CloudTrail event data."
+        remediation: "Configure AWS::CloudTrail::EventDataStore with customer-managed KMS encryption by setting 'KMSKeyId' property to reference an AWS::KMS::Key resource. This provides full control over encryption keys used for storing CloudTrail event data."
     },
     // **** IAM POLICIES ****
     "CKV_AWS_62": {
         description: "AWS IAM policies that allow full \"*-*\" administrative privileges are created",
         priority: "CRITICAL",
-        intent: "Avoid creating IAM policies with full administrative privileges. Instead of using wildcard \"*\" for both Action and Resource in PolicyDocument, scope down permissions to specific actions and resources. For example, in AWS::IAM::Policy resource, replace \"Action\": \"*\" and \"Resource\": \"*\" with specific actions like \"s3:GetObject\" and specific resources like \"arn:aws:s3:::mybucket/*\". Follow the principle of least privilege by granting only the minimum permissions required."
+        remediation: "Avoid creating IAM policies with full administrative privileges. Instead of using wildcard \"*\" for both Action and Resource in PolicyDocument, scope down permissions to specific actions and resources. For example, in AWS::IAM::Policy resource, replace \"Action\": \"*\" and \"Resource\": \"*\" with specific actions like \"s3:GetObject\" and specific resources like \"arn:aws:s3:::mybucket/*\". Follow the principle of least privilege by granting only the minimum permissions required."
     },
     "CKV_AWS_348": {
         description: "AWS Access key enabled on root account",
         priority: "HIGH",
-        intent: "Remove access keys from the root account and avoid creating AWS::IAM::AccessKey resources for the root user. Root account access keys pose significant security risks. Instead, create dedicated IAM users with specific permissions using AWS::IAM::User resource and associate access keys only with those users, not the root account."
+        remediation: "Remove access keys from the root account and avoid creating AWS::IAM::AccessKey resources for the root user. Root account access keys pose significant security risks. Instead, create dedicated IAM users with specific permissions using AWS::IAM::User resource and associate access keys only with those users, not the root account."
     },
     "CKV_AWS_274": {
         description: "AWS AdministratorAccess policy is used by IAM roles, users, or groups",
         priority: "HIGH",
-        intent: "Avoid attaching the AWS managed 'AdministratorAccess' policy to IAM entities. Instead of using \"arn:aws:iam::aws:policy/AdministratorAccess\" in ManagedPolicyArns of AWS::IAM::Role, AWS::IAM::User, or AWS::IAM::Group, create custom policies with specific permissions tailored to the entity's actual needs using AWS::IAM::Policy with scoped PolicyDocument."
+        remediation: "Avoid attaching the AWS managed 'AdministratorAccess' policy to IAM entities. Instead of using \"arn:aws:iam::aws:policy/AdministratorAccess\" in ManagedPolicyArns of AWS::IAM::Role, AWS::IAM::User, or AWS::IAM::Group, create custom policies with specific permissions tailored to the entity's actual needs using AWS::IAM::Policy with scoped PolicyDocument."
     },
     "CKV_AWS_358": {
         description: "AWS GitHub Actions OIDC authorization policies allow for unsafe claims or claim order",
         priority: "HIGH",
-        intent: "Configure GitHub Actions OIDC trust policies with secure claim conditions in AWS::IAM::Role AssumeRolePolicyDocument. Use specific conditions like 'StringEquals' for 'token.actions.githubusercontent.com:sub' to match exact repository and branch patterns. Avoid overly broad conditions that could allow unauthorized GitHub repositories to assume the role."
+        remediation: "Configure GitHub Actions OIDC trust policies with secure claim conditions in AWS::IAM::Role AssumeRolePolicyDocument. Use specific conditions like 'StringEquals' for 'token.actions.githubusercontent.com:sub' to match exact repository and branch patterns. Avoid overly broad conditions that could allow unauthorized GitHub repositories to assume the role."
     },
     "CKV_AWS_13": {
         description: "AWS IAM password policy does allow password reuse",
         priority: "HIGH",
-        intent: "Configure IAM account password policy to prevent password reuse by setting 'PasswordReusePrevention' property to 24 (or desired number) in AWS::IAM::AccountPasswordPolicy resource. This ensures users cannot reuse their previous passwords, enhancing security against brute force attacks."
+        remediation: "Configure IAM account password policy to prevent password reuse by setting 'PasswordReusePrevention' property to 24 (or desired number) in AWS::IAM::AccountPasswordPolicy resource. This ensures users cannot reuse their previous passwords, enhancing security against brute force attacks."
     },
     "CKV_AWS_61": {
         description: "AWS IAM policy allows all principals used by any AWS service from target account to assume role",
         priority: "HIGH",
-        intent: "Restrict IAM role trust policies to specific principals instead of allowing all AWS services from an account. In the AssumeRolePolicyDocument of AWS::IAM::Role, replace broad principal patterns like \"AWS\": \"arn:aws:iam::ACCOUNT-ID:*\" with specific service principals or roles, such as \"Service\": \"lambda.amazonaws.com\" or specific role ARNs."
+        remediation: "Restrict IAM role trust policies to specific principals instead of allowing all AWS services from an account. In the AssumeRolePolicyDocument of AWS::IAM::Role, replace broad principal patterns like \"AWS\": \"arn:aws:iam::ACCOUNT-ID:*\" with specific service principals or roles, such as \"Service\": \"lambda.amazonaws.com\" or specific role ARNs."
     },
     "CKV_AWS_63": {
         description: "AWS IAM policy documents allow * (asterisk) as a statement's action",
         priority: "HIGH",
-        intent: "Replace wildcard actions (*) in IAM policy statements with specific actions. In the PolicyDocument of AWS::IAM::Policy, AWS::IAM::Role, AWS::IAM::User, or AWS::IAM::Group, instead of \"Action\": \"*\", use specific actions like [\"s3:GetObject\", \"s3:PutObject\"] to follow the principle of least privilege."
+        remediation: "Replace wildcard actions (*) in IAM policy statements with specific actions. In the PolicyDocument of AWS::IAM::Policy, AWS::IAM::Role, AWS::IAM::User, or AWS::IAM::Group, instead of \"Action\": \"*\", use specific actions like [\"s3:GetObject\", \"s3:PutObject\"] to follow the principle of least privilege."
     },
     "CKV_AWS_49": {
         description: "AWS IAM policy documents do not allow * (asterisk) as a statement's action",
         priority: "HIGH",
-        intent: "Remove wildcard actions (*) from IAM policy documents. In PolicyDocument statements of AWS::IAM::Policy and related resources, replace \"Action\": \"*\" with specific actions relevant to the use case, such as \"Action\": [\"ec2:DescribeInstances\", \"ec2:StartInstances\"] to limit permissions appropriately."
+        remediation: "Remove wildcard actions (*) from IAM policy documents. In PolicyDocument statements of AWS::IAM::Policy and related resources, replace \"Action\": \"*\" with specific actions relevant to the use case, such as \"Action\": [\"ec2:DescribeInstances\", \"ec2:StartInstances\"] to limit permissions appropriately."
     },
     "CKV_AWS_60": {
         description: "AWS IAM role allows all services or principals to be assumed",
         priority: "HIGH",
-        intent: "Restrict IAM role assume role policies to specific trusted entities. In the AssumeRolePolicyDocument of AWS::IAM::Role, replace overly broad principals like \"Principal\": \"*\" with specific service principals like \"Service\": \"lambda.amazonaws.com\" or specific AWS account principals to prevent unauthorized access."
+        remediation: "Restrict IAM role assume role policies to specific trusted entities. In the AssumeRolePolicyDocument of AWS::IAM::Role, replace overly broad principals like \"Principal\": \"*\" with specific service principals like \"Service\": \"lambda.amazonaws.com\" or specific AWS account principals to prevent unauthorized access."
     },
     "CKV_AWS_356": {
         description: "Data source IAM policy document allows all resources with restricted actions",
         priority: "HIGH",
-        intent: "Scope IAM policy resources to specific ARNs instead of using wildcards. In PolicyDocument statements, replace \"Resource\": \"*\" with specific resource ARNs like \"arn:aws:s3:::mybucket/*\" or \"arn:aws:dynamodb:region:account:table/mytable\" to limit the scope of permitted actions."
+        remediation: "Scope IAM policy resources to specific ARNs instead of using wildcards. In PolicyDocument statements, replace \"Resource\": \"*\" with specific resource ARNs like \"arn:aws:s3:::mybucket/*\" or \"arn:aws:dynamodb:region:account:table/mytable\" to limit the scope of permitted actions."
     },
     "CKV_AWS_288": {
         description: "IAM policies allow data exfiltration",
         priority: "HIGH",
-        intent: "Review and restrict IAM policies that permit data exfiltration actions. Remove or constrain permissions for actions like 's3:GetObject', 'dynamodb:Scan', 'rds:DescribeDBSnapshots' in PolicyDocument of AWS::IAM::Policy. Add resource constraints and condition blocks to limit when these actions can be performed."
+        remediation: "Review and restrict IAM policies that permit data exfiltration actions. Remove or constrain permissions for actions like 's3:GetObject', 'dynamodb:Scan', 'rds:DescribeDBSnapshots' in PolicyDocument of AWS::IAM::Policy. Add resource constraints and condition blocks to limit when these actions can be performed."
     },
     "CKV_AWS_287": {
         description: "IAM policies allow exposure of credentials",
         priority: "HIGH",
-        intent: "Remove or restrict IAM policy actions that can expose credentials. In PolicyDocument, avoid or constrain actions like 'iam:GetUser', 'iam:ListAccessKeys', 'secretsmanager:GetSecretValue', 'ssm:GetParameter'. If required, add specific resource constraints and condition blocks to limit exposure."
+        remediation: "Remove or restrict IAM policy actions that can expose credentials. In PolicyDocument, avoid or constrain actions like 'iam:GetUser', 'iam:ListAccessKeys', 'secretsmanager:GetSecretValue', 'ssm:GetParameter'. If required, add specific resource constraints and condition blocks to limit exposure."
     },
     "CKV_AWS_289": {
         description: "IAM policies allow permissions management or resource exposure without constraints",
         priority: "HIGH",
-        intent: "Restrict IAM policies that allow permissions management actions. In PolicyDocument, constrain or remove actions like 'iam:AttachUserPolicy', 'iam:PutRolePolicy', 'iam:CreateRole' unless specifically required. Add resource constraints and condition blocks to limit the scope of permissions management capabilities."
+        remediation: "Restrict IAM policies that allow permissions management actions. In PolicyDocument, constrain or remove actions like 'iam:AttachUserPolicy', 'iam:PutRolePolicy', 'iam:CreateRole' unless specifically required. Add resource constraints and condition blocks to limit the scope of permissions management capabilities."
     },
     "CKV_AWS_290": {
         description: "IAM policies allow write access without constraints",
         priority: "HIGH",
-        intent: "Add constraints to IAM policies with broad write permissions. In PolicyDocument, replace unrestricted write actions with resource-specific permissions. For example, instead of \"s3:*\" action with \"*\" resource, use specific actions like \"s3:PutObject\" with specific bucket ARNs like \"arn:aws:s3:::mybucket/*\"."
+        remediation: "Add constraints to IAM policies with broad write permissions. In PolicyDocument, replace unrestricted write actions with resource-specific permissions. For example, instead of \"s3:*\" action with \"*\" resource, use specific actions like \"s3:PutObject\" with specific bucket ARNs like \"arn:aws:s3:::mybucket/*\"."
     },
     "CKV_AWS_283": {
         description: "IAM Policy Document Allows All or Any AWS Principal Permissions to Resources",
         priority: "HIGH",
-        intent: "Replace overly broad principal permissions in IAM policy documents. In PolicyDocument of resource-based policies, replace \"Principal\": \"*\" or \"Principal\": {\"AWS\": \"*\"} with specific principal ARNs, account IDs, or service principals to prevent unauthorized access from any AWS account."
+        remediation: "Replace overly broad principal permissions in IAM policy documents. In PolicyDocument of resource-based policies, replace \"Principal\": \"*\" or \"Principal\": {\"AWS\": \"*\"} with specific principal ARNs, account IDs, or service principals to prevent unauthorized access from any AWS account."
     },
     "CKV_AWS_355": {
         description: "IAM policy document allows all resources with restricted actions",
         priority: "HIGH",
-        intent: "Scope IAM policy resources to specific ARNs instead of wildcards. In PolicyDocument statements of AWS::IAM::Policy, replace \"Resource\": \"*\" with specific resource ARNs that align with the intended actions, such as \"arn:aws:s3:::specific-bucket/*\" for S3 operations."
+        remediation: "Scope IAM policy resources to specific ARNs instead of wildcards. In PolicyDocument statements of AWS::IAM::Policy, replace \"Resource\": \"*\" with specific resource ARNs that align with the intended actions, such as \"arn:aws:s3:::specific-bucket/*\" for S3 operations."
     },
     "CKV_AWS_275": {
         description: "IAM policy uses the AWS AdministratorAccess policy",
         priority: "HIGH",
-        intent: "Replace AWS managed AdministratorAccess policy with custom policies. Instead of referencing \"arn:aws:iam::aws:policy/AdministratorAccess\" in ManagedPolicyArns, create AWS::IAM::Policy resources with specific permissions tailored to actual requirements, following the principle of least privilege."
+        remediation: "Replace AWS managed AdministratorAccess policy with custom policies. Instead of referencing \"arn:aws:iam::aws:policy/AdministratorAccess\" in ManagedPolicyArns, create AWS::IAM::Policy resources with specific permissions tailored to actual requirements, following the principle of least privilege."
     },
     "CKV_AWS_364": {
         description: "Permissions delegated to AWS services for AWS Lambda functions are not limited by SourceArn or SourceAccount",
         priority: "HIGH",
-        intent: "Add SourceArn or SourceAccount constraints to Lambda permissions. In AWS::Lambda::Permission resource, include 'SourceArn' property to specify the exact ARN of the service invoking the function, or 'SourceAccount' to limit access to a specific AWS account. This prevents unauthorized services from invoking your Lambda functions."
+        remediation: "Add SourceArn or SourceAccount constraints to Lambda permissions. In AWS::Lambda::Permission resource, include 'SourceArn' property to specify the exact ARN of the service invoking the function, or 'SourceAccount' to limit access to a specific AWS account. This prevents unauthorized services from invoking your Lambda functions."
     },
     "CKV2_AWS_56": {
         description: "The AWS Managed IAMFullAccess IAM policy should not be used",
         priority: "HIGH",
-        intent: "Avoid using the AWS managed 'IAMFullAccess' policy. Instead of attaching \"arn:aws:iam::aws:policy/IAMFullAccess\" to IAM entities, create custom IAM policies with specific IAM permissions required for the use case using AWS::IAM::Policy with scoped PolicyDocument that grants only necessary IAM actions."
+        remediation: "Avoid using the AWS managed 'IAMFullAccess' policy. Instead of attaching \"arn:aws:iam::aws:policy/IAMFullAccess\" to IAM entities, create custom IAM policies with specific IAM permissions required for the use case using AWS::IAM::Policy with scoped PolicyDocument that grants only necessary IAM actions."
     },
     "CKV2_AWS_64": {
         description: "A Policy is not Defined for KMS Key",
         priority: "MEDIUM",
-        intent: "Define an explicit key policy for KMS keys using the 'Policy' property in AWS::KMS::Key resource. Avoid relying on default key policies. Create a PolicyDocument that specifies which principals can perform which actions on the key, including key administration and usage permissions."
+        remediation: "Define an explicit key policy for KMS keys using the 'Policy' property in AWS::KMS::Key resource. Avoid relying on default key policies. Create a PolicyDocument that specifies which principals can perform which actions on the key, including key administration and usage permissions."
     },
     "CKV_AWS_309": {
         description: "Authorization type for API GatewayV2 routes is not specified",
         priority: "MEDIUM",
-        intent: "Specify authorization type for API Gateway V2 routes by setting the 'AuthorizationType' property in AWS::ApiGatewayV2::Route resource. Use values like 'AWS_IAM', 'JWT', or 'CUSTOM' instead of leaving it unspecified. This ensures proper access control for your API endpoints."
+        remediation: "Specify authorization type for API Gateway V2 routes by setting the 'AuthorizationType' property in AWS::ApiGatewayV2::Route resource. Use values like 'AWS_IAM', 'JWT', or 'CUSTOM' instead of leaving it unspecified. This ensures proper access control for your API endpoints."
     },
     "CKV_AWS_366": {
         description: "AWS Cognito identity pool allows unauthenticated guest access",
         priority: "MEDIUM",
-        intent: "Disable unauthenticated access in Cognito identity pools by setting 'AllowUnauthenticatedIdentities: false' in AWS::Cognito::IdentityPool resource. If guest access is required, implement proper restrictions and monitoring for unauthenticated user actions."
+        remediation: "Disable unauthenticated access in Cognito identity pools by setting 'AllowUnauthenticatedIdentities: false' in AWS::Cognito::IdentityPool resource. If guest access is required, implement proper restrictions and monitoring for unauthenticated user actions."
     },
     "CKV2_AWS_40": {
         description: "AWS IAM policy allows full administrative privileges",
         priority: "MEDIUM",
-        intent: "Avoid creating IAM policies with full administrative privileges. In PolicyDocument of AWS::IAM::Policy, replace statements with \"Effect\": \"Allow\", \"Action\": \"*\", \"Resource\": \"*\" with specific actions and resources. Grant only the minimum permissions required for the intended functionality."
+        remediation: "Avoid creating IAM policies with full administrative privileges. In PolicyDocument of AWS::IAM::Policy, replace statements with \"Effect\": \"Allow\", \"Action\": \"*\", \"Resource\": \"*\" with specific actions and resources. Grant only the minimum permissions required for the intended functionality."
     },
     "CKV_AWS_286": {
         description: "AWS IAM Policy permission may cause privilege escalation",
         priority: "MEDIUM",
-        intent: "Review and restrict IAM policies that may enable privilege escalation. Remove or constrain dangerous action combinations like 'iam:AttachUserPolicy' + 'iam:CreatePolicy', or 'iam:UpdateAssumeRolePolicy' + 'sts:AssumeRole' in PolicyDocument. Add resource constraints and condition blocks to prevent unauthorized privilege escalation."
+        remediation: "Review and restrict IAM policies that may enable privilege escalation. Remove or constrain dangerous action combinations like 'iam:AttachUserPolicy' + 'iam:CreatePolicy', or 'iam:UpdateAssumeRolePolicy' + 'sts:AssumeRole' in PolicyDocument. Add resource constraints and condition blocks to prevent unauthorized privilege escalation."
     },
     "CKV_AWS_33": {
         description: "AWS KMS Key policy overly permissive",
         priority: "MEDIUM",
-        intent: "Restrict KMS key policies to avoid wildcard principals. In the Policy property of AWS::KMS::Key resource, replace \"Principal\": \"*\" with specific principal ARNs, account IDs, or service principals. Use conditions to further restrict access based on request context like source IP or MFA status."
+        remediation: "Restrict KMS key policies to avoid wildcard principals. In the Policy property of AWS::KMS::Key resource, replace \"Principal\": \"*\" with specific principal ARNs, account IDs, or service principals. Use conditions to further restrict access based on request context like source IP or MFA status."
     },
     "CKV2_AWS_43": {
         description: "AWS S3 buckets are accessible to any authenticated user",
         priority: "MEDIUM",
-        intent: "Restrict S3 bucket policies to avoid access by any authenticated user. In bucket policy PolicyDocument, replace \"Principal\": {\"AWS\": \"*\"} with specific principal ARNs or account IDs. Use bucket-level access controls and avoid granting broad access to authenticated users."
+        remediation: "Restrict S3 bucket policies to avoid access by any authenticated user. In bucket policy PolicyDocument, replace \"Principal\": {\"AWS\": \"*\"} with specific principal ARNs or account IDs. Use bucket-level access controls and avoid granting broad access to authenticated users."
     },
     "CKV_AWS_110": {
         description: "IAM policies allow privilege escalation",
         priority: "MEDIUM",
-        intent: "Remove or constrain IAM policy actions that enable privilege escalation. In PolicyDocument, review action combinations that could allow users to escalate their privileges, such as 'iam:CreateRole' + 'iam:AttachRolePolicy'. Add resource constraints and conditions to limit privilege escalation possibilities."
+        remediation: "Remove or constrain IAM policy actions that enable privilege escalation. In PolicyDocument, review action combinations that could allow users to escalate their privileges, such as 'iam:CreateRole' + 'iam:AttachRolePolicy'. Add resource constraints and conditions to limit privilege escalation possibilities."
     },
     "CKV2_AWS_22": {
         description: "IAM User has access to the console",
         priority: "MEDIUM",
-        intent: "Restrict console access for service accounts and automated users. Avoid creating AWS::IAM::LoginProfile resources for users that should only have programmatic access. If console access is required, implement strong password policies and MFA requirements using AWS::IAM::AccountPasswordPolicy and appropriate conditions."
+        remediation: "Restrict console access for service accounts and automated users. Avoid creating AWS::IAM::LoginProfile resources for users that should only have programmatic access. If console access is required, implement strong password policies and MFA requirements using AWS::IAM::AccountPasswordPolicy and appropriate conditions."
     },
     "CKV_AWS_161": {
         description: "RDS database does not have IAM authentication enabled",
         priority: "MEDIUM",
-        intent: "Enable IAM database authentication for RDS instances by setting 'EnableIAMDatabaseAuthentication: true' in AWS::RDS::DBInstance resource. This allows users to authenticate to the database using IAM credentials instead of database passwords, improving security and enabling centralized access management."
+        remediation: "Enable IAM database authentication for RDS instances by setting 'EnableIAMDatabaseAuthentication: true' in AWS::RDS::DBInstance resource. This allows users to authenticate to the database using IAM credentials instead of database passwords, improving security and enabling centralized access management."
     },
     "CKV_AWS_273": {
         description: "Access is not controlled through Single Sign-On (SSO)",
         priority: "LOW",
-        intent: "Implement AWS SSO for centralized access management instead of individual IAM users. Minimize the use of AWS::IAM::User resources for human access and instead configure AWS SSO with appropriate permission sets. This provides better governance and reduces the complexity of managing individual user access."
+        remediation: "Implement AWS SSO for centralized access management instead of individual IAM users. Minimize the use of AWS::IAM::User resources for human access and instead configure AWS SSO with appropriate permission sets. This provides better governance and reduces the complexity of managing individual user access."
     },
     "CKV2_AWS_46": {
         description: "AWS Cloudfront Distribution with S3 have Origin Access set to disabled",
         priority: "LOW",
-        intent: "Configure CloudFront distributions to use Origin Access Control (OAC) or Origin Access Identity (OAI) for S3 origins. In AWS::CloudFront::Distribution resource, set up OriginAccessControlId in the Origin configuration and update the S3 bucket policy to allow access only from CloudFront, preventing direct S3 access."
+        remediation: "Configure CloudFront distributions to use Origin Access Control (OAC) or Origin Access Identity (OAI) for S3 origins. In AWS::CloudFront::Distribution resource, set up OriginAccessControlId in the Origin configuration and update the S3 bucket policy to allow access only from CloudFront, preventing direct S3 access."
     },
     "CKV_AWS_249": {
         description: "AWS Execution Role ARN and Task Role ARN are different in ECS Task definitions",
         priority: "LOW",
-        intent: "Ensure ECS task definitions use separate execution and task roles for better security isolation. In AWS::ECS::TaskDefinition resource, set different IAM roles for 'ExecutionRoleArn' (for ECS agent operations) and 'TaskRoleArn' (for application permissions). This follows the principle of separation of duties."
+        remediation: "Ensure ECS task definitions use separate execution and task roles for better security isolation. In AWS::ECS::TaskDefinition resource, set different IAM roles for 'ExecutionRoleArn' (for ECS agent operations) and 'TaskRoleArn' (for application permissions). This follows the principle of separation of duties."
     },
     "CKV_AWS_12": {
         description: "AWS IAM password policy does not have a number",
         priority: "LOW",
-        intent: "Configure IAM password policy to require numbers by setting 'RequireNumbers: true' in AWS::IAM::AccountPasswordPolicy resource. This enhances password strength by ensuring passwords contain at least one numeric character."
+        remediation: "Configure IAM password policy to require numbers by setting 'RequireNumbers: true' in AWS::IAM::AccountPasswordPolicy resource. This enhances password strength by ensuring passwords contain at least one numeric character."
     },
     "CKV_AWS_1": {
         description: "AWS IAM policies that allow full administrative privileges are created",
         priority: "LOW",
-        intent: "Avoid creating serverless function policies with full administrative privileges. Instead of granting broad permissions, scope IAM roles for Lambda functions to specific actions and resources they need. Use AWS::IAM::Role with PolicyDocument containing only necessary permissions for the function's intended operations."
+        remediation: "Avoid creating serverless function policies with full administrative privileges. Instead of granting broad permissions, scope IAM roles for Lambda functions to specific actions and resources they need. Use AWS::IAM::Role with PolicyDocument containing only necessary permissions for the function's intended operations."
     },
     "CKV_AWS_40": {
         description: "AWS IAM policy attached to users",
         priority: "LOW",
-        intent: "Attach IAM policies to groups or roles instead of directly to users. Avoid using the 'Users' property in AWS::IAM::Policy or 'Policies' property in AWS::IAM::User. Instead, create AWS::IAM::Group resources, attach policies to groups, and add users to groups using 'Groups' property in AWS::IAM::User for better access management."
+        remediation: "Attach IAM policies to groups or roles instead of directly to users. Avoid using the 'Users' property in AWS::IAM::Policy or 'Policies' property in AWS::IAM::User. Instead, create AWS::IAM::Group resources, attach policies to groups, and add users to groups using 'Groups' property in AWS::IAM::User for better access management."
     },
     "CKV_AWS_359": {
         description: "AWS Neptune Cluster not configured with IAM authentication",
         priority: "LOW",
-        intent: "Enable IAM database authentication for Neptune clusters by setting 'IamAuthEnabled: true' in AWS::Neptune::DBCluster resource. This allows applications to authenticate to Neptune using IAM credentials, providing better security and centralized access control."
+        remediation: "Enable IAM database authentication for Neptune clusters by setting 'IamAuthEnabled: true' in AWS::Neptune::DBCluster resource. This allows applications to authenticate to Neptune using IAM credentials, providing better security and centralized access control."
     },
     "CKV2_AWS_52": {
         description: "AWS OpenSearch Fine-grained access control is disabled",
         priority: "LOW",
-        intent: "Enable fine-grained access control for OpenSearch domains by configuring 'AdvancedSecurityOptions' with 'Enabled: true' in AWS::OpenSearchService::Domain resource. Set up internal user database or SAML authentication and define appropriate access policies for enhanced security."
+        remediation: "Enable fine-grained access control for OpenSearch domains by configuring 'AdvancedSecurityOptions' with 'Enabled: true' in AWS::OpenSearchService::Domain resource. Set up internal user database or SAML authentication and define appropriate access policies for enhanced security."
     },
     "CKV_AWS_162": {
         description: "AWS RDS cluster not configured with IAM authentication",
         priority: "LOW",
-        intent: "Enable IAM database authentication for RDS clusters by setting 'EnableIAMDatabaseAuthentication: true' in AWS::RDS::DBCluster resource. This allows applications to authenticate using IAM credentials instead of database passwords, improving security and access management."
+        remediation: "Enable IAM database authentication for RDS clusters by setting 'EnableIAMDatabaseAuthentication: true' in AWS::RDS::DBCluster resource. This allows applications to authenticate using IAM credentials instead of database passwords, improving security and access management."
     },
     "CKV_AWS_107": {
         description: "Credentials exposure actions return credentials in an API response",
         priority: "LOW",
-        intent: "Review and restrict IAM policy actions that can expose credentials in API responses. In PolicyDocument, carefully evaluate actions like 'iam:GetUser', 'secretsmanager:GetSecretValue', 'ssm:GetParameter' and add appropriate resource constraints and conditions to prevent unauthorized credential exposure."
+        remediation: "Review and restrict IAM policy actions that can expose credentials in API responses. In PolicyDocument, carefully evaluate actions like 'iam:GetUser', 'secretsmanager:GetSecretValue', 'ssm:GetParameter' and add appropriate resource constraints and conditions to prevent unauthorized credential exposure."
     },
     "CKV_AWS_108": {
         description: "Data exfiltration allowed without resource constraints",
         priority: "LOW",
-        intent: "Add resource constraints to IAM policies that allow data access actions. In PolicyDocument, scope actions like 's3:GetObject', 'dynamodb:Scan', 'rds:CreateDBSnapshot' to specific resources using resource ARNs instead of wildcards. Implement conditions to limit when these actions can be performed."
+        remediation: "Add resource constraints to IAM policies that allow data access actions. In PolicyDocument, scope actions like 's3:GetObject', 'dynamodb:Scan', 'rds:CreateDBSnapshot' to specific resources using resource ARNs instead of wildcards. Implement conditions to limit when these actions can be performed."
     },
     "CKV_AWS_128": {
         description: "IAM authentication for Amazon RDS clusters is disabled",
         priority: "LOW",
-        intent: "Enable IAM database authentication for RDS clusters by setting 'EnableIAMDatabaseAuthentication: true' in AWS::RDS::DBCluster resource. Configure database users to use IAM authentication and update application code to use IAM credentials for database connections."
+        remediation: "Enable IAM database authentication for RDS clusters by setting 'EnableIAMDatabaseAuthentication: true' in AWS::RDS::DBCluster resource. Configure database users to use IAM authentication and update application code to use IAM credentials for database connections."
     },
     "CKV2_AWS_21": {
         description: "Not all IAM users are members of at least one IAM group",
         priority: "LOW",
-        intent: "Ensure all IAM users belong to at least one IAM group by adding 'Groups' property to AWS::IAM::User resources. Create AWS::IAM::Group resources with appropriate policies and assign users to these groups instead of attaching policies directly to users for better access management."
+        remediation: "Ensure all IAM users belong to at least one IAM group by adding 'Groups' property to AWS::IAM::User resources. Create AWS::IAM::Group resources with appropriate policies and assign users to these groups instead of attaching policies directly to users for better access management."
     },
     "CKV_AWS_109": {
         description: "Resource exposure allows modification of policies and exposes resources",
         priority: "LOW",
-        intent: "Add constraints to IAM policies that allow policy modification actions. In PolicyDocument, scope actions like 'iam:PutUserPolicy', 'iam:AttachRolePolicy', 's3:PutBucketPolicy' to specific resources and add conditions to prevent unauthorized resource exposure or policy modifications."
+        remediation: "Add constraints to IAM policies that allow policy modification actions. In PolicyDocument, scope actions like 'iam:PutUserPolicy', 'iam:AttachRolePolicy', 's3:PutBucketPolicy' to specific resources and add conditions to prevent unauthorized resource exposure or policy modifications."
     },
     "CKV_AWS_129": {
         description: "Respective logs of Amazon RDS are disabled",
         priority: "LOW",
-        intent: "Enable appropriate database logging for RDS instances by setting 'EnableCloudwatchLogsExports' property in AWS::RDS::DBInstance resource. Include relevant log types such as 'error', 'general', 'slow-query' for MySQL, or 'postgresql' for PostgreSQL to ensure proper audit logging and monitoring."
+        remediation: "Enable appropriate database logging for RDS instances by setting 'EnableCloudwatchLogsExports' property in AWS::RDS::DBInstance resource. Include relevant log types such as 'error', 'general', 'slow-query' for MySQL, or 'postgresql' for PostgreSQL to ensure proper audit logging and monitoring."
     },
     "CKV_AWS_111": {
         description: "Write access allowed without constraint",
         priority: "LOW",
-        intent: "Add resource constraints to IAM policies with write permissions. In PolicyDocument, scope write actions to specific resources instead of using wildcards. For example, replace \"s3:PutObject\" with \"*\" resource with specific bucket ARNs like \"arn:aws:s3:::mybucket/*\" to limit write access scope."
+        remediation: "Add resource constraints to IAM policies with write permissions. In PolicyDocument, scope write actions to specific resources instead of using wildcards. For example, replace \"s3:PutObject\" with \"*\" resource with specific bucket ARNs like \"arn:aws:s3:::mybucket/*\" to limit write access scope."
     },
     "CKV2_AWS_41": {
         description: "AWS EC2 Instance IAM Role not enabled",
         priority: "INFO",
-        intent: "Attach IAM roles to EC2 instances for secure AWS API access by setting 'IamInstanceProfile' property in AWS::EC2::Instance resource. Create AWS::IAM::InstanceProfile and AWS::IAM::Role resources with appropriate permissions instead of using hardcoded credentials or access keys on EC2 instances."
+        remediation: "Attach IAM roles to EC2 instances for secure AWS API access by setting 'IamInstanceProfile' property in AWS::EC2::Instance resource. Create AWS::IAM::InstanceProfile and AWS::IAM::Role resources with appropriate permissions instead of using hardcoded credentials or access keys on EC2 instances."
     },
     "CKV2_AWS_14": {
         description: "AWS IAM group not in use",
         priority: "INFO",
-        intent: "Ensure IAM groups have at least one user member or remove unused groups. Either add users to AWS::IAM::Group by setting 'GroupName' in AWS::IAM::UserToGroupAddition resource, or remove unused AWS::IAM::Group resources to maintain clean IAM configuration and avoid confusion."
+        remediation: "Ensure IAM groups have at least one user member or remove unused groups. Either add users to AWS::IAM::Group by setting 'GroupName' in AWS::IAM::UserToGroupAddition resource, or remove unused AWS::IAM::Group resources to maintain clean IAM configuration and avoid confusion."
     },
     "CKV_AWS_9": {
         description: "AWS IAM password policy does not expire in 90 days",
         priority: "INFO",
-        intent: "Configure IAM password policy to require password expiration by setting 'MaxPasswordAge' property to 90 (or desired number of days) in AWS::IAM::AccountPasswordPolicy resource. This ensures regular password rotation and reduces the risk of compromised credentials."
+        remediation: "Configure IAM password policy to require password expiration by setting 'MaxPasswordAge' property to 90 (or desired number of days) in AWS::IAM::AccountPasswordPolicy resource. This ensures regular password rotation and reduces the risk of compromised credentials."
     },
     "CKV_AWS_11": {
         description: "AWS IAM password policy does not have a lowercase character",
         priority: "INFO",
-        intent: "Configure IAM password policy to require lowercase characters by setting 'RequireLowercaseCharacters: true' in AWS::IAM::AccountPasswordPolicy resource. This enhances password complexity and security."
+        remediation: "Configure IAM password policy to require lowercase characters by setting 'RequireLowercaseCharacters: true' in AWS::IAM::AccountPasswordPolicy resource. This enhances password complexity and security."
     },
     "CKV_AWS_10": {
         description: "AWS IAM password policy does not have a minimum of 14 characters",
         priority: "INFO",
-        intent: "Configure IAM password policy with minimum length by setting 'MinimumPasswordLength' property to 14 (or higher) in AWS::IAM::AccountPasswordPolicy resource. Longer passwords provide better protection against brute force attacks."
+        remediation: "Configure IAM password policy with minimum length by setting 'MinimumPasswordLength' property to 14 (or higher) in AWS::IAM::AccountPasswordPolicy resource. Longer passwords provide better protection against brute force attacks."
     },
     "CKV_AWS_14": {
         description: "AWS IAM password policy does not have a symbol",
         priority: "INFO",
-        intent: "Configure IAM password policy to require symbols by setting 'RequireSymbols: true' in AWS::IAM::AccountPasswordPolicy resource. This increases password complexity and enhances security against password attacks."
+        remediation: "Configure IAM password policy to require symbols by setting 'RequireSymbols: true' in AWS::IAM::AccountPasswordPolicy resource. This increases password complexity and enhances security against password attacks."
     },
     "CKV_AWS_15": {
         description: "AWS IAM password policy does not have an uppercase character",
         priority: "INFO",
-        intent: "Configure IAM password policy to require uppercase characters by setting 'RequireUppercaseCharacters: true' in AWS::IAM::AccountPasswordPolicy resource. This enhances password strength by ensuring character diversity."
+        remediation: "Configure IAM password policy to require uppercase characters by setting 'RequireUppercaseCharacters: true' in AWS::IAM::AccountPasswordPolicy resource. This enhances password strength by ensuring character diversity."
     },
     "CKV_AWS_72": {
         description: "SQS policy allows all actions",
         priority: "INFO",
-        intent: "Restrict SQS queue policies to specific actions instead of allowing all actions. In the PolicyDocument of AWS::SQS::QueuePolicy resource, replace \"Action\": \"sqs:*\" with specific actions like [\"sqs:SendMessage\", \"sqs:ReceiveMessage\"] that align with the intended use case. Add appropriate resource and condition constraints."
+        remediation: "Restrict SQS queue policies to specific actions instead of allowing all actions. In the PolicyDocument of AWS::SQS::QueuePolicy resource, replace \"Action\": \"sqs:*\" with specific actions like [\"sqs:SendMessage\", \"sqs:ReceiveMessage\"] that align with the intended use case. Add appropriate resource and condition constraints."
     },
     // **** KUBERNETES POLICIES ****
     "CKV_AWS_100": {
         description: "AWS EKS node group have implicit SSH access from 0.0.0.0/0",
         priority: "HIGH",
-        intent: "Restrict SSH access to EKS node groups by configuring the RemoteAccess property in AWS::EKS::Nodegroup resource. Either remove the RemoteAccess configuration entirely to disable SSH access, or if SSH access is required, specify 'SourceSecurityGroups' with specific security group IDs instead of allowing access from 0.0.0.0/0. This prevents unauthorized internet-based SSH access to your EKS worker nodes."
+        remediation: "Restrict SSH access to EKS node groups by configuring the RemoteAccess property in AWS::EKS::Nodegroup resource. Either remove the RemoteAccess configuration entirely to disable SSH access, or if SSH access is required, specify 'SourceSecurityGroups' with specific security group IDs instead of allowing access from 0.0.0.0/0. This prevents unauthorized internet-based SSH access to your EKS worker nodes."
     },
     "CKV_AWS_339": {
         description: "EKS clusters are not running on a supported Kubernetes version",
         priority: "HIGH",
-        intent: "Update EKS cluster to a supported Kubernetes version by setting the 'Version' property in AWS::EKS::Cluster resource to a currently supported version (e.g., '1.28', '1.27', '1.26'). AWS regularly deprecates older Kubernetes versions, so ensure you're running on a version that receives security updates and support. Plan regular upgrades to stay current with supported versions."
+        remediation: "Update EKS cluster to a supported Kubernetes version by setting the 'Version' property in AWS::EKS::Cluster resource to a currently supported version (e.g., '1.28', '1.27', '1.26'). AWS regularly deprecates older Kubernetes versions, so ensure you're running on a version that receives security updates and support. Plan regular upgrades to stay current with supported versions."
     },
     "CKV_AWS_58": {
         description: "AWS EKS cluster does not have secrets encryption enabled",
         priority: "MEDIUM",
-        intent: "Enable secrets encryption for EKS cluster by configuring the 'EncryptionConfig' property in AWS::EKS::Cluster resource. Set 'Resources' to include 'secrets' and specify a 'Provider' with a KMS key ARN. This encrypts Kubernetes secrets stored in etcd using AWS KMS, protecting sensitive information like passwords and API keys from unauthorized access."
+        remediation: "Enable secrets encryption for EKS cluster by configuring the 'EncryptionConfig' property in AWS::EKS::Cluster resource. Set 'Resources' to include 'secrets' and specify a 'Provider' with a KMS key ARN. This encrypts Kubernetes secrets stored in etcd using AWS KMS, protecting sensitive information like passwords and API keys from unauthorized access."
     },
     "CKV_AWS_39": {
         description: "AWS EKS cluster endpoint access publicly enabled",
         priority: "LOW",
-        intent: "Restrict EKS cluster endpoint access by configuring 'ResourcesVpcConfig' property in AWS::EKS::Cluster resource. Set 'EndpointConfigPublic' to false to disable public access, or if public access is required, use 'PublicAccessCidrs' to specify allowed IP ranges instead of 0.0.0.0/0. Consider enabling private endpoint access with 'EndpointConfigPrivate: true' for internal cluster communication."
+        remediation: "Restrict EKS cluster endpoint access by configuring 'ResourcesVpcConfig' property in AWS::EKS::Cluster resource. Set 'EndpointConfigPublic' to false to disable public access, or if public access is required, use 'PublicAccessCidrs' to specify allowed IP ranges instead of 0.0.0.0/0. Consider enabling private endpoint access with 'EndpointConfigPrivate: true' for internal cluster communication."
     },
     "CKV_AWS_38": {
         description: "AWS EKS cluster security group overly permissive to all traffic",
         priority: "LOW",
-        intent: "Configure EKS cluster with restricted public access CIDR blocks by setting 'PublicAccessCidrs' property in the ResourcesVpcConfig of AWS::EKS::Cluster resource. Replace overly broad ranges like '0.0.0.0/0' with specific IP ranges or CIDR blocks that represent your organization's networks. This limits which networks can access the EKS API server endpoint."
+        remediation: "Configure EKS cluster with restricted public access CIDR blocks by setting 'PublicAccessCidrs' property in the ResourcesVpcConfig of AWS::EKS::Cluster resource. Replace overly broad ranges like '0.0.0.0/0' with specific IP ranges or CIDR blocks that represent your organization's networks. This limits which networks can access the EKS API server endpoint."
     },
     "CKV_AWS_37": {
         description: "AWS EKS control plane logging disabled",
         priority: "INFO",
-        intent: "Enable EKS control plane logging by configuring the 'Logging' property in AWS::EKS::Cluster resource. Set 'ClusterLogging' with 'Types' array containing relevant log types such as ['api', 'audit', 'authenticator', 'controllerManager', 'scheduler'] and 'Enabled: true'. This provides valuable diagnostic information for troubleshooting, security auditing, and monitoring cluster activities."
+        remediation: "Enable EKS control plane logging by configuring the 'Logging' property in AWS::EKS::Cluster resource. Set 'ClusterLogging' with 'Types' array containing relevant log types such as ['api', 'audit', 'authenticator', 'controllerManager', 'scheduler'] and 'Enabled: true'. This provides valuable diagnostic information for troubleshooting, security auditing, and monitoring cluster activities."
     },
     // **** LOGGING POLICIES ****
     "CKV_AWS_101": {
         description: "Neptune logging is not enabled",
         priority: "HIGH",
-        intent: "Enable Neptune cluster logging by setting 'EnableCloudwatchLogsExports' property to ['audit'] in AWS::Neptune::DBCluster resource. This captures database activities for auditing, monitoring, and compliance requirements, providing visibility into database operations and access patterns."
+        remediation: "Enable Neptune cluster logging by setting 'EnableCloudwatchLogsExports' property to ['audit'] in AWS::Neptune::DBCluster resource. This captures database activities for auditing, monitoring, and compliance requirements, providing visibility into database operations and access patterns."
     },
     "CKV_AWS_48": {
         description: "Amazon MQ Broker logging is not enabled",
         priority: "MEDIUM",
-        intent: "Enable MQ broker logging by configuring 'Logs' property in AWS::AmazonMQ::Broker resource. Set 'Audit: true' and 'General: true' to enable audit and general logging respectively. This provides visibility into broker activities, message flows, and security events for monitoring and compliance purposes."
+        remediation: "Enable MQ broker logging by configuring 'Logs' property in AWS::AmazonMQ::Broker resource. Set 'Audit: true' and 'General: true' to enable audit and general logging respectively. This provides visibility into broker activities, message flows, and security events for monitoring and compliance purposes."
     },
     "CKV_AWS_80": {
         description: "Amazon MSK cluster logging is not enabled",
         priority: "MEDIUM",
-        intent: "Enable MSK cluster logging by configuring 'LoggingInfo' property in AWS::MSK::Cluster resource. Set 'BrokerLogs' with destinations like CloudWatchLogs (Enabled: true, LogGroup), Firehose (Enabled: true, DeliveryStream), or S3 (Enabled: true, Bucket, Prefix) to capture broker logs for monitoring and troubleshooting."
+        remediation: "Enable MSK cluster logging by configuring 'LoggingInfo' property in AWS::MSK::Cluster resource. Set 'BrokerLogs' with destinations like CloudWatchLogs (Enabled: true, LogGroup), Firehose (Enabled: true, DeliveryStream), or S3 (Enabled: true, Bucket, Prefix) to capture broker logs for monitoring and troubleshooting."
     },
     "CKV2_AWS_61": {
         description: "An S3 bucket must have a lifecycle configuration",
         priority: "MEDIUM",
-        intent: "Configure S3 bucket lifecycle policy by adding 'LifecycleConfiguration' property in AWS::S3::Bucket resource. Define rules for transitioning objects to different storage classes or expiring old objects. This helps manage storage costs and ensures proper data retention practices."
+        remediation: "Configure S3 bucket lifecycle policy by adding 'LifecycleConfiguration' property in AWS::S3::Bucket resource. Define rules for transitioning objects to different storage classes or expiring old objects. This helps manage storage costs and ensures proper data retention practices."
     },
     "CKV_AWS_121": {
         description: "AWS config is not enabled in all regions",
         priority: "MEDIUM",
-        intent: "Enable AWS Config in all regions by creating AWS::Config::ConfigurationAggregator resource with 'AllAwsRegions: true' in AccountAggregationSources, or specify individual regions in AwsRegions. This provides centralized compliance monitoring across all AWS regions."
+        remediation: "Enable AWS Config in all regions by creating AWS::Config::ConfigurationAggregator resource with 'AllAwsRegions: true' in AccountAggregationSources, or specify individual regions in AwsRegions. This provides centralized compliance monitoring across all AWS regions."
     },
     "CKV_AWS_85": {
         description: "AWS DocumentDB logging is not enabled",
         priority: "MEDIUM",
-        intent: "Enable DocumentDB logging by setting 'EnableCloudwatchLogsExports' property to ['audit', 'profiler'] in AWS::DocDB::DBCluster resource. This enables audit logging for security monitoring and profiler logging for performance analysis and troubleshooting."
+        remediation: "Enable DocumentDB logging by setting 'EnableCloudwatchLogsExports' property to ['audit', 'profiler'] in AWS::DocDB::DBCluster resource. This enables audit logging for security monitoring and profiler logging for performance analysis and troubleshooting."
     },
     "CKV_AWS_126": {
         description: "AWS EC2 instance detailed monitoring disabled",
         priority: "MEDIUM",
-        intent: "Enable EC2 detailed monitoring by setting 'Monitoring: true' property in AWS::EC2::Instance resource. This provides CloudWatch metrics at 1-minute intervals instead of the default 5-minute intervals, enabling faster detection of performance issues and more granular monitoring."
+        remediation: "Enable EC2 detailed monitoring by setting 'Monitoring: true' property in AWS::EC2::Instance resource. This provides CloudWatch metrics at 1-minute intervals instead of the default 5-minute intervals, enabling faster detection of performance issues and more granular monitoring."
     },
     "CKV_AWS_317": {
         description: "Elasticsearch Domain Audit Logging is disabled",
         priority: "MEDIUM",
-        intent: "Enable Elasticsearch audit logging by configuring 'LogPublishingOptions' property in AWS::Elasticsearch::Domain resource. Add 'AUDIT_LOGS' with 'CloudWatchLogsLogGroupArn' and 'Enabled: true' to capture user authentication, authorization, and index operations for security monitoring."
+        remediation: "Enable Elasticsearch audit logging by configuring 'LogPublishingOptions' property in AWS::Elasticsearch::Domain resource. Add 'AUDIT_LOGS' with 'CloudWatchLogsLogGroupArn' and 'Enabled: true' to capture user authentication, authorization, and index operations for security monitoring."
     },
     "CKV_AWS_285": {
         description: "Execution history logging is not enabled on the State Machine",
         priority: "MEDIUM",
-        intent: "Enable Step Functions execution history logging by configuring 'LoggingConfiguration' property in AWS::StepFunctions::StateMachine resource. Set 'Level' to 'ALL' or 'ERROR', 'IncludeExecutionData: true', and specify 'Destinations' with CloudWatch Logs group ARN for comprehensive execution monitoring."
+        remediation: "Enable Step Functions execution history logging by configuring 'LoggingConfiguration' property in AWS::StepFunctions::StateMachine resource. Set 'Level' to 'ALL' or 'ERROR', 'IncludeExecutionData: true', and specify 'Destinations' with CloudWatch Logs group ARN for comprehensive execution monitoring."
     },
     "CKV_AWS_324": {
         description: "RDS Cluster log capture is disabled",
         priority: "MEDIUM",
-        intent: "Enable RDS cluster log exports by setting 'EnableCloudwatchLogsExports' property in AWS::RDS::DBCluster resource. Include relevant log types such as ['audit', 'error', 'general', 'slowquery'] for MySQL or ['postgresql'] for PostgreSQL to capture database activities and performance data."
+        remediation: "Enable RDS cluster log exports by setting 'EnableCloudwatchLogsExports' property in AWS::RDS::DBCluster resource. Include relevant log types such as ['audit', 'error', 'general', 'slowquery'] for MySQL or ['postgresql'] for PostgreSQL to capture database activities and performance data."
     },
     "CKV_AWS_76": {
         description: "API Gateway does not have access logging enabled",
         priority: "LOW",
-        intent: "Enable API Gateway access logging by configuring 'AccessLogSetting' property in AWS::ApiGateway::Stage resource. Set 'DestinationArn' to a CloudWatch Logs group ARN and define 'Format' with desired log format including request ID, IP, user agent, and response metrics for API monitoring and analytics."
+        remediation: "Enable API Gateway access logging by configuring 'AccessLogSetting' property in AWS::ApiGateway::Stage resource. Set 'DestinationArn' to a CloudWatch Logs group ARN and define 'Format' with desired log format including request ID, IP, user agent, and response metrics for API monitoring and analytics."
     },
     "CKV_AWS_73": {
         description: "API Gateway does not have X-Ray tracing enabled",
         priority: "LOW",
-        intent: "Enable API Gateway X-Ray tracing by setting 'TracingEnabled: true' property in AWS::ApiGateway::Stage resource. This provides distributed tracing capabilities to analyze request flows, identify performance bottlenecks, and troubleshoot issues across your API and downstream services."
+        remediation: "Enable API Gateway X-Ray tracing by setting 'TracingEnabled: true' property in AWS::ApiGateway::Stage resource. This provides distributed tracing capabilities to analyze request flows, identify performance bottlenecks, and troubleshoot issues across your API and downstream services."
     },
     "CKV2_AWS_4": {
         description: "API Gateway stage does not have logging level defined appropriately",
         priority: "LOW",
-        intent: "Configure appropriate API Gateway logging levels by setting 'MethodSettings' property in AWS::ApiGateway::Stage resource. Define 'LoggingLevel' as 'ERROR' or 'INFO' and 'DataTraceEnabled: true' for comprehensive API request and response logging to aid in debugging and monitoring."
+        remediation: "Configure appropriate API Gateway logging levels by setting 'MethodSettings' property in AWS::ApiGateway::Stage resource. Define 'LoggingLevel' as 'ERROR' or 'INFO' and 'DataTraceEnabled: true' for comprehensive API request and response logging to aid in debugging and monitoring."
     },
     "CKV_AWS_118": {
         description: "AWS Amazon RDS instances Enhanced Monitoring is disabled",
         priority: "LOW",
-        intent: "Enable RDS Enhanced Monitoring by setting 'MonitoringInterval' property to a value between 1-60 seconds and 'MonitoringRoleArn' to an appropriate IAM role in AWS::RDS::DBInstance resource. This provides real-time operating system metrics for detailed performance monitoring."
+        remediation: "Enable RDS Enhanced Monitoring by setting 'MonitoringInterval' property to a value between 1-60 seconds and 'MonitoringRoleArn' to an appropriate IAM role in AWS::RDS::DBInstance resource. This provides real-time operating system metrics for detailed performance monitoring."
     },
     "CKV_AWS_95": {
         description: "AWS API Gateway V2 has Access Logging is disabled",
         priority: "LOW",
-        intent: "Enable API Gateway V2 access logging by configuring 'AccessLogSettings' property in AWS::ApiGatewayV2::Stage resource. Set 'DestinationArn' to a CloudWatch Logs group and define 'Format' with request details like requestId, ip, requestTime, and status for comprehensive API monitoring."
+        remediation: "Enable API Gateway V2 access logging by configuring 'AccessLogSettings' property in AWS::ApiGatewayV2::Stage resource. Set 'DestinationArn' to a CloudWatch Logs group and define 'Format' with request details like requestId, ip, requestTime, and status for comprehensive API monitoring."
     },
     "CKV_AWS_124": {
         description: "AWS CloudFormation stack configured without SNS topic",
         priority: "LOW",
-        intent: "Configure CloudFormation stack notifications by setting 'NotificationARNs' property in AWS::CloudFormation::Stack resource with SNS topic ARNs. This enables notifications for stack events like creation, updates, and failures for better operational awareness and incident response."
+        remediation: "Configure CloudFormation stack notifications by setting 'NotificationARNs' property in AWS::CloudFormation::Stack resource with SNS topic ARNs. This enables notifications for stack events like creation, updates, and failures for better operational awareness and incident response."
     },
     "CKV_AWS_36": {
         description: "AWS CloudTrail log validation is not enabled in all regions",
         priority: "LOW",
-        intent: "Enable CloudTrail log file validation by setting 'EnableLogFileValidation: true' property in AWS::CloudTrail::Trail resource. This enables log file integrity validation using cryptographic hash to detect tampering or corruption of CloudTrail log files."
+        remediation: "Enable CloudTrail log file validation by setting 'EnableLogFileValidation: true' property in AWS::CloudTrail::Trail resource. This enables log file integrity validation using cryptographic hash to detect tampering or corruption of CloudTrail log files."
     },
     "CKV_AWS_66": {
         description: "AWS CloudWatch Log groups not configured with definite retention days",
         priority: "LOW",
-        intent: "Configure CloudWatch Log Group retention by setting 'RetentionInDays' property in AWS::Logs::LogGroup resource to a specific value (e.g., 30, 90, 365, 3653) instead of indefinite retention. This helps manage storage costs and ensures compliance with data retention policies."
+        remediation: "Configure CloudWatch Log Group retention by setting 'RetentionInDays' property in AWS::Logs::LogGroup resource to a specific value (e.g., 30, 90, 365, 3653) instead of indefinite retention. This helps manage storage costs and ensures compliance with data retention policies."
     },
     "CKV_AWS_65": {
         description: "AWS ECS cluster with container insights feature disabled",
         priority: "LOW",
-        intent: "Enable ECS Container Insights by adding 'ClusterSettings' property in AWS::ECS::Cluster resource with 'Name: containerInsights' and 'Value: enabled'. This provides enhanced monitoring metrics and logs for containers, tasks, and services for better observability."
+        remediation: "Enable ECS Container Insights by adding 'ClusterSettings' property in AWS::ECS::Cluster resource with 'Name: containerInsights' and 'Value: enabled'. This provides enhanced monitoring metrics and logs for containers, tasks, and services for better observability."
     },
     "CKV_AWS_333": {
         description: "AWS ECS services have automatic public IP address assignment enabled",
         priority: "LOW",
-        intent: "Disable automatic public IP assignment for ECS services by setting 'AssignPublicIp: DISABLED' in NetworkConfiguration of AWS::ECS::Service resource. This improves security by preventing direct internet access to ECS tasks unless explicitly required."
+        remediation: "Disable automatic public IP assignment for ECS services by setting 'AssignPublicIp: DISABLED' in NetworkConfiguration of AWS::ECS::Service resource. This improves security by preventing direct internet access to ECS tasks unless explicitly required."
     },
     "CKV_AWS_176": {
         description: "AWS WAF Web Access Control Lists logging is disabled",
         priority: "LOW",
-        intent: "Enable WAF Classic logging by creating AWS::WAF::LoggingConfiguration resource with 'ResourceArn' pointing to the Web ACL and 'LogDestinationConfigs' specifying Kinesis Data Firehose delivery stream ARNs. This captures web traffic patterns and security events for analysis."
+        remediation: "Enable WAF Classic logging by creating AWS::WAF::LoggingConfiguration resource with 'ResourceArn' pointing to the Web ACL and 'LogDestinationConfigs' specifying Kinesis Data Firehose delivery stream ARNs. This captures web traffic patterns and security events for analysis."
     },
     "CKV2_AWS_31": {
         description: "AWS WAF2 does not have a Logging Configuration",
         priority: "LOW",
-        intent: "Enable WAFv2 logging by creating AWS::WAFv2::LoggingConfiguration resource with 'ResourceArn' pointing to the Web ACL and 'LogDestinationConfigs' specifying destinations like CloudWatch Logs, S3, or Kinesis Data Firehose for comprehensive web traffic monitoring."
+        remediation: "Enable WAFv2 logging by creating AWS::WAFv2::LoggingConfiguration resource with 'ResourceArn' pointing to the Web ACL and 'LogDestinationConfigs' specifying destinations like CloudWatch Logs, S3, or Kinesis Data Firehose for comprehensive web traffic monitoring."
     },
     "CKV_AWS_276": {
         description: "Data Trace is not enabled in the API Gateway Method Settings",
         priority: "LOW",
-        intent: "Enable API Gateway data trace logging by setting 'DataTraceEnabled: true' in MethodSettings of AWS::ApiGateway::Stage resource. This captures full request and response data for detailed debugging and API behavior analysis, useful for development and troubleshooting."
+        remediation: "Enable API Gateway data trace logging by setting 'DataTraceEnabled: true' in MethodSettings of AWS::ApiGateway::Stage resource. This captures full request and response data for detailed debugging and API behavior analysis, useful for development and troubleshooting."
     },
     "CKV2_AWS_39": {
         description: "Domain Name System (DNS) query logging is not enabled for Amazon Route 53 hosted zones",
         priority: "LOW",
-        intent: "Enable Route 53 DNS query logging by creating AWS::Route53::QueryLoggingConfig resource with 'HostedZoneId' and 'CloudWatchLogsLogGroupArn'. This captures DNS queries made to the hosted zone for security monitoring, troubleshooting, and usage analytics."
+        remediation: "Enable Route 53 DNS query logging by creating AWS::Route53::QueryLoggingConfig resource with 'HostedZoneId' and 'CloudWatchLogsLogGroupArn'. This captures DNS queries made to the hosted zone for security monitoring, troubleshooting, and usage analytics."
     },
     "CKV_AWS_75": {
         description: "Global Accelerator does not have Flow logs enabled",
         priority: "LOW",
-        intent: "Enable Global Accelerator flow logs by setting 'Enabled: true' in FlowLogsConfig property of AWS::GlobalAccelerator::Accelerator resource. Specify 'FlowLogsS3Bucket' and 'FlowLogsS3Prefix' to capture network flow information for performance analysis and troubleshooting."
+        remediation: "Enable Global Accelerator flow logs by setting 'Enabled: true' in FlowLogsConfig property of AWS::GlobalAccelerator::Accelerator resource. Specify 'FlowLogsS3Bucket' and 'FlowLogsS3Prefix' to capture network flow information for performance analysis and troubleshooting."
     },
     "CKV_AWS_325": {
         description: "RDS Cluster audit logging for MySQL engine is disabled",
         priority: "LOW",
-        intent: "Enable MySQL RDS cluster audit logging by setting 'EnableCloudwatchLogsExports' property to include 'audit' in AWS::RDS::DBCluster resource. Also configure the cluster parameter group with server_audit_logging=1 and appropriate server_audit_events for comprehensive database activity monitoring."
+        remediation: "Enable MySQL RDS cluster audit logging by setting 'EnableCloudwatchLogsExports' property to include 'audit' in AWS::RDS::DBCluster resource. Also configure the cluster parameter group with server_audit_logging=1 and appropriate server_audit_events for comprehensive database activity monitoring."
     },
     "CKV_AWS_353": {
         description: "RDS instances have performance insights disabled",
         priority: "LOW",
-        intent: "Enable RDS Performance Insights by setting 'EnablePerformanceInsights: true' and 'PerformanceInsightsRetentionPeriod' to desired retention days (7 or 731) in AWS::RDS::DBInstance resource. Optionally set 'PerformanceInsightsKMSKeyId' for encryption to gain detailed database performance monitoring."
+        remediation: "Enable RDS Performance Insights by setting 'EnablePerformanceInsights: true' and 'PerformanceInsightsRetentionPeriod' to desired retention days (7 or 731) in AWS::RDS::DBInstance resource. Optionally set 'PerformanceInsightsKMSKeyId' for encryption to gain detailed database performance monitoring."
     },
     "CKV2_AWS_62": {
         description: "S3 buckets do not have event notifications enabled",
         priority: "LOW",
-        intent: "Configure S3 event notifications by adding 'NotificationConfiguration' property in AWS::S3::Bucket resource. Define TopicConfigurations, QueueConfigurations, or LambdaConfigurations with appropriate events like 's3:ObjectCreated:*' to trigger notifications for bucket activities and automated workflows."
+        remediation: "Configure S3 event notifications by adding 'NotificationConfiguration' property in AWS::S3::Bucket resource. Define TopicConfigurations, QueueConfigurations, or LambdaConfigurations with appropriate events like 's3:ObjectCreated:*' to trigger notifications for bucket activities and automated workflows."
     },
     "CKV_AWS_284": {
         description: "State machine does not have X-ray tracing enabled",
         priority: "LOW",
-        intent: "Enable Step Functions X-Ray tracing by setting 'TracingConfiguration' property with 'Enabled: true' in AWS::StepFunctions::StateMachine resource. This provides distributed tracing capabilities to analyze execution flows, identify performance bottlenecks, and troubleshoot state machine workflows."
+        remediation: "Enable Step Functions X-Ray tracing by setting 'TracingConfiguration' property with 'Enabled: true' in AWS::StepFunctions::StateMachine resource. This provides distributed tracing capabilities to analyze execution flows, identify performance bottlenecks, and troubleshoot state machine workflows."
     },
     "CKV_AWS_86": {
         description: "AWS CloudFront distribution with access logging disabled",
         priority: "INFO",
-        intent: "Enable CloudFront access logging by configuring 'Logging' property in AWS::CloudFront::Distribution resource. Set 'Bucket' to S3 bucket name, optionally set 'Prefix' for log file organization, and 'IncludeCookies: false' to capture request logs for analytics, monitoring, and troubleshooting."
+        remediation: "Enable CloudFront access logging by configuring 'Logging' property in AWS::CloudFront::Distribution resource. Set 'Bucket' to S3 bucket name, optionally set 'Prefix' for log file organization, and 'IncludeCookies: false' to capture request logs for analytics, monitoring, and troubleshooting."
     },
     "CKV_AWS_67": {
         description: "AWS CloudTrail is not enabled with multi trail and not capturing all management events",
         priority: "INFO",
-        intent: "Configure CloudTrail for comprehensive logging by setting 'IsMultiRegionTrail: true', 'IncludeGlobalServiceEvents: true', and 'IsLogging: true' in AWS::CloudTrail::Trail resource. Configure EventSelectors to capture all management events with 'ReadWriteType: All' and 'IncludeManagementEvents: true'."
+        remediation: "Configure CloudTrail for comprehensive logging by setting 'IsMultiRegionTrail: true', 'IncludeGlobalServiceEvents: true', and 'IsLogging: true' in AWS::CloudTrail::Trail resource. Configure EventSelectors to capture all management events with 'ReadWriteType: All' and 'IncludeManagementEvents: true'."
     },
     "CKV_AWS_35": {
         description: "AWS CloudTrail logs are not encrypted using Customer Master Keys (CMKs)",
         priority: "INFO",
-        intent: "Enable CloudTrail log encryption by setting 'KMSKeyId' property with a customer-managed KMS key ARN in AWS::CloudTrail::Trail resource. This encrypts CloudTrail logs at rest using your own KMS key, providing enhanced security and control over access to audit logs."
+        remediation: "Enable CloudTrail log encryption by setting 'KMSKeyId' property with a customer-managed KMS key ARN in AWS::CloudTrail::Trail resource. This encrypts CloudTrail logs at rest using your own KMS key, providing enhanced security and control over access to audit logs."
     },
     "CKV2_AWS_10": {
         description: "AWS CloudTrail trail logs is not integrated with CloudWatch Log",
         priority: "INFO",
-        intent: "Integrate CloudTrail with CloudWatch Logs by setting 'CloudWatchLogsLogGroupArn' and 'CloudWatchLogsRoleArn' properties in AWS::CloudTrail::Trail resource. This enables real-time log monitoring, alerting, and analysis of AWS API calls through CloudWatch Logs."
+        remediation: "Integrate CloudTrail with CloudWatch Logs by setting 'CloudWatchLogsLogGroupArn' and 'CloudWatchLogsRoleArn' properties in AWS::CloudTrail::Trail resource. This enables real-time log monitoring, alerting, and analysis of AWS API calls through CloudWatch Logs."
     },
     "CKV_AWS_338": {
         description: "AWS CloudWatch log groups retention set to less than 365 days",
         priority: "INFO",
-        intent: "Configure CloudWatch Log Groups with adequate retention by setting 'RetentionInDays' property to 365 or higher in AWS::Logs::LogGroup resource. This ensures logs are retained for sufficient time for compliance, audit, and historical analysis requirements."
+        remediation: "Configure CloudWatch Log Groups with adequate retention by setting 'RetentionInDays' property to 365 or higher in AWS::Logs::LogGroup resource. This ensures logs are retained for sufficient time for compliance, audit, and historical analysis requirements."
     },
     "CKV_AWS_314": {
         description: "AWS CodeBuild project not configured with logging configuration",
         priority: "INFO",
-        intent: "Configure CodeBuild project logging by setting 'LogsConfig' property in AWS::CodeBuild::Project resource. Enable CloudWatchLogs with 'Status: ENABLED' and optionally configure S3Logs for build log storage and monitoring. This provides visibility into build processes and troubleshooting capabilities."
+        remediation: "Configure CodeBuild project logging by setting 'LogsConfig' property in AWS::CodeBuild::Project resource. Enable CloudWatchLogs with 'Status: ENABLED' and optionally configure S3Logs for build log storage and monitoring. This provides visibility into build processes and troubleshooting capabilities."
     },
     "CKV_AWS_7": {
         description: "AWS Customer Master Key (CMK) rotation is not enabled",
         priority: "INFO",
-        intent: "Enable KMS key rotation by setting 'EnableKeyRotation: true' property in AWS::KMS::Key resource. This automatically rotates the key material annually while keeping the same key ID, ARN, and permissions, enhancing security by regularly changing encryption keys."
+        remediation: "Enable KMS key rotation by setting 'EnableKeyRotation: true' property in AWS::KMS::Key resource. This automatically rotates the key material annually while keeping the same key ID, ARN, and permissions, enhancing security by regularly changing encryption keys."
     },
     "CKV_AWS_92": {
         description: "AWS Elastic Load Balancer (Classic) with access log disabled",
         priority: "INFO",
-        intent: "Enable Classic Load Balancer access logging by setting 'AccessLoggingPolicy' property with 'Enabled: true', 'S3BucketName', and optionally 'S3BucketPrefix' in AWS::ElasticLoadBalancing::LoadBalancer resource. This captures detailed request logs for traffic analysis and troubleshooting."
+        remediation: "Enable Classic Load Balancer access logging by setting 'AccessLoggingPolicy' property with 'Enabled: true', 'S3BucketName', and optionally 'S3BucketPrefix' in AWS::ElasticLoadBalancing::LoadBalancer resource. This captures detailed request logs for traffic analysis and troubleshooting."
     },
     "CKV_AWS_91": {
         description: "AWS Elastic Load Balancer v2 (ELBv2) with access log disabled",
         priority: "INFO",
-        intent: "Enable Application/Network Load Balancer access logging by adding 'LoadBalancerAttributes' with 'Key: access_logs.s3.enabled', 'Value: true' and 'Key: access_logs.s3.bucket' with S3 bucket name in AWS::ElasticLoadBalancingV2::LoadBalancer resource for comprehensive traffic monitoring."
+        remediation: "Enable Application/Network Load Balancer access logging by adding 'LoadBalancerAttributes' with 'Key: access_logs.s3.enabled', 'Value: true' and 'Key: access_logs.s3.bucket' with S3 bucket name in AWS::ElasticLoadBalancingV2::LoadBalancer resource for comprehensive traffic monitoring."
     },
     "CKV2_AWS_63": {
         description: "AWS Network Firewall is not configured with logging configuration",
         priority: "INFO",
-        intent: "Configure Network Firewall logging by creating AWS::NetworkFirewall::LoggingConfiguration resource with 'FirewallArn', 'LoggingConfiguration' specifying LogDestinationConfigs for CloudWatch Logs, S3, or Kinesis Data Firehose to capture network traffic patterns and security events."
+        remediation: "Configure Network Firewall logging by creating AWS::NetworkFirewall::LoggingConfiguration resource with 'FirewallArn', 'LoggingConfiguration' specifying LogDestinationConfigs for CloudWatch Logs, S3, or Kinesis Data Firehose to capture network traffic patterns and security events."
     },
     "CKV_AWS_71": {
         description: "AWS Redshift database does not have audit logging enabled",
         priority: "INFO",
-        intent: "Enable Redshift audit logging by setting 'LoggingProperties' with 'BucketName' and optionally 'S3KeyPrefix' in AWS::Redshift::Cluster resource. This captures database connection logs, user activity logs, and user activity queries for security monitoring and compliance."
+        remediation: "Enable Redshift audit logging by setting 'LoggingProperties' with 'BucketName' and optionally 'S3KeyPrefix' in AWS::Redshift::Cluster resource. This captures database connection logs, user activity logs, and user activity queries for security monitoring and compliance."
     },
     "CKV2_AWS_11": {
         description: "AWS VPC Flow Logs not enabled",
         priority: "INFO",
-        intent: "Enable VPC Flow Logs by creating AWS::EC2::FlowLog resource with 'ResourceType: VPC', 'ResourceId' pointing to VPC ID, 'TrafficType: ALL' or 'REJECT', and 'LogDestination' specifying CloudWatch Logs group ARN or S3 bucket for network traffic monitoring and security analysis."
+        remediation: "Enable VPC Flow Logs by creating AWS::EC2::FlowLog resource with 'ResourceType: VPC', 'ResourceId' pointing to VPC ID, 'TrafficType: ALL' or 'REJECT', and 'LogDestination' specifying CloudWatch Logs group ARN or S3 bucket for network traffic monitoring and security analysis."
     },
     // **** NETWORKING POLICIES ****
     "CKV_AWS_328": {
         description: "ALB is not configured with the defensive or strictest desync mitigation mode",
         priority: "HIGH",
-        intent: "In your CloudFormation template, set the 'DesyncMitigationMode' property to either 'defensive' or 'strictest' in your AWS::ElasticLoadBalancingV2::LoadBalancer resource. This protects against HTTP Desync attacks that could lead to DDoS, cache poisoning, and data theft. Example: DesyncMitigationMode: 'defensive'"
+        remediation: "In your CloudFormation template, set the 'DesyncMitigationMode' property to either 'defensive' or 'strictest' in your AWS::ElasticLoadBalancingV2::LoadBalancer resource. This protects against HTTP Desync attacks that could lead to DDoS, cache poisoning, and data theft. Example: DesyncMitigationMode: 'defensive'"
     },
     "CKV2_AWS_38": {
         description: "Domain Name System Security Extensions (DNSSEC) signing is not enabled for Amazon Route 53 public hosted zones",
         priority: "HIGH",
-        intent: "Enable DNSSEC signing for your Route 53 public hosted zones in CloudFormation by: 1) Creating an AWS::Route53::HostedZone resource for your domain, 2) Adding an AWS::Route53::KeySigningKey resource with a reference to a KMS key, 3) Creating an AWS::Route53::HostedZoneDNSSEC resource that references your hosted zone. This protects your DNS records from tampering and DNS spoofing attacks."
+        remediation: "Enable DNSSEC signing for your Route 53 public hosted zones in CloudFormation by: 1) Creating an AWS::Route53::HostedZone resource for your domain, 2) Adding an AWS::Route53::KeySigningKey resource with a reference to a KMS key, 3) Creating an AWS::Route53::HostedZoneDNSSEC resource that references your hosted zone. This protects your DNS records from tampering and DNS spoofing attacks."
     },
     "CKV_AWS_291": {
         description: "MSK nodes are not private",
         priority: "HIGH",
-        intent: "Configure your AWS::MSK::Cluster resource in CloudFormation to use private subnets by setting the 'BrokerNodeGroupInfo.ClientSubnets' property to reference only private subnet IDs, and ensure 'BrokerNodeGroupInfo.ConnectivityInfo.PublicAccess.Type' is not set to 'SERVICE_PROVIDED_EIPS'. This prevents public internet access to your Kafka brokers, reducing attack surface."
+        remediation: "Configure your AWS::MSK::Cluster resource in CloudFormation to use private subnets by setting the 'BrokerNodeGroupInfo.ClientSubnets' property to reference only private subnet IDs, and ensure 'BrokerNodeGroupInfo.ConnectivityInfo.PublicAccess.Type' is not set to 'SERVICE_PROVIDED_EIPS'. This prevents public internet access to your Kafka brokers, reducing attack surface."
     },
     "CKV2_AWS_66": {
         description: "MWAA environment is publicly accessible",
         priority: "HIGH",
-        intent: "Set 'NetworkConfiguration.AccessMode' property to 'PRIVATE_ONLY' in your AWS::MWAA::Environment CloudFormation resource. This ensures your Managed Workflows for Apache Airflow environment can only be accessed from within your VPC and not from the public internet, reducing potential attack vectors."
+        remediation: "Set 'NetworkConfiguration.AccessMode' property to 'PRIVATE_ONLY' in your AWS::MWAA::Environment CloudFormation resource. This ensures your Managed Workflows for Apache Airflow environment can only be accessed from within your VPC and not from the public internet, reducing potential attack vectors."
     },
     "CKV_AWS_352": {
         description: "NACL ingress allows all ports",
         priority: "HIGH",
-        intent: "In your AWS::EC2::NetworkAclEntry resources, avoid using port range 0-65535 for ingress rules. Instead, define specific NetworkAclEntry resources for each required port or port range with the Protocol, PortRange.From, and PortRange.To properties explicitly specified. This limits network traffic to only necessary services and reduces the attack surface."
+        remediation: "In your AWS::EC2::NetworkAclEntry resources, avoid using port range 0-65535 for ingress rules. Instead, define specific NetworkAclEntry resources for each required port or port range with the Protocol, PortRange.From, and PortRange.To properties explicitly specified. This limits network traffic to only necessary services and reduces the attack surface."
     },
     "CKV_AWS_192": {
         description: "WAF enables message lookup in Log4j2",
         priority: "HIGH",
-        intent: "Add a rule to the WAFv2 web ACL whose top-level statement is a managed rule group statement referencing the AWS-vendored group AWSManagedRulesKnownBadInputsRuleSet, which contains the Log4JRCE rule. Do not exclude or override Log4JRCE, and leave the group override action as none rather than count. Give the rule a unique priority within the web ACL and enable sampled requests and CloudWatch metrics. If you also add an explicit '${jndi:' byte-match rule, that byte-match must be the rule's own top-level statement: this check only inspects top-level statements, so a pattern nested inside an and/or/not statement is not detected and the check still fails. Protects against Log4Shell (CVE-2021-44228), which allows remote code execution."
+        remediation: "Add a rule to the WAFv2 web ACL whose top-level statement is a managed rule group statement referencing the AWS-vendored group AWSManagedRulesKnownBadInputsRuleSet, which contains the Log4JRCE rule. Do not exclude or override Log4JRCE, and leave the group override action as none rather than count. Give the rule a unique priority within the web ACL and enable sampled requests and CloudWatch metrics. If you also add an explicit '${jndi:' byte-match rule, that byte-match must be the rule's own top-level statement: this check only inspects top-level statements, so a pattern nested inside an and/or/not statement is not detected and the check still fails. Protects against Log4Shell (CVE-2021-44228), which allows remote code execution."
     },
     "CKV_AWS_131": {
         description: "ALB does not drop HTTP headers",
         priority: "MEDIUM",
-        intent: "Configure your AWS::ElasticLoadBalancingV2::LoadBalancer to drop invalid HTTP headers by setting the 'LoadBalancerAttributes' property to include an attribute with 'Key: routing.http.drop_invalid_header_fields.enabled' and 'Value: true'. This prevents potentially malicious HTTP headers from being forwarded to your application."
+        remediation: "Configure your AWS::ElasticLoadBalancingV2::LoadBalancer to drop invalid HTTP headers by setting the 'LoadBalancerAttributes' property to include an attribute with 'Key: routing.http.drop_invalid_header_fields.enabled' and 'Value: true'. This prevents potentially malicious HTTP headers from being forwarded to your application."
     },
     "CKV2_AWS_70": {
         description: "AWS API Gateway method lacking authorization or API keys",
         priority: "MEDIUM",
-        intent: "Add authorization to your AWS::ApiGateway::Method by setting the 'AuthorizationType' property to 'AWS_IAM', 'COGNITO_USER_POOLS', or 'CUSTOM' (not 'NONE'). Alternatively, set 'ApiKeyRequired' to 'true'. This ensures that API endpoints require proper authentication before being accessed."
+        remediation: "Add authorization to your AWS::ApiGateway::Method by setting the 'AuthorizationType' property to 'AWS_IAM', 'COGNITO_USER_POOLS', or 'CUSTOM' (not 'NONE'). Alternatively, set 'ApiKeyRequired' to 'true'. This ensures that API endpoints require proper authentication before being accessed."
     },
     "CKV2_AWS_54": {
         description: "AWS CloudFront distribution is using insecure SSL protocols for HTTPS communication",
         priority: "MEDIUM",
-        intent: "In your AWS::CloudFront::Distribution resource, set the 'ViewerCertificate.MinimumProtocolVersion' property to 'TLSv1.2_2021' or newer. Avoid using older protocols like 'TLSv1', 'TLSv1_2016', or 'TLSv1.1_2016' which have known vulnerabilities. This ensures stronger encryption and secure communications with clients."
+        remediation: "In your AWS::CloudFront::Distribution resource, set the 'ViewerCertificate.MinimumProtocolVersion' property to 'TLSv1.2_2021' or newer. Avoid using older protocols like 'TLSv1', 'TLSv1_2016', or 'TLSv1.1_2016' which have known vulnerabilities. This ensures stronger encryption and secure communications with clients."
     },
     "CKV2_AWS_72": {
         description: "AWS CloudFront origin protocol policy does not enforce HTTPS-only",
         priority: "MEDIUM",
-        intent: "In your AWS::CloudFront::Distribution resource, set 'DistributionConfig.Origins.CustomOriginConfig.OriginProtocolPolicy' to 'https-only' for each origin. This ensures that CloudFront only connects to your origins using HTTPS, preventing insecure HTTP communications that could expose sensitive data."
+        remediation: "In your AWS::CloudFront::Distribution resource, set 'DistributionConfig.Origins.CustomOriginConfig.OriginProtocolPolicy' to 'https-only' for each origin. This ensures that CloudFront only connects to your origins using HTTPS, preventing insecure HTTP communications that could expose sensitive data."
     },
     "CKV_AWS_34": {
         description: "AWS CloudFront viewer protocol policy is not configured with HTTPS",
         priority: "MEDIUM",
-        intent: "Set the 'ViewerProtocolPolicy' property to either 'redirect-to-https' or 'https-only' in the DefaultCacheBehavior and any CacheBehaviors of your AWS::CloudFront::Distribution resource. Using 'redirect-to-https' will automatically redirect HTTP requests to HTTPS, while 'https-only' will reject HTTP requests entirely."
+        remediation: "Set the 'ViewerProtocolPolicy' property to either 'redirect-to-https' or 'https-only' in the DefaultCacheBehavior and any CacheBehaviors of your AWS::CloudFront::Distribution resource. Using 'redirect-to-https' will automatically redirect HTTP requests to HTTPS, while 'https-only' will reject HTTP requests entirely."
     },
     "CKV_AWS_2": {
         description: "AWS Elastic Load Balancer v2 (ELBv2) listener that allow connection requests over HTTP",
         priority: "MEDIUM",
-        intent: "For AWS::ElasticLoadBalancingV2::Listener resources, ensure the 'Protocol' property is set to 'HTTPS' or 'TLS' rather than 'HTTP' or 'TCP'. If you need to support HTTP, create a redirect listener with 'DefaultActions.Type' set to 'redirect' and 'RedirectConfig.Protocol' set to 'HTTPS'. This enforces encrypted communications between clients and your load balancer."
+        remediation: "For AWS::ElasticLoadBalancingV2::Listener resources, ensure the 'Protocol' property is set to 'HTTPS' or 'TLS' rather than 'HTTP' or 'TCP'. If you need to support HTTP, create a redirect listener with 'DefaultActions.Type' set to 'redirect' and 'RedirectConfig.Protocol' set to 'HTTPS'. This enforces encrypted communications between clients and your load balancer."
     },
     "CKV2_AWS_75": {
         description: "AWS Lambda function URL having overly permissive cross-origin resource sharing permissions",
         priority: "MEDIUM",
-        intent: "When configuring AWS::Lambda::Url resources, avoid setting 'Cors.AllowOrigins' to '*'. Instead, specify exact domains that need access in the AllowOrigins array. Also, set 'Cors.AllowMethods' to only include necessary HTTP methods and 'Cors.AllowCredentials' to 'false' unless you specifically need cross-origin requests with credentials. This prevents cross-site attacks."
+        remediation: "When configuring AWS::Lambda::Url resources, avoid setting 'Cors.AllowOrigins' to '*'. Instead, specify exact domains that need access in the AllowOrigins array. Also, set 'Cors.AllowMethods' to only include necessary HTTP methods and 'Cors.AllowCredentials' to 'false' unless you specifically need cross-origin requests with credentials. This prevents cross-site attacks."
     },
     "CKV_AWS_378": {
         description: "AWS Load Balancer uses HTTP protocol",
         priority: "MEDIUM",
-        intent: "Configure your AWS::ElasticLoadBalancingV2::TargetGroup to use HTTPS by setting the 'Protocol' property to 'HTTPS' instead of 'HTTP'. Also, specify a proper 'HealthCheckProtocol' value of 'HTTPS'. If your application doesn't support HTTPS, implement TLS termination at the load balancer and use AWS::ElasticLoadBalancingV2::Listener with HTTPS protocol."
+        remediation: "Configure your AWS::ElasticLoadBalancingV2::TargetGroup to use HTTPS by setting the 'Protocol' property to 'HTTPS' instead of 'HTTP'. Also, specify a proper 'HealthCheckProtocol' value of 'HTTPS'. If your application doesn't support HTTPS, implement TLS termination at the load balancer and use AWS::ElasticLoadBalancingV2::Listener with HTTPS protocol."
     },
     "CKV2_AWS_69": {
         description: "AWS RDS database instance not configured with encryption in transit",
         priority: "MEDIUM",
-        intent: "Enable encryption in transit for your AWS::RDS::DBInstance by setting both 'StorageEncrypted: true' and including a parameter group (AWS::RDS::DBParameterGroup) with parameters like 'ssl_force_connection=1' or 'rds.force_ssl=1' depending on your database engine. This ensures all database connections use SSL/TLS encryption to protect data during transmission."
+        remediation: "Enable encryption in transit for your AWS::RDS::DBInstance by setting both 'StorageEncrypted: true' and including a parameter group (AWS::RDS::DBParameterGroup) with parameters like 'ssl_force_connection=1' or 'rds.force_ssl=1' depending on your database engine. This ensures all database connections use SSL/TLS encryption to protect data during transmission."
     },
     "CKV_AWS_379": {
         description: "AWS S3 bucket not configured with secure data transport policy",
         priority: "MEDIUM",
-        intent: "Add a bucket policy to your AWS::S3::Bucket that enforces HTTPS-only access. In the AWS::S3::BucketPolicy resource, include a condition that denies requests when 'aws:SecureTransport' is 'false'. Example: \"Effect\": \"Deny\", \"Principal\": \"*\", \"Action\": \"s3:*\", \"Resource\": [bucket ARN and objects], \"Condition\": {\"Bool\": {\"aws:SecureTransport\": \"false\"}}."
+        remediation: "Add a bucket policy to your AWS::S3::Bucket that enforces HTTPS-only access. In the AWS::S3::BucketPolicy resource, include a condition that denies requests when 'aws:SecureTransport' is 'false'. Example: \"Effect\": \"Deny\", \"Principal\": \"*\", \"Action\": \"s3:*\", \"Resource\": [bucket ARN and objects], \"Condition\": {\"Bool\": {\"aws:SecureTransport\": \"false\"}}."
     },
     "CKV_AWS_370": {
         description: "AWS SageMaker model does not use network isolation",
         priority: "MEDIUM",
-        intent: "Enable network isolation for your AWS::SageMaker::Model by setting the 'EnableNetworkIsolation' property to 'true'. This creates a security boundary around your model container, preventing it from making outbound network calls, which helps protect against data exfiltration and improves security of your machine learning workloads."
+        remediation: "Enable network isolation for your AWS::SageMaker::Model by setting the 'EnableNetworkIsolation' property to 'true'. This creates a security boundary around your model container, preventing it from making outbound network calls, which helps protect against data exfiltration and improves security of your machine learning workloads."
     },
     "CKV2_AWS_68": {
         description: "AWS SageMaker notebook instance IAM policy is overly permissive",
         priority: "MEDIUM",
-        intent: "Restrict the IAM policy attached to your SageMaker notebook instance by defining a custom policy in AWS::IAM::Role with least-privilege permissions. Avoid using wildcard '*' in the Action and Resource elements. Instead, specify only the exact permissions needed for your workload. Reference this role in your AWS::SageMaker::NotebookInstance's 'RoleArn' property."
+        remediation: "Restrict the IAM policy attached to your SageMaker notebook instance by defining a custom policy in AWS::IAM::Role with least-privilege permissions. Avoid using wildcard '*' in the Action and Resource elements. Instead, specify only the exact permissions needed for your workload. Reference this role in your AWS::SageMaker::NotebookInstance's 'RoleArn' property."
     },
     "CKV_AWS_277": {
         description: "AWS Security Group allows all traffic on all ports",
         priority: "MEDIUM",
-        intent: "Remove any overly permissive rules from your AWS::EC2::SecurityGroup resource. Instead of using a CidrIp of '0.0.0.0/0' with port range '0-65535', define specific ingress rules with appropriate IpProtocol, FromPort, ToPort, and CidrIp values that match your application's requirements. This limits exposure to only the necessary services and network ranges."
+        remediation: "Remove any overly permissive rules from your AWS::EC2::SecurityGroup resource. Instead of using a CidrIp of '0.0.0.0/0' with port range '0-65535', define specific ingress rules with appropriate IpProtocol, FromPort, ToPort, and CidrIp values that match your application's requirements. This limits exposure to only the necessary services and network ranges."
     },
     "CKV_AWS_164": {
         description: "AWS Transfer Server is publicly exposed",
         priority: "MEDIUM",
-        intent: "Set the 'EndpointType' property to 'VPC' instead of 'PUBLIC' in your AWS::Transfer::Server resource, and provide appropriate 'EndpointDetails' with VPC configuration including subnet IDs and security groups. This restricts your SFTP/FTPS/FTP server to be accessible only from within your VPC rather than from the public internet."
+        remediation: "Set the 'EndpointType' property to 'VPC' instead of 'PUBLIC' in your AWS::Transfer::Server resource, and provide appropriate 'EndpointDetails' with VPC configuration including subnet IDs and security groups. This restricts your SFTP/FTPS/FTP server to be accessible only from within your VPC rather than from the public internet."
     },
     "CKV_AWS_90": {
         description: "DocDB TLS is disabled",
         priority: "MEDIUM",
-        intent: "Enable TLS for your AWS::DocDB::DBCluster by creating an AWS::DocDB::DBClusterParameterGroup with the 'tls' parameter set to 'enabled', then reference this parameter group in your DBCluster resource's 'DBClusterParameterGroupName' property. This enforces encrypted connections between clients and your DocumentDB cluster."
+        remediation: "Enable TLS for your AWS::DocDB::DBCluster by creating an AWS::DocDB::DBClusterParameterGroup with the 'tls' parameter set to 'enabled', then reference this parameter group in your DBCluster resource's 'DBClusterParameterGroupName' property. This enforces encrypted connections between clients and your DocumentDB cluster."
     },
     "CKV2_AWS_29": {
         description: "Public API gateway not configured with AWS Web Application Firewall v2 (AWS WAFv2)",
         priority: "MEDIUM",
-        intent: "Protect your public API Gateway by creating an AWS::WAFv2::WebACL resource with appropriate rules, then associate it with your API stage using an AWS::WAFv2::WebACLAssociation resource where 'ResourceArn' references your AWS::ApiGateway::Stage ARN. This provides an additional security layer against common web vulnerabilities and attacks."
+        remediation: "Protect your public API Gateway by creating an AWS::WAFv2::WebACL resource with appropriate rules, then associate it with your API stage using an AWS::WAFv2::WebACLAssociation resource where 'ResourceArn' references your AWS::ApiGateway::Stage ARN. This provides an additional security layer against common web vulnerabilities and attacks."
     },
     "CKV_AWS_365": {
         description: "TLS not enforced in SES configuration set",
         priority: "MEDIUM",
-        intent: "Enable TLS enforcement in your AWS::SES::ConfigurationSet by adding a TlsPolicy property set to 'Require'. This ensures that Amazon SES only delivers email to recipients that support TLS connections, preventing email contents from being transmitted over unencrypted connections."
+        remediation: "Enable TLS enforcement in your AWS::SES::ConfigurationSet by adding a TlsPolicy property set to 'Require'. This ensures that Amazon SES only delivers email to recipients that support TLS connections, preventing email contents from being transmitted over unencrypted connections."
     },
     "CKV2_AWS_20": {
         description: "ALB does not redirect HTTP requests into HTTPS ones",
         priority: "LOW",
-        intent: "Create an HTTP-to-HTTPS redirect by adding an AWS::ElasticLoadBalancingV2::Listener with 'Protocol: HTTP' and configure its 'DefaultActions' with 'Type: redirect' and 'RedirectConfig: { Protocol: \"HTTPS\", Port: \"443\", StatusCode: \"HTTP_301\" }'. This ensures all HTTP traffic is automatically redirected to secure HTTPS connections."
+        remediation: "Create an HTTP-to-HTTPS redirect by adding an AWS::ElasticLoadBalancingV2::Listener with 'Protocol: HTTP' and configure its 'DefaultActions' with 'Type: redirect' and 'RedirectConfig: { Protocol: \"HTTPS\", Port: \"443\", StatusCode: \"HTTP_301\" }'. This ensures all HTTP traffic is automatically redirected to secure HTTPS connections."
     },
     "CKV2_AWS_7": {
         description: "Amazon EMR clusters' security groups are open to the world",
         priority: "LOW",
-        intent: "For AWS::EMR::Cluster resources, specify security groups in 'SecurityConfiguration' that have restricted inbound rules. Create associated AWS::EC2::SecurityGroup resources with ingress rules that limit source IPs to specific CIDR blocks or security groups, not '0.0.0.0/0'. This prevents unauthorized access to your EMR cluster from the internet."
+        remediation: "For AWS::EMR::Cluster resources, specify security groups in 'SecurityConfiguration' that have restricted inbound rules. Create associated AWS::EC2::SecurityGroup resources with ingress rules that limit source IPs to specific CIDR blocks or security groups, not '0.0.0.0/0'. This prevents unauthorized access to your EMR cluster from the internet."
     },
     "CKV2_AWS_15": {
         description: "Auto scaling groups associated with a load balancer do not use elastic load balancing health checks",
         priority: "LOW",
-        intent: "Configure your AWS::AutoScaling::AutoScalingGroup to use ELB health checks by setting the 'HealthCheckType' property to 'ELB' and setting an appropriate 'HealthCheckGracePeriod' value. This ensures instances are replaced if they fail load balancer health checks, improving application availability."
+        remediation: "Configure your AWS::AutoScaling::AutoScalingGroup to use ELB health checks by setting the 'HealthCheckType' property to 'ELB' and setting an appropriate 'HealthCheckGracePeriod' value. This ensures instances are replaced if they fail load balancer health checks, improving application availability."
     },
     "CKV_AWS_233": {
         description: "AWS ACM certificate does not enable Create before Destroy",
         priority: "LOW",
-        intent: "Use the DependsOn attribute in CloudFormation to ensure the new certificate is created before the old one is destroyed. In practice, implement a blue/green deployment strategy for certificate rotation, where you create a new certificate resource with a different name, update references to use the new certificate, then remove the old certificate resource after deployment is successful."
+        remediation: "Use the DependsOn attribute in CloudFormation to ensure the new certificate is created before the old one is destroyed. In practice, implement a blue/green deployment strategy for certificate rotation, where you create a new certificate resource with a different name, update references to use the new certificate, then remove the old certificate resource after deployment is successful."
     },
     "CKV2_AWS_71": {
         description: "AWS ACM Certificate with wildcard domain name",
         priority: "LOW",
-        intent: "Instead of using wildcard certificates (*.example.com) in your AWS::CertificateManager::Certificate resources, specify distinct certificates with explicit domain names in the 'DomainName' and 'SubjectAlternativeNames' properties. This improves security by limiting the scope of each certificate to only the domains that actually need it."
+        remediation: "Instead of using wildcard certificates (*.example.com) in your AWS::CertificateManager::Certificate resources, specify distinct certificates with explicit domain names in the 'DomainName' and 'SubjectAlternativeNames' properties. This improves security by limiting the scope of each certificate to only the domains that actually need it."
     },
     "CKV2_AWS_28": {
         description: "AWS Application Load Balancer (ALB) not configured with AWS Web Application Firewall v2 (AWS WAFv2)",
         priority: "LOW",
-        intent: "Protect your ALB by creating an AWS::WAFv2::WebACL resource with appropriate security rules, then associate it with your load balancer using an AWS::WAFv2::WebACLAssociation resource where 'ResourceArn' references your AWS::ElasticLoadBalancingV2::LoadBalancer ARN. This adds protection against common web attacks."
+        remediation: "Protect your ALB by creating an AWS::WAFv2::WebACL resource with appropriate security rules, then associate it with your load balancer using an AWS::WAFv2::WebACLAssociation resource where 'ResourceArn' references your AWS::ElasticLoadBalancingV2::LoadBalancer ARN. This adds protection against common web attacks."
     },
     "CKV2_AWS_32": {
         description: "AWS CloudFront distribution does not have a strict security headers policy attached",
         priority: "LOW",
-        intent: "Add a response headers policy to your AWS::CloudFront::Distribution by creating an AWS::CloudFront::ResponseHeadersPolicy resource with security headers (X-Content-Type-Options, X-Frame-Options, Content-Security-Policy, etc.), then reference it in your distribution's cache behaviors using the 'ResponseHeadersPolicyId' property. This helps prevent various browser-based attacks."
+        remediation: "Add a response headers policy to your AWS::CloudFront::Distribution by creating an AWS::CloudFront::ResponseHeadersPolicy resource with security headers (X-Content-Type-Options, X-Frame-Options, Content-Security-Policy, etc.), then reference it in your distribution's cache behaviors using the 'ResponseHeadersPolicyId' property. This helps prevent various browser-based attacks."
     },
     "CKV_AWS_174": {
         description: "AWS CloudFront web distribution using insecure TLS version",
         priority: "LOW",
-        intent: "In your AWS::CloudFront::Distribution resource, update the 'ViewerCertificate.MinimumProtocolVersion' property to 'TLSv1.2_2021' or newer. This ensures that CloudFront only accepts connections using modern, secure TLS protocols, protecting against vulnerabilities in older TLS versions."
+        remediation: "In your AWS::CloudFront::Distribution resource, update the 'ViewerCertificate.MinimumProtocolVersion' property to 'TLSv1.2_2021' or newer. This ensures that CloudFront only accepts connections using modern, secure TLS protocols, protecting against vulnerabilities in older TLS versions."
     },
     "CKV2_AWS_42": {
         description: "AWS CloudFront web distribution with default SSL certificate",
         priority: "LOW",
-        intent: "Use a custom SSL certificate in your AWS::CloudFront::Distribution by setting 'ViewerCertificate.CloudFrontDefaultCertificate' to 'false' and providing either 'ViewerCertificate.AcmCertificateArn' (recommended) or 'ViewerCertificate.IamCertificateId'. This improves security and builds trust with users by using your domain's certificate rather than the generic CloudFront one."
+        remediation: "Use a custom SSL certificate in your AWS::CloudFront::Distribution by setting 'ViewerCertificate.CloudFrontDefaultCertificate' to 'false' and providing either 'ViewerCertificate.AcmCertificateArn' (recommended) or 'ViewerCertificate.IamCertificateId'. This improves security and builds trust with users by using your domain's certificate rather than the generic CloudFront one."
     },
     "CKV_AWS_374": {
         description: "AWS CloudFront web distribution with geo restriction disabled",
         priority: "LOW",
-        intent: "Enable geographic restrictions in your AWS::CloudFront::Distribution by configuring the 'Restrictions.GeoRestriction' property with appropriate 'RestrictionType' ('whitelist' or 'blacklist') and 'Locations' array containing the ISO 3166-1-alpha-2 country codes you want to allow or block. This can help prevent access from high-risk regions or countries where you don't do business."
+        remediation: "Enable geographic restrictions in your AWS::CloudFront::Distribution by configuring the 'Restrictions.GeoRestriction' property with appropriate 'RestrictionType' ('whitelist' or 'blacklist') and 'Locations' array containing the ISO 3166-1-alpha-2 country codes you want to allow or block. This can help prevent access from high-risk regions or countries where you don't do business."
     },
     "CKV2_AWS_49": {
         description: "AWS Database Migration Service endpoint do not have SSL configured",
         priority: "LOW",
-        intent: "Enable SSL for your AWS::DMS::Endpoint by setting appropriate SSL mode in the 'MySqlSettings', 'PostgreSqlSettings', 'OracleSettings', 'SybaseSettings', 'MicrosoftSqlServerSettings', etc. depending on your database type. For example, add 'SslMode: verify-full' and provide certificate information when applicable. This encrypts data during migration."
+        remediation: "Enable SSL for your AWS::DMS::Endpoint by setting appropriate SSL mode in the 'MySqlSettings', 'PostgreSqlSettings', 'OracleSettings', 'SybaseSettings', 'MicrosoftSqlServerSettings', etc. depending on your database type. For example, add 'SslMode: verify-full' and provide certificate information when applicable. This encrypts data during migration."
     },
     "CKV2_AWS_12": {
         description: "AWS Default Security Group does not restrict all traffic",
         priority: "LOW",
-        intent: "Remove all ingress and egress rules from your default security group by creating an AWS::EC2::SecurityGroupIngress and AWS::EC2::SecurityGroupEgress with the default security group ID, then add only the specific rules you need. Alternatively, create a custom security group with specific rules and don't use the default security group."
+        remediation: "Remove all ingress and egress rules from your default security group by creating an AWS::EC2::SecurityGroupIngress and AWS::EC2::SecurityGroupEgress with the default security group ID, then add only the specific rules you need. Alternatively, create a custom security group with specific rules and don't use the default security group."
     },
     "CKV_AWS_138": {
         description: "AWS Elastic Load Balancer (Classic) with cross-zone load balancing disabled",
         priority: "LOW",
-        intent: "Enable cross-zone load balancing for your AWS::ElasticLoadBalancing::LoadBalancer by setting the 'CrossZone' property to 'true'. This ensures that traffic is distributed evenly across all instances in all availability zones, improving availability and fault tolerance of your application."
+        remediation: "Enable cross-zone load balancing for your AWS::ElasticLoadBalancing::LoadBalancer by setting the 'CrossZone' property to 'true'. This ensures that traffic is distributed evenly across all instances in all availability zones, improving availability and fault tolerance of your application."
     },
     "CKV_AWS_376": {
         description: "AWS Elastic Load Balancer with listener TLS/SSL is not configured",
         priority: "LOW",
-        intent: "Add a secure listener to your AWS::ElasticLoadBalancing::LoadBalancer by configuring 'Listeners' with 'Protocol: HTTPS' or 'Protocol: SSL', appropriate 'LoadBalancerPort', 'InstanceProtocol', 'InstancePort', and 'SSLCertificateId' pointing to your ACM or IAM certificate. This ensures encrypted communication between clients and your load balancer."
+        remediation: "Add a secure listener to your AWS::ElasticLoadBalancing::LoadBalancer by configuring 'Listeners' with 'Protocol: HTTPS' or 'Protocol: SSL', appropriate 'LoadBalancerPort', 'InstanceProtocol', 'InstancePort', and 'SSLCertificateId' pointing to your ACM or IAM certificate. This ensures encrypted communication between clients and your load balancer."
     },
     "CKV_AWS_196": {
         description: "AWS Elasticache security groups are not defined",
         priority: "LOW",
-        intent: "For AWS::ElastiCache::CacheCluster or AWS::ElastiCache::ReplicationGroup resources, specify the 'SecurityGroupIds' property with references to AWS::EC2::SecurityGroup resources that have appropriate ingress rules. This ensures that only authorized sources can connect to your ElastiCache cluster."
+        remediation: "For AWS::ElastiCache::CacheCluster or AWS::ElastiCache::ReplicationGroup resources, specify the 'SecurityGroupIds' property with references to AWS::EC2::SecurityGroup resources that have appropriate ingress rules. This ensures that only authorized sources can connect to your ElastiCache cluster."
     },
     "CKV_AWS_137": {
         description: "AWS Elasticsearch is not configured inside a VPC",
         priority: "LOW",
-        intent: "Configure your AWS::Elasticsearch::Domain within a VPC by setting 'VPCOptions' with appropriate 'SubnetIds' and 'SecurityGroupIds'. Remove any 'AccessPolicies' that allow public access. This ensures your Elasticsearch domain is only accessible from within your VPC network, not from the public internet."
+        remediation: "Configure your AWS::Elasticsearch::Domain within a VPC by setting 'VPCOptions' with appropriate 'SubnetIds' and 'SecurityGroupIds'. Remove any 'AccessPolicies' that allow public access. This ensures your Elasticsearch domain is only accessible from within your VPC network, not from the public internet."
     },
     "CKV_AWS_248": {
         description: "AWS Elasticsearch uses the default security group",
         priority: "LOW",
-        intent: "Create a dedicated security group for your AWS::Elasticsearch::Domain with specific ingress/egress rules, then reference it in the 'VPCOptions.SecurityGroupIds' property instead of using the default security group. This follows the principle of least privilege and improves your security posture."
+        remediation: "Create a dedicated security group for your AWS::Elasticsearch::Domain with specific ingress/egress rules, then reference it in the 'VPCOptions.SecurityGroupIds' property instead of using the default security group. This follows the principle of least privilege and improves your security posture."
     },
     "CKV_AWS_213": {
         description: "AWS ELB Policy uses some unsecure protocols",
         priority: "LOW",
-        intent: "Create an AWS::ElasticLoadBalancing::LoadBalancerPolicy resource with secure SSL protocols and ciphers, then associate it with your load balancer. Set 'PolicyAttributes' to include only secure protocols (e.g., 'Protocol-TLSv1.2', 'Protocol-TLSv1.3') and strong ciphers, avoiding deprecated ones like SSLv3 or TLSv1.0."
+        remediation: "Create an AWS::ElasticLoadBalancing::LoadBalancerPolicy resource with secure SSL protocols and ciphers, then associate it with your load balancer. Set 'PolicyAttributes' to include only secure protocols (e.g., 'Protocol-TLSv1.2', 'Protocol-TLSv1.3') and strong ciphers, avoiding deprecated ones like SSLv3 or TLSv1.0."
     },
     "CKV2_AWS_74": {
         description: "AWS Load Balancers do not use strong ciphers",
         priority: "LOW",
-        intent: "For AWS::ElasticLoadBalancingV2::Listener resources with HTTPS protocol, set the 'SslPolicy' property to a policy that enforces strong ciphers, such as 'ELBSecurityPolicy-TLS-1-2-2017-01' or newer. This ensures that your load balancer only negotiates connections using strong encryption algorithms, protecting data in transit."
+        remediation: "For AWS::ElasticLoadBalancingV2::Listener resources with HTTPS protocol, set the 'SslPolicy' property to a policy that enforces strong ciphers, such as 'ELBSecurityPolicy-TLS-1-2-2017-01' or newer. This ensures that your load balancer only negotiates connections using strong encryption algorithms, protecting data in transit."
     },
     "CKV_AWS_230": {
         description: "AWS NACL allows ingress from 0.0.0.0/0 to port 20",
         priority: "LOW",
-        intent: "Modify your AWS::EC2::NetworkAclEntry for port 20 (FTP data) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need FTP access. If possible, completely remove public access to this port and use more secure file transfer methods. This prevents unauthorized FTP access attempts."
+        remediation: "Modify your AWS::EC2::NetworkAclEntry for port 20 (FTP data) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need FTP access. If possible, completely remove public access to this port and use more secure file transfer methods. This prevents unauthorized FTP access attempts."
     },
     "CKV_AWS_229": {
         description: "AWS NACL allows ingress from 0.0.0.0/0 to port 21",
         priority: "LOW",
-        intent: "Modify your AWS::EC2::NetworkAclEntry for port 21 (FTP control) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need FTP access. If possible, completely remove public access to this port and use more secure file transfer methods like SFTP (port 22) with proper authentication."
+        remediation: "Modify your AWS::EC2::NetworkAclEntry for port 21 (FTP control) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need FTP access. If possible, completely remove public access to this port and use more secure file transfer methods like SFTP (port 22) with proper authentication."
     },
     "CKV_AWS_232": {
         description: "AWS NACL allows ingress from 0.0.0.0/0 to port 22",
         priority: "LOW",
-        intent: "Modify your AWS::EC2::NetworkAclEntry for port 22 (SSH) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need SSH access. For example, limit it to your company's IP range or VPN IP range. This prevents unauthorized SSH access attempts from the internet."
+        remediation: "Modify your AWS::EC2::NetworkAclEntry for port 22 (SSH) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need SSH access. For example, limit it to your company's IP range or VPN IP range. This prevents unauthorized SSH access attempts from the internet."
     },
     "CKV_AWS_231": {
         description: "AWS NACL allows ingress from 0.0.0.0/0 to port 3389",
         priority: "LOW",
-        intent: "Modify your AWS::EC2::NetworkAclEntry for port 3389 (RDP) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need RDP access. For example, limit it to your company's IP range or VPN IP range. This prevents unauthorized RDP access attempts from the internet."
+        remediation: "Modify your AWS::EC2::NetworkAclEntry for port 3389 (RDP) to restrict the 'CidrBlock' from '0.0.0.0/0' to specific IP ranges that need RDP access. For example, limit it to your company's IP range or VPN IP range. This prevents unauthorized RDP access attempts from the internet."
     },
     "CKV2_AWS_35": {
         description: "AWS NAT Gateways are not utilized for the default route",
         priority: "LOW",
-        intent: "Configure private subnet route tables to use NAT Gateways for internet access by creating AWS::EC2::Route resources with 'DestinationCidrBlock: 0.0.0.0/0' and 'NatGatewayId' referencing your AWS::EC2::NatGateway resource. This provides secure outbound internet access for resources in private subnets without exposing them directly."
+        remediation: "Configure private subnet route tables to use NAT Gateways for internet access by creating AWS::EC2::Route resources with 'DestinationCidrBlock: 0.0.0.0/0' and 'NatGatewayId' referencing your AWS::EC2::NatGateway resource. This provides secure outbound internet access for resources in private subnets without exposing them directly."
     },
     "CKV_AWS_198": {
         description: "AWS RDS security groups are not defined",
         priority: "LOW",
-        intent: "Specify security groups for your AWS::RDS::DBInstance or AWS::RDS::DBCluster by setting the 'VPCSecurityGroups' property to reference AWS::EC2::SecurityGroup resources with appropriate ingress rules. This ensures that only authorized network sources can connect to your database."
+        remediation: "Specify security groups for your AWS::RDS::DBInstance or AWS::RDS::DBCluster by setting the 'VPCSecurityGroups' property to reference AWS::EC2::SecurityGroup resources with appropriate ingress rules. This ensures that only authorized network sources can connect to your database."
     },
     "CKV2_AWS_44": {
         description: "AWS route table with VPC peering overly permissive to all traffic",
         priority: "LOW",
-        intent: "When creating routes for VPC peering in AWS::EC2::Route resources, avoid using overly broad CIDR blocks like '0.0.0.0/0'. Instead, specify the exact CIDR range of the peered VPC in the 'DestinationCidrBlock' property. This limits traffic across the peering connection to only what's necessary."
+        remediation: "When creating routes for VPC peering in AWS::EC2::Route resources, avoid using overly broad CIDR blocks like '0.0.0.0/0'. Instead, specify the exact CIDR range of the peered VPC in the 'DestinationCidrBlock' property. This limits traffic across the peering connection to only what's necessary."
     },
     "CKV_AWS_375": {
         description: "AWS S3 bucket has global view ACL permissions enabled",
         priority: "LOW",
-        intent: "Remove global view ACL permissions from your S3 bucket by setting 'PublicAccessBlockConfiguration' properties in your AWS::S3::Bucket resource: Set 'BlockPublicAcls', 'BlockPublicPolicy', 'IgnorePublicAcls', and 'RestrictPublicBuckets' all to 'true'. This prevents any public access to your bucket contents."
+        remediation: "Remove global view ACL permissions from your S3 bucket by setting 'PublicAccessBlockConfiguration' properties in your AWS::S3::Bucket resource: Set 'BlockPublicAcls', 'BlockPublicPolicy', 'IgnorePublicAcls', and 'RestrictPublicBuckets' all to 'true'. This prevents any public access to your bucket contents."
     },
     "CKV_AWS_122": {
         description: "AWS SageMaker notebook instance configured with direct internet access feature",
         priority: "LOW",
-        intent: "Disable direct internet access for your AWS::SageMaker::NotebookInstance by setting the 'DirectInternetAccess' property to 'Disabled' and placing the notebook in a private subnet with a NAT Gateway for outbound access. This prevents the notebook from being directly accessible from the internet."
+        remediation: "Disable direct internet access for your AWS::SageMaker::NotebookInstance by setting the 'DirectInternetAccess' property to 'Disabled' and placing the notebook in a private subnet with a NAT Gateway for outbound access. This prevents the notebook from being directly accessible from the internet."
     },
     "CKV_AWS_382": {
         description: "AWS Security Group allows unrestricted egress traffic",
         priority: "LOW",
-        intent: "Remove the default '0.0.0.0/0' egress rule from your AWS::EC2::SecurityGroup and replace it with specific outbound rules that allow only necessary traffic. Define AWS::EC2::SecurityGroupEgress resources with specific 'CidrIp', 'IpProtocol', 'FromPort', and 'ToPort' values based on your application's requirements."
+        remediation: "Remove the default '0.0.0.0/0' egress rule from your AWS::EC2::SecurityGroup and replace it with specific outbound rules that allow only necessary traffic. Define AWS::EC2::SecurityGroupEgress resources with specific 'CidrIp', 'IpProtocol', 'FromPort', and 'ToPort' values based on your application's requirements."
     },
     "CKV_AWS_260": {
         description: "AWS security groups allow ingress from 0.0.0.0/0 to port 80",
         priority: "LOW",
-        intent: "Modify your AWS::EC2::SecurityGroup ingress rules for port 80 (HTTP) to restrict the 'CidrIp' from '0.0.0.0/0' to specific IP ranges, or place resources behind a load balancer and only allow traffic from the load balancer's security group. For public web services, consider using CloudFront with WAF for added protection."
+        remediation: "Modify your AWS::EC2::SecurityGroup ingress rules for port 80 (HTTP) to restrict the 'CidrIp' from '0.0.0.0/0' to specific IP ranges, or place resources behind a load balancer and only allow traffic from the load balancer's security group. For public web services, consider using CloudFront with WAF for added protection."
     },
     "CKV_AWS_380": {
         description: "AWS Transfer Server not using latest Security Policy",
         priority: "LOW",
-        intent: "Set the 'Protocols' property in your AWS::Transfer::Server resource to only include secure protocols ('SFTP', 'FTPS') and not 'FTP'. Additionally, set the 'SecurityPolicyName' property to the most recent security policy version (e.g., 'TransferSecurityPolicy-2020-06'). This ensures secure file transfers with up-to-date encryption."
+        remediation: "Set the 'Protocols' property in your AWS::Transfer::Server resource to only include secure protocols ('SFTP', 'FTPS') and not 'FTP'. Additionally, set the 'SecurityPolicyName' property to the most recent security policy version (e.g., 'TransferSecurityPolicy-2020-06'). This ensures secure file transfers with up-to-date encryption."
     },
     "CKV_AWS_130": {
         description: "AWS VPC subnets should not allow automatic public IP assignment",
         priority: "LOW",
-        intent: "Set 'MapPublicIpOnLaunch' to 'false' in your AWS::EC2::Subnet resources, especially for subnets intended to host private resources. This prevents instances launched in these subnets from automatically receiving public IP addresses, reducing your public attack surface."
+        remediation: "Set 'MapPublicIpOnLaunch' to 'false' in your AWS::EC2::Subnet resources, especially for subnets intended to host private resources. This prevents instances launched in these subnets from automatically receiving public IP addresses, reducing your public attack surface."
     },
     "CKV_AWS_175": {
         description: "AWS WAF does not have associated rules",
         priority: "LOW",
-        intent: "Add at least one rule to your AWS::WAFv2::WebACL by configuring the 'Rules' property with appropriate rule statements. At minimum, include AWS managed rule groups like 'AWSManagedRulesCommonRuleSet' to protect against common vulnerabilities, and consider adding custom rules specific to your application's security requirements."
+        remediation: "Add at least one rule to your AWS::WAFv2::WebACL by configuring the 'Rules' property with appropriate rule statements. At minimum, include AWS managed rule groups like 'AWSManagedRulesCommonRuleSet' to protect against common vulnerabilities, and consider adding custom rules specific to your application's security requirements."
     },
     "CKV_AWS_148": {
         description: "Default VPC is planned to be provisioned",
         priority: "LOW",
-        intent: "Avoid using the default VPC by explicitly creating custom AWS::EC2::VPC resources with appropriate CIDR blocks and security controls. If you must reference a VPC and don't specify one, use an explicit reference to an existing custom VPC instead of relying on the default VPC. This follows security best practices of using purpose-built networks."
+        remediation: "Avoid using the default VPC by explicitly creating custom AWS::EC2::VPC resources with appropriate CIDR blocks and security controls. If you must reference a VPC and don't specify one, use an explicit reference to an existing custom VPC instead of relying on the default VPC. This follows security best practices of using purpose-built networks."
     },
     "CKV_AWS_323": {
         description: "ElastiCache cluster is using the default subnet group",
         priority: "LOW",
-        intent: "Create a custom AWS::ElastiCache::SubnetGroup resource with appropriate private subnets, then reference it in your AWS::ElastiCache::CacheCluster or AWS::ElastiCache::ReplicationGroup resource using the 'CacheSubnetGroupName' property. This ensures your ElastiCache clusters are placed in properly secured and isolated subnets."
+        remediation: "Create a custom AWS::ElastiCache::SubnetGroup resource with appropriate private subnets, then reference it in your AWS::ElastiCache::CacheCluster or AWS::ElastiCache::ReplicationGroup resource using the 'CacheSubnetGroupName' property. This ensures your ElastiCache clusters are placed in properly secured and isolated subnets."
     },
     "CKV2_AWS_19": {
         description: "Not all EIP addresses allocated to a VPC are attached to EC2 instances",
         priority: "LOW",
-        intent: "Ensure all AWS::EC2::EIP resources are associated with instances or network interfaces by always including either the 'InstanceId' property or the 'NetworkInterfaceId' property. Unattached Elastic IPs incur costs without providing value, and should be properly attached or released."
+        remediation: "Ensure all AWS::EC2::EIP resources are associated with instances or network interfaces by always including either the 'InstanceId' property or the 'NetworkInterfaceId' property. Unattached Elastic IPs incur costs without providing value, and should be properly attached or released."
     },
     "CKV_AWS_23": {
         description: "Not every Security Group rule has a description",
         priority: "LOW",
-        intent: "Add a descriptive 'Description' property to all ingress and egress rules in your AWS::EC2::SecurityGroup resources. The description should clearly explain the purpose of each rule, making it easier to audit security configurations and understand why specific ports or protocols are allowed."
+        remediation: "Add a descriptive 'Description' property to all ingress and egress rules in your AWS::EC2::SecurityGroup resources. The description should clearly explain the purpose of each rule, making it easier to audit security configurations and understand why specific ports or protocols are allowed."
     },
     "CKV_AWS_154": {
         description: "Redshift is deployed outside of a VPC",
         priority: "LOW",
-        intent: "Deploy your AWS::Redshift::Cluster within a VPC by specifying the 'ClusterSubnetGroupName' property referencing an AWS::Redshift::ClusterSubnetGroup resource that contains private subnet IDs. Additionally, set 'PubliclyAccessible' to 'false' to ensure the cluster is only accessible from within your VPC network."
+        remediation: "Deploy your AWS::Redshift::Cluster within a VPC by specifying the 'ClusterSubnetGroupName' property referencing an AWS::Redshift::ClusterSubnetGroup resource that contains private subnet IDs. Additionally, set 'PubliclyAccessible' to 'false' to ensure the cluster is only accessible from within your VPC network."
     },
     "CKV_AWS_377": {
         description: "Route 53 domains do not have transfer lock protection",
         priority: "LOW",
-        intent: "Enable transfer lock protection for your Route 53 domains by setting 'TransferLock: true' in your AWS::Route53Domains::Domain resource. This prevents unauthorized domain transfers by requiring additional verification steps, protecting your domains from hijacking attempts."
+        remediation: "Enable transfer lock protection for your Route 53 domains by setting 'TransferLock: true' in your AWS::Route53Domains::Domain resource. This prevents unauthorized domain transfers by requiring additional verification steps, protecting your domains from hijacking attempts."
     },
     "CKV2_AWS_6": {
         description: "S3 Bucket does not have public access blocks",
         priority: "LOW",
-        intent: "Add public access block configuration to your AWS::S3::Bucket by including the 'PublicAccessBlockConfiguration' property with all four settings ('BlockPublicAcls', 'BlockPublicPolicy', 'IgnorePublicAcls', 'RestrictPublicBuckets') set to 'true'. This prevents any accidental public exposure of your bucket contents."
+        remediation: "Add public access block configuration to your AWS::S3::Bucket by including the 'PublicAccessBlockConfiguration' property with all four settings ('BlockPublicAcls', 'BlockPublicPolicy', 'IgnorePublicAcls', 'RestrictPublicBuckets') set to 'true'. This prevents any accidental public exposure of your bucket contents."
     },
     "CKV2_AWS_5": {
         description: "Security Groups are not attached to EC2 instances or ENIs",
         priority: "LOW",
-        intent: "Ensure all AWS::EC2::SecurityGroup resources are referenced by either AWS::EC2::Instance resources (in the 'SecurityGroupIds' property) or by AWS::EC2::NetworkInterface resources. Unused security groups increase complexity and can introduce security risks when modified later without understanding their impact."
+        remediation: "Ensure all AWS::EC2::SecurityGroup resources are referenced by either AWS::EC2::Instance resources (in the 'SecurityGroupIds' property) or by AWS::EC2::NetworkInterface resources. Unused security groups increase complexity and can introduce security risks when modified later without understanding their impact."
     },
     "CKV_AWS_123": {
         description: "VPC endpoint service is not configured for manual acceptance",
         priority: "LOW",
-        intent: "Configure your AWS::EC2::VPCEndpointService to require manual acceptance by setting the 'AcceptanceRequired' property to 'true'. This ensures that you must explicitly approve each consumer VPC that attempts to create an endpoint to your service, preventing unauthorized access."
+        remediation: "Configure your AWS::EC2::VPCEndpointService to require manual acceptance by setting the 'AcceptanceRequired' property to 'true'. This ensures that you must explicitly approve each consumer VPC that attempts to create an endpoint to your service, preventing unauthorized access."
     },
     "CKV_AWS_152": {
         description: "AWS Elastic Load Balancer v2 (ELBv2) with cross-zone load balancing disabled",
         priority: "INFO",
-        intent: "Enable cross-zone load balancing for your AWS::ElasticLoadBalancingV2::LoadBalancer by setting a load balancer attribute with 'Key: load_balancing.cross_zone.enabled' and 'Value: true' in the 'LoadBalancerAttributes' property. This ensures traffic is distributed evenly across all instances in all availability zones."
+        remediation: "Enable cross-zone load balancing for your AWS::ElasticLoadBalancingV2::LoadBalancer by setting a load balancer attribute with 'Key: load_balancing.cross_zone.enabled' and 'Value: true' in the 'LoadBalancerAttributes' property. This ensures traffic is distributed evenly across all instances in all availability zones."
     },
     "CKV2_AWS_1": {
         description: "AWS Network ACL is not in use",
         priority: "INFO",
-        intent: "Ensure all AWS::EC2::Subnet resources are associated with custom Network ACLs by creating AWS::EC2::NetworkAcl resources with appropriate rules, then creating AWS::EC2::SubnetNetworkAclAssociation resources to link them to your subnets. This provides an additional layer of network security beyond security groups."
+        remediation: "Ensure all AWS::EC2::Subnet resources are associated with custom Network ACLs by creating AWS::EC2::NetworkAcl resources with appropriate rules, then creating AWS::EC2::SubnetNetworkAclAssociation resources to link them to your subnets. This provides an additional layer of network security beyond security groups."
     },
     "CKV_AWS_306": {
         description: "AWS SageMaker notebook instance is not placed in VPC",
         priority: "INFO",
-        intent: "Place your AWS::SageMaker::NotebookInstance within a VPC by specifying the 'SubnetId' property with a private subnet ID and including appropriate security group IDs in the 'SecurityGroupIds' property. This improves security by isolating the notebook instance within your private network."
+        remediation: "Place your AWS::SageMaker::NotebookInstance within a VPC by specifying the 'SubnetId' property with a private subnet ID and including appropriate security group IDs in the 'SecurityGroupIds' property. This improves security by isolating the notebook instance within your private network."
     },
     "CKV_AWS_25": {
         description: "AWS Security Group allows all traffic on RDP port (3389)",
         priority: "INFO",
-        intent: "Modify your AWS::EC2::SecurityGroup ingress rules for port 3389 (RDP) to restrict the 'CidrIp' from '0.0.0.0/0' to specific IP ranges that require RDP access. Ideally, limit access to your corporate IP ranges or require users to connect through a bastion host or VPN. This prevents unauthorized RDP access attempts."
+        remediation: "Modify your AWS::EC2::SecurityGroup ingress rules for port 3389 (RDP) to restrict the 'CidrIp' from '0.0.0.0/0' to specific IP ranges that require RDP access. Ideally, limit access to your corporate IP ranges or require users to connect through a bastion host or VPN. This prevents unauthorized RDP access attempts."
     },
     "CKV_AWS_24": {
         description: "AWS Security Group allows all traffic on SSH port (22)",
         priority: "INFO",
-        intent: "Modify your AWS::EC2::SecurityGroup ingress rules for port 22 (SSH) to restrict the 'CidrIp' from '0.0.0.0/0' to specific IP ranges that require SSH access. Ideally, limit access to your corporate IP ranges or require users to connect through a bastion host or VPN. This prevents unauthorized SSH access attempts."
+        remediation: "Modify your AWS::EC2::SecurityGroup ingress rules for port 22 (SSH) to restrict the 'CidrIp' from '0.0.0.0/0' to specific IP ranges that require SSH access. Ideally, limit access to your corporate IP ranges or require users to connect through a bastion host or VPN. This prevents unauthorized SSH access attempts."
     },
     // **** SERVERLESS POLICIES ****
     "CKV_AWS_173": {
         description: "AWS Lambda encryption settings environmental variable is not set properly",
         priority: "LOW",
-        intent: "When using environment variables in your AWS::Lambda::Function or AWS::Serverless::Function resource, add the 'KmsKeyArn' property with a valid KMS key ARN to encrypt these variables. Example: 'KmsKeyArn: arn:aws:kms:region:account-id:key/key-id'. This protects sensitive information stored in environment variables from unauthorized access, which is especially important for secrets, API keys, or connection strings."
+        remediation: "When using environment variables in your AWS::Lambda::Function or AWS::Serverless::Function resource, add the 'KmsKeyArn' property with a valid KMS key ARN to encrypt these variables. Example: 'KmsKeyArn: arn:aws:kms:region:account-id:key/key-id'. This protects sensitive information stored in environment variables from unauthorized access, which is especially important for secrets, API keys, or connection strings."
     },
     "CKV_AWS_50": {
         description: "AWS Lambda functions with tracing not enabled",
         priority: "LOW",
-        intent: "Enable AWS X-Ray tracing for your Lambda function by adding the 'TracingConfig' property with 'Mode: Active' to your AWS::Lambda::Function resource. Example: \"TracingConfig\": { \"Mode\": \"Active\" }. This allows you to visualize and troubleshoot performance issues, errors, and latency by providing distributed tracing data for your serverless applications."
+        remediation: "Enable AWS X-Ray tracing for your Lambda function by adding the 'TracingConfig' property with 'Mode: Active' to your AWS::Lambda::Function resource. Example: \"TracingConfig\": { \"Mode\": \"Active\" }. This allows you to visualize and troubleshoot performance issues, errors, and latency by providing distributed tracing data for your serverless applications."
     },
     // **** SUPPLY CHAIN POLICIES ****
     "CKV_AWS_386": {
         description: "Potential WhoAMI name confusion attack exposure",
         priority: "LOW",
-        intent: "When using AWS::EC2::Image or custom AMI references in CloudFormation, always specify the exact AMI ID rather than using wildcards or generic names. If using AWS::ImageBuilder resources, explicitly specify trusted owners by their account IDs in the 'ImageRecipeVersion.Platform' or similar properties. For example, use 'ImageId: ami-0123456789abcdef0' with the complete AMI ID rather than relying on dynamic lookups with wildcards. This prevents attackers from exploiting name similarity to trick users into using malicious images that mimic trusted ones."
+        remediation: "When using AWS::EC2::Image or custom AMI references in CloudFormation, always specify the exact AMI ID rather than using wildcards or generic names. If using AWS::ImageBuilder resources, explicitly specify trusted owners by their account IDs in the 'ImageRecipeVersion.Platform' or similar properties. For example, use 'ImageId: ami-0123456789abcdef0' with the complete AMI ID rather than relying on dynamic lookups with wildcards. This prevents attackers from exploiting name similarity to trick users into using malicious images that mimic trusted ones."
     },
     // **** ELASTICSEARCH POLICIES ****
     "CKV_AWS_6": {
         description: "AWS Elasticsearch does not have node-to-node encryption enabled",
         priority: "MEDIUM",
-        intent: "Enable node-to-node encryption in your AWS::Elasticsearch::Domain resource by adding the 'NodeToNodeEncryptionOptions' property with 'Enabled: true'. This ensures that data remains encrypted in-transit while being distributed and replicated between nodes in your Elasticsearch cluster, protecting against potential eavesdropping or man-in-the-middle attacks on your internal cluster traffic."
+        remediation: "Enable node-to-node encryption in your AWS::Elasticsearch::Domain resource by adding the 'NodeToNodeEncryptionOptions' property with 'Enabled: true'. This ensures that data remains encrypted in-transit while being distributed and replicated between nodes in your Elasticsearch cluster, protecting against potential eavesdropping or man-in-the-middle attacks on your internal cluster traffic."
     },
     "CKV_AWS_83": {
         description: "AWS Elasticsearch domain is not configured with HTTPS",
         priority: "MEDIUM",
-        intent: "Configure your AWS::Elasticsearch::Domain resource to enforce HTTPS by adding the 'DomainEndpointOptions' property with 'EnforceHTTPS: true'. This ensures all communication between applications and your Elasticsearch domain occurs over encrypted channels, preventing potential interception of sensitive data and eliminating man-in-the-middle attack vectors."
+        remediation: "Configure your AWS::Elasticsearch::Domain resource to enforce HTTPS by adding the 'DomainEndpointOptions' property with 'EnforceHTTPS: true'. This ensures all communication between applications and your Elasticsearch domain occurs over encrypted channels, preventing potential interception of sensitive data and eliminating man-in-the-middle attack vectors."
     },
     "CKV_AWS_84": {
         description: "AWS Elasticsearch domain logging is not enabled",
         priority: "MEDIUM",
-        intent: "Enable logging for your AWS::Elasticsearch::Domain by configuring the 'LogPublishingOptions' property. At minimum, enable audit logs with: 'LogPublishingOptions: { AUDIT_LOGS: { Enabled: true, CloudWatchLogsLogGroupArn: !GetAtt ElasticsearchLogGroup.Arn } }'. You should also consider enabling INDEX_SLOW_LOGS, SEARCH_SLOW_LOGS, and ES_APPLICATION_LOGS. This helps with troubleshooting performance issues and provides audit trails for compliance requirements."
+        remediation: "Enable logging for your AWS::Elasticsearch::Domain by configuring the 'LogPublishingOptions' property. At minimum, enable audit logs with: 'LogPublishingOptions: { AUDIT_LOGS: { Enabled: true, CloudWatchLogsLogGroupArn: !GetAtt ElasticsearchLogGroup.Arn } }'. You should also consider enabling INDEX_SLOW_LOGS, SEARCH_SLOW_LOGS, and ES_APPLICATION_LOGS. This helps with troubleshooting performance issues and provides audit trails for compliance requirements."
     },
     "CKV_AWS_5": {
         description: "AWS Elasticsearch domain Encryption for data at rest is disabled",
         priority: "LOW",
-        intent: "Enable encryption at rest for your AWS::Elasticsearch::Domain resource by adding the 'EncryptionAtRestOptions' property with 'Enabled: true'. Optionally, you can specify a KMS key with 'KmsKeyId: !Ref MyKmsKeyId'. This protects sensitive data stored in indices, logs, and snapshots from unauthorized access if the underlying storage is compromised."
+        remediation: "Enable encryption at rest for your AWS::Elasticsearch::Domain resource by adding the 'EncryptionAtRestOptions' property with 'Enabled: true'. Optionally, you can specify a KMS key with 'KmsKeyId: !Ref MyKmsKeyId'. This protects sensitive data stored in indices, logs, and snapshots from unauthorized access if the underlying storage is compromised."
     },
     // **** PUBLIC POLICIES ****
     "CKV_AWS_88": {
         description: "AWS EC2 instances with public IP and associated with security groups have Internet access",
         priority: "HIGH",
-        intent: "Remove public IP addressing from EC2 instances by setting 'AssociatePublicIpAddress: false' in the NetworkInterfaces property of your AWS::EC2::Instance or AWS::EC2::LaunchTemplate resources. For existing public-facing applications, consider using a load balancer or NAT gateway instead, keeping your EC2 instances in private subnets while still allowing necessary outbound internet access."
+        remediation: "Remove public IP addressing from EC2 instances by setting 'AssociatePublicIpAddress: false' in the NetworkInterfaces property of your AWS::EC2::Instance or AWS::EC2::LaunchTemplate resources. For existing public-facing applications, consider using a load balancer or NAT gateway instead, keeping your EC2 instances in private subnets while still allowing necessary outbound internet access."
     },
     "CKV_AWS_32": {
         description: "AWS Private ECR repository policy is overly permissive",
         priority: "MEDIUM",
-        intent: "Modify the RepositoryPolicyText property in your AWS::ECR::Repository resource to avoid using wildcard principals (\"*\"). Instead, specify explicit AWS account IDs or IAM roles/users that need access to your repository. For example, replace \"Principal\": \"*\" with \"Principal\": { \"AWS\": [\"arn:aws:iam::123456789012:role/MyRole\"] }. This limits access to only authenticated and authorized entities."
+        remediation: "Modify the RepositoryPolicyText property in your AWS::ECR::Repository resource to avoid using wildcard principals (\"*\"). Instead, specify explicit AWS account IDs or IAM roles/users that need access to your repository. For example, replace \"Principal\": \"*\" with \"Principal\": { \"AWS\": [\"arn:aws:iam::123456789012:role/MyRole\"] }. This limits access to only authenticated and authorized entities."
     },
     "CKV_AWS_17": {
         description: "AWS RDS database instance is publicly accessible",
         priority: "MEDIUM",
-        intent: "Set the 'PubliclyAccessible' property to 'false' in your AWS::RDS::DBInstance resource. Additionally, place your RDS instance in a private subnet with appropriate security groups that restrict access to only necessary application servers. For access from outside the VPC, consider using a bastion host or VPN connection instead of making the database directly accessible from the internet."
+        remediation: "Set the 'PubliclyAccessible' property to 'false' in your AWS::RDS::DBInstance resource. Additionally, place your RDS instance in a private subnet with appropriate security groups that restrict access to only necessary application servers. For access from outside the VPC, consider using a bastion host or VPN connection instead of making the database directly accessible from the internet."
     },
     "CKV_AWS_87": {
         description: "AWS Redshift cluster instance with public access setting enabled",
         priority: "MEDIUM",
-        intent: "Configure your AWS::Redshift::Cluster resource with 'PubliclyAccessible: false' to ensure the cluster is not directly accessible from the internet. Additionally, place the cluster in private subnets and configure security groups to only allow connections from authorized application servers or client networks."
+        remediation: "Configure your AWS::Redshift::Cluster resource with 'PubliclyAccessible: false' to ensure the cluster is not directly accessible from the internet. Additionally, place the cluster in private subnets and configure security groups to only allow connections from authorized application servers or client networks."
     },
     "CKV_AWS_59": {
         description: "AWS API gateway methods are publicly accessible",
         priority: "LOW",
-        intent: "Secure your AWS::ApiGateway::Method resources by implementing one of these approaches: 1) Set 'AuthorizationType' to a value other than 'NONE' (such as 'AWS_IAM', 'COGNITO_USER_POOLS', or 'CUSTOM'), 2) Set 'ApiKeyRequired' to 'true', or 3) For OPTIONS methods used in CORS, you can keep 'AuthorizationType: NONE'. This ensures that all API methods require proper authentication or authorization before access is granted."
+        remediation: "Secure your AWS::ApiGateway::Method resources by implementing one of these approaches: 1) Set 'AuthorizationType' to a value other than 'NONE' (such as 'AWS_IAM', 'COGNITO_USER_POOLS', or 'CUSTOM'), 2) Set 'ApiKeyRequired' to 'true', or 3) For OPTIONS methods used in CORS, you can keep 'AuthorizationType: NONE'. This ensures that all API methods require proper authentication or authorization before access is granted."
     },
     "CKV_AWS_89": {
         description: "AWS DMS replication instance is publicly accessible",
         priority: "LOW",
-        intent: "Set the 'PubliclyAccessible' property to 'false' in your AWS::DMS::ReplicationInstance resource. This ensures your Database Migration Service replication instance only has private IP addresses and is not accessible from the internet, reducing the attack surface of your migration infrastructure."
+        remediation: "Set the 'PubliclyAccessible' property to 'false' in your AWS::DMS::ReplicationInstance resource. This ensures your Database Migration Service replication instance only has private IP addresses and is not accessible from the internet, reducing the attack surface of your migration infrastructure."
     },
     "CKV_AWS_69": {
         description: "AWS MQ is publicly accessible",
         priority: "LOW",
-        intent: "Configure your AWS::AmazonMQ::Broker resource with 'PubliclyAccessible: false' to ensure the message broker is only accessible from within your VPC. This prevents potential unauthorized access to your messaging infrastructure and protects sensitive data that might be transmitted through your message queues."
+        remediation: "Configure your AWS::AmazonMQ::Broker resource with 'PubliclyAccessible: false' to ensure the message broker is only accessible from within your VPC. This prevents potential unauthorized access to your messaging infrastructure and protects sensitive data that might be transmitted through your message queues."
     },
     // **** S3 POLICIES ****
     "CKV_AWS_20": {
         description: "AWS S3 bucket ACL grants READ permission to everyone",
         priority: "HIGH",
-        intent: "Remove public read access from your S3 bucket by removing the 'AccessControl' property from your AWS::S3::Bucket resource or explicitly setting it to 'Private'. If using a separate AWS::S3::BucketPolicy resource, ensure it does not grant broad public read access. Never use 'PublicRead' or 'PublicReadWrite' access controls in production environments unless the bucket is specifically intended to host public web content."
+        remediation: "Remove public read access from your S3 bucket by removing the 'AccessControl' property from your AWS::S3::Bucket resource or explicitly setting it to 'Private'. If using a separate AWS::S3::BucketPolicy resource, ensure it does not grant broad public read access. Never use 'PublicRead' or 'PublicReadWrite' access controls in production environments unless the bucket is specifically intended to host public web content."
     },
     "CKV_AWS_57": {
         description: "AWS S3 Bucket has an ACL defined which allows public WRITE access",
         priority: "HIGH",
-        intent: "Remove public write access from your S3 bucket by removing the 'AccessControl' property from your AWS::S3::Bucket resource or explicitly setting it to 'Private'. If the 'AccessControl' property is set to 'PublicReadWrite', change it to 'Private'. Public write access to S3 buckets poses a severe security risk as it allows anyone to add, modify, or delete content in your bucket."
+        remediation: "Remove public write access from your S3 bucket by removing the 'AccessControl' property from your AWS::S3::Bucket resource or explicitly setting it to 'Private'. If the 'AccessControl' property is set to 'PublicReadWrite', change it to 'Private'. Public write access to S3 buckets poses a severe security risk as it allows anyone to add, modify, or delete content in your bucket."
     },
     "CKV_AWS_53": {
         description: "AWS S3 Buckets has block public access setting disabled",
         priority: "MEDIUM",
-        intent: "Enable the 'BlockPublicAcls' setting in your AWS::S3::Bucket resource by adding the 'PublicAccessBlockConfiguration' property with 'BlockPublicAcls: true'. This prevents new public ACLs from being applied to the bucket and its objects, reducing the risk of accidental public exposure of sensitive data. Example: \"PublicAccessBlockConfiguration\": { \"BlockPublicAcls\": true, ... }"
+        remediation: "Enable the 'BlockPublicAcls' setting in your AWS::S3::Bucket resource by adding the 'PublicAccessBlockConfiguration' property with 'BlockPublicAcls: true'. This prevents new public ACLs from being applied to the bucket and its objects, reducing the risk of accidental public exposure of sensitive data. Example: \"PublicAccessBlockConfiguration\": { \"BlockPublicAcls\": true, ... }"
     },
     "CKV_AWS_54": {
         description: "AWS S3 Bucket BlockPublicPolicy is not set to True",
         priority: "MEDIUM",
-        intent: "Enable the 'BlockPublicPolicy' setting in your AWS::S3::Bucket resource by adding or updating the 'PublicAccessBlockConfiguration' property with 'BlockPublicPolicy: true'. This prevents the attachment of public bucket policies, providing an additional layer of protection against inadvertent public access. Example: \"PublicAccessBlockConfiguration\": { \"BlockPublicPolicy\": true, ... }"
+        remediation: "Enable the 'BlockPublicPolicy' setting in your AWS::S3::Bucket resource by adding or updating the 'PublicAccessBlockConfiguration' property with 'BlockPublicPolicy: true'. This prevents the attachment of public bucket policies, providing an additional layer of protection against inadvertent public access. Example: \"PublicAccessBlockConfiguration\": { \"BlockPublicPolicy\": true, ... }"
     },
     "CKV_AWS_55": {
         description: "AWS S3 bucket IgnorePublicAcls is not set to True",
         priority: "MEDIUM",
-        intent: "Enable the 'IgnorePublicAcls' setting in your AWS::S3::Bucket resource by adding or updating the 'PublicAccessBlockConfiguration' property with 'IgnorePublicAcls: true'. This setting causes S3 to ignore all public ACLs on the bucket and its objects, effectively nullifying any existing public access granted via ACLs. Example: \"PublicAccessBlockConfiguration\": { \"IgnorePublicAcls\": true, ... }"
+        remediation: "Enable the 'IgnorePublicAcls' setting in your AWS::S3::Bucket resource by adding or updating the 'PublicAccessBlockConfiguration' property with 'IgnorePublicAcls: true'. This setting causes S3 to ignore all public ACLs on the bucket and its objects, effectively nullifying any existing public access granted via ACLs. Example: \"PublicAccessBlockConfiguration\": { \"IgnorePublicAcls\": true, ... }"
     },
     "CKV_AWS_56": {
         description: "AWS S3 bucket RestrictPublicBucket is not set to True",
         priority: "MEDIUM",
-        intent: "Enable the 'RestrictPublicBuckets' setting in your AWS::S3::Bucket resource by adding or updating the 'PublicAccessBlockConfiguration' property with 'RestrictPublicBuckets: true'. This restricts access to buckets with public policies to only AWS services and authorized users within the account. Example: \"PublicAccessBlockConfiguration\": { \"RestrictPublicBuckets\": true, ... }"
+        remediation: "Enable the 'RestrictPublicBuckets' setting in your AWS::S3::Bucket resource by adding or updating the 'PublicAccessBlockConfiguration' property with 'RestrictPublicBuckets: true'. This restricts access to buckets with public policies to only AWS services and authorized users within the account. Example: \"PublicAccessBlockConfiguration\": { \"RestrictPublicBuckets\": true, ... }"
     },
     "CKV_AWS_70": {
         description: "AWS S3 bucket policy overly permissive to any principal",
         priority: "MEDIUM",
-        intent: "Revise your AWS::S3::BucketPolicy to avoid using wildcard principals like \"Principal\": \"*\" or \"Principal\": {\"AWS\": \"*\"}. Instead, explicitly specify the ARNs of IAM users, roles, or AWS accounts that need access. For example, replace \"Principal\": \"*\" with \"Principal\": {\"AWS\": \"arn:aws:iam::123456789012:role/MyRole\"}. This prevents anonymous access and limits the bucket access to only authorized identities."
+        remediation: "Revise your AWS::S3::BucketPolicy to avoid using wildcard principals like \"Principal\": \"*\" or \"Principal\": {\"AWS\": \"*\"}. Instead, explicitly specify the ARNs of IAM users, roles, or AWS accounts that need access. For example, replace \"Principal\": \"*\" with \"Principal\": {\"AWS\": \"arn:aws:iam::123456789012:role/MyRole\"}. This prevents anonymous access and limits the bucket access to only authorized identities."
     },
     "CKV_AWS_93": {
         description: "S3 bucket policy allows lockout all but root user",
         priority: "MEDIUM",
-        intent: "Modify your AWS::S3::BucketPolicy to avoid overly restrictive deny statements that could lock out all users except the root user. If using broad deny statements with \"Effect\": \"Deny\" and \"Principal\": \"*\", ensure you include a condition that excludes specific IAM roles or users who need administrative access. Example: Add \"Condition\": {\"StringNotLike\": {\"aws:PrincipalArn\": [\"arn:aws:iam::123456789012:role/AdminRole\"]}}."
+        remediation: "Modify your AWS::S3::BucketPolicy to avoid overly restrictive deny statements that could lock out all users except the root user. If using broad deny statements with \"Effect\": \"Deny\" and \"Principal\": \"*\", ensure you include a condition that excludes specific IAM roles or users who need administrative access. Example: Add \"Condition\": {\"StringNotLike\": {\"aws:PrincipalArn\": [\"arn:aws:iam::123456789012:role/AdminRole\"]}}."
     },
     "CKV_AWS_19": {
         description: "AWS S3 buckets do not have server side encryption",
         priority: "LOW",
-        intent: "Enable server-side encryption for your S3 bucket by adding the 'BucketEncryption' property to your AWS::S3::Bucket resource with 'ServerSideEncryptionConfiguration' that specifies either 'AES256' or 'aws:kms' as the SSEAlgorithm. Example: \"BucketEncryption\": { \"ServerSideEncryptionConfiguration\": [{ \"ServerSideEncryptionByDefault\": { \"SSEAlgorithm\": \"AES256\" }}]}. This ensures all objects stored in the bucket are encrypted at rest."
+        remediation: "Enable server-side encryption for your S3 bucket by adding the 'BucketEncryption' property to your AWS::S3::Bucket resource with 'ServerSideEncryptionConfiguration' that specifies either 'AES256' or 'aws:kms' as the SSEAlgorithm. Example: \"BucketEncryption\": { \"ServerSideEncryptionConfiguration\": [{ \"ServerSideEncryptionByDefault\": { \"SSEAlgorithm\": \"AES256\" }}]}. This ensures all objects stored in the bucket are encrypted at rest."
     },
     "CKV_AWS_21": {
         description: "AWS S3 Object Versioning is disabled",
         priority: "LOW",
-        intent: "Enable object versioning for your S3 bucket by adding the 'VersioningConfiguration' property with 'Status: Enabled' to your AWS::S3::Bucket resource. Example: \"VersioningConfiguration\": { \"Status\": \"Enabled\" }. Versioning helps protect against accidental deletions and modifications by preserving multiple copies of objects, allowing you to recover previous versions if needed."
+        remediation: "Enable object versioning for your S3 bucket by adding the 'VersioningConfiguration' property with 'Status: Enabled' to your AWS::S3::Bucket resource. Example: \"VersioningConfiguration\": { \"Status\": \"Enabled\" }. Versioning helps protect against accidental deletions and modifications by preserving multiple copies of objects, allowing you to recover previous versions if needed."
     },
     "CKV_AWS_18": {
         description: "AWS Access logging not enabled on S3 buckets",
         priority: "INFO",
-        intent: "Enable access logging for your S3 bucket by adding the 'LoggingConfiguration' property to your AWS::S3::Bucket resource, specifying a destination bucket and optional prefix. Example: \"LoggingConfiguration\": { \"DestinationBucketName\": \"my-log-bucket\", \"LogFilePrefix\": \"logs/\" }. Access logging provides detailed records of requests made to your bucket, which is useful for security audits, compliance verification, and troubleshooting."
+        remediation: "Enable access logging for your S3 bucket by adding the 'LoggingConfiguration' property to your AWS::S3::Bucket resource, specifying a destination bucket and optional prefix. Example: \"LoggingConfiguration\": { \"DestinationBucketName\": \"my-log-bucket\", \"LogFilePrefix\": \"logs/\" }. Access logging provides detailed records of requests made to your bucket, which is useful for security audits, compliance verification, and troubleshooting."
     },
     // **** SECRETS POLICIES ****
     "CKV_AWS_41": {
         description: "AWS access keys and secrets are hard coded in infrastructure",
         priority: "HIGH",
-        intent: "Remove hardcoded AWS access keys and secret keys from the CloudFormation template. Replace direct credentials with CloudFormation parameters using NoEcho for security: \"Parameters: { MyAccessKey: { Type: String, NoEcho: true } }\" and reference them with \"!Ref MyAccessKey\" where needed."
+        remediation: "Remove hardcoded AWS access keys and secret keys from the CloudFormation template. Replace direct credentials with CloudFormation parameters using NoEcho for security: \"Parameters: { MyAccessKey: { Type: String, NoEcho: true } }\" and reference them with \"!Ref MyAccessKey\" where needed."
     },
     "CKV_AWS_46": {
         description: "EC2 user data exposes secrets",
         priority: "HIGH",
-        intent: "Remove credentials and secrets from the UserData property of AWS::EC2::Instance resources. For AWS permissions, add an IAM instance profile instead: \"IamInstanceProfile: !Ref MyInstanceProfile\" where MyInstanceProfile is an AWS::IAM::InstanceProfile resource with appropriate permissions."
+        remediation: "Remove credentials and secrets from the UserData property of AWS::EC2::Instance resources. For AWS permissions, add an IAM instance profile instead: \"IamInstanceProfile: !Ref MyInstanceProfile\" where MyInstanceProfile is an AWS::IAM::InstanceProfile resource with appropriate permissions."
     },
     "CKV_AWS_45": {
         description: "Lambda function's environment variables expose secrets",
         priority: "MEDIUM",
-        intent: "Remove sensitive values from the Environment.Variables property of AWS::Lambda::Function resources. For AWS access, use the Lambda's execution role by setting the Role property to reference an AWS::IAM::Role with appropriate permissions. For other secrets, use AWS Systems Manager Parameter Store with secure references: \"MY_SECRET: '{{resolve:ssm-secure:/path/to/parameter:1}}'\"."
+        remediation: "Remove sensitive values from the Environment.Variables property of AWS::Lambda::Function resources. For AWS access, use the Lambda's execution role by setting the Role property to reference an AWS::IAM::Role with appropriate permissions. For other secrets, use AWS Systems Manager Parameter Store with secure references: \"MY_SECRET: '{{resolve:ssm-secure:/path/to/parameter:1}}'\"."
     }
 };
 

@@ -1,26 +1,32 @@
 import { SecurityControl } from '../../../controls/security-control.js';
-import { ControlFinding } from '../../../controls/types.js';
-import { S3008Adapter } from './s3-008.adapter.js';
+import type { Finding } from '../../../controls/types.js';
+import type { S3008Adapter } from './s3-008.adapter.js';
 
-export class S3008Control extends SecurityControl<S3008Adapter> {
+const MISSING_LIFECYCLE_CONFIGURATION = 'missing-lifecycle-configuration';
+
+const FINDINGS = {
+  [MISSING_LIFECYCLE_CONFIGURATION]: {
+    issue: 'S3 buckets must have a lifecycle policy',
+    remediation: 'Configure a lifecycle policy for the S3 bucket that transitions objects to STANDARD_IA after 30 days.',
+  },
+} as const satisfies Record<string, Finding>;
+
+type FindingKey = keyof typeof FINDINGS;
+
+export class S3008Control extends SecurityControl<S3008Adapter, FindingKey> {
   constructor() {
     super({
       id: 'S3-008',
       priority: 'HIGH',
       description: 'S3 buckets must have a lifecycle policy',
-      remediationScenarios: [
-        {
-          scenario: 'missing-lifecycle-configuration',
-          intent: 'Configure a lifecycle policy for the S3 bucket that transitions objects to STANDARD_IA after 30 days.',
-        },
-      ],
+      findings: FINDINGS,
     });
   }
 
-  protected evaluate(adapter: S3008Adapter): ControlFinding | null {
+  protected evaluate(adapter: S3008Adapter): FindingKey | null {
     if (!adapter.isBucket) return null;
     if (adapter.hasLifecycleConfiguration) return null;
-    return { scenario: 'missing-lifecycle-configuration' };
+    return MISSING_LIFECYCLE_CONFIGURATION;
   }
 }
 

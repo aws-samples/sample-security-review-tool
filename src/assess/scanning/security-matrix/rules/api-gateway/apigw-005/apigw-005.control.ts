@@ -1,6 +1,6 @@
 import { SecurityControl } from '../../../controls/security-control.js';
-import { ControlFinding } from '../../../controls/types.js';
-import { Apigw005Adapter } from './apigw-005.adapter.js';
+import type { Finding } from '../../../controls/types.js';
+import type { Apigw005Adapter } from './apigw-005.adapter.js';
 
 const MISSING_ENDPOINT_CONFIGURATION = 'missing-endpoint-configuration';
 const PUBLIC_ENDPOINT_TYPE = 'public-endpoint-type';
@@ -10,67 +10,55 @@ const POLICY_EXCLUDES_PRIVATE_PATH = 'policy-excludes-private-path';
 const PRIVATE = 'PRIVATE';
 const VPC_CONDITION_KEYS = ['aws:sourcevpce', 'aws:sourcevpc'];
 
-export class Apigw005Control extends SecurityControl<Apigw005Adapter> {
+const FINDINGS = {
+  [MISSING_ENDPOINT_CONFIGURATION]: {
+    issue: 'The API Gateway REST API does not specify an endpoint type, so it defaults to a publicly reachable internet-facing endpoint instead of a private endpoint reachable only from within a VPC.',
+    remediation: 'Declare the REST API endpoint type explicitly as private, and associate it with an interface VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and enables private DNS.',
+  },
+  [PUBLIC_ENDPOINT_TYPE]: {
+    issue: 'The API Gateway REST API is configured with a publicly reachable endpoint type instead of a private endpoint reachable only from within a VPC.',
+    remediation: 'Change the REST API endpoint type to private, and associate it with an interface VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and enables private DNS.',
+  },
+  [MISSING_VPC_ENDPOINT]: {
+    issue: 'The private API Gateway REST API is not associated with a VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and has private DNS enabled.',
+    remediation: 'Associate the private REST API with an interface VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and enables private DNS.',
+  },
+  [POLICY_EXCLUDES_PRIVATE_PATH]: {
+    issue: 'The private API Gateway REST API access policy denies or does not allow invocations arriving through the VPC endpoint that provides its private access path, so callers inside the VPC cannot reach the API.',
+    remediation: 'Update the private REST API access policy so that invocations arriving through the associated interface VPC endpoint (or its VPC) are allowed, and remove any statement that denies that endpoint or VPC.',
+  },
+} as const satisfies Record<string, Finding>;
+
+type FindingKey = keyof typeof FINDINGS;
+
+export class Apigw005Control extends SecurityControl<Apigw005Adapter, FindingKey> {
   constructor() {
     super({
       id: 'APIGW-005',
       priority: 'HIGH',
       description: 'When VPC-connected resources such as EC2 instances or VPC-connected Lambda functions call an API, API Gateway REST APIs must be configured as PRIVATE endpoints and accessed through a properly configured VPC endpoint (with subnet IDs, security group IDs, and private DNS enabled) for the API Gateway execute-api service, rather than being exposed as a public endpoint.',
-      remediationScenarios: [
-        {
-          scenario: MISSING_ENDPOINT_CONFIGURATION,
-          intent: 'Declare the REST API endpoint type explicitly as private, and associate it with an interface VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and enables private DNS.',
-        },
-        {
-          scenario: PUBLIC_ENDPOINT_TYPE,
-          intent: 'Change the REST API endpoint type to private, and associate it with an interface VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and enables private DNS.',
-        },
-        {
-          scenario: MISSING_VPC_ENDPOINT,
-          intent: 'Associate the private REST API with an interface VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and enables private DNS.',
-        },
-        {
-          scenario: POLICY_EXCLUDES_PRIVATE_PATH,
-          intent: 'Update the private REST API access policy so that invocations arriving through the associated interface VPC endpoint (or its VPC) are allowed, and remove any statement that denies that endpoint or VPC.',
-        },
-      ],
+      findings: FINDINGS,
     });
   }
 
-  protected evaluate(adapter: Apigw005Adapter): ControlFinding | null {
+  protected evaluate(adapter: Apigw005Adapter): FindingKey | null {
     if (adapter.hasUnresolvableDecidingValue()) return null;
 
     const types = adapter.getEndpointTypes();
 
     if (!types || types.length === 0) {
       if (!adapter.hasVpcCallers()) return null;
-      return {
-        scenario: MISSING_ENDPOINT_CONFIGURATION,
-        issue: 'The API Gateway REST API does not specify an endpoint type, so it defaults to a publicly reachable internet-facing endpoint instead of a private endpoint reachable only from within a VPC.',
-      };
+      return MISSING_ENDPOINT_CONFIGURATION;
     }
 
     if (!types.some(type => type.toUpperCase() === PRIVATE)) {
       if (!adapter.hasVpcCallers()) return null;
-      return {
-        scenario: PUBLIC_ENDPOINT_TYPE,
-        issue: 'The API Gateway REST API is configured with a publicly reachable endpoint type instead of a private endpoint reachable only from within a VPC.',
-      };
+      return PUBLIC_ENDPOINT_TYPE;
     }
 
-    if (!adapter.hasCompliantVpcEndpoint()) {
-      return {
-        scenario: MISSING_VPC_ENDPOINT,
-        issue: 'The private API Gateway REST API is not associated with a VPC endpoint for the API Gateway execute-api service that specifies subnets, security groups and has private DNS enabled.',
-      };
-    }
+    if (!adapter.hasCompliantVpcEndpoint()) return MISSING_VPC_ENDPOINT;
 
-    if (this.policyExcludesPrivatePath(adapter)) {
-      return {
-        scenario: POLICY_EXCLUDES_PRIVATE_PATH,
-        issue: 'The private API Gateway REST API access policy denies or does not allow invocations arriving through the VPC endpoint that provides its private access path, so callers inside the VPC cannot reach the API.',
-      };
-    }
+    if (this.policyExcludesPrivatePath(adapter)) return POLICY_EXCLUDES_PRIVATE_PATH;
 
     return null;
   }

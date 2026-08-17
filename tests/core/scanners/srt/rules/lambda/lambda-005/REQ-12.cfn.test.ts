@@ -76,8 +76,7 @@ function runOnRole(template: Template): ScanResult | null {
   return lambda005Control.run(adapter, context);
 }
 
-const broadScenarioIntent = lambda005Control.remediationScenarios
-  .find(scenario => scenario.scenario === 'overly-broad-managed-policy')?.intent;
+const broadManagedPolicyRemediation = lambda005Control.findings['overly-broad-managed-policy'].remediation;
 
 describe('LAMBDA-005 REQ-12 (CloudFormation): mixed narrow + admin-level attachments', () => {
   it('flags an execution role whose narrow policies are accompanied by AdministratorAccess', () => {
@@ -86,7 +85,7 @@ describe('LAMBDA-005 REQ-12 (CloudFormation): mixed narrow + admin-level attachm
     expect(result).not.toBeNull();
     expect(result?.check_id).toBe('LAMBDA-005');
     expect(result?.resourceName).toBe('ExecRole');
-    expect(result?.fix).toBe(broadScenarioIntent);
+    expect(result?.fix).toBe(broadManagedPolicyRemediation);
   });
 
   it('flags an execution role whose narrow policies are accompanied by PowerUserAccess', () => {
@@ -94,7 +93,7 @@ describe('LAMBDA-005 REQ-12 (CloudFormation): mixed narrow + admin-level attachm
 
     expect(result).not.toBeNull();
     expect(result?.check_id).toBe('LAMBDA-005');
-    expect(result?.fix).toBe(broadScenarioIntent);
+    expect(result?.fix).toBe(broadManagedPolicyRemediation);
   });
 
   // Opposite outcome: identical fixture except the broad policy is replaced by another

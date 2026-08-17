@@ -6,7 +6,7 @@ import type { ScanResult, TerraformResource, TfContext } from '../../../../../..
 
 const BUCKET_NAME = 'athena-results-bucket';
 const OUTPUT_LOCATION = `s3://${BUCKET_NAME}/query-results/`;
-const INSECURE_TRANSPORT_SCENARIO = 'output-bucket-allows-insecure-transport';
+const INSECURE_TRANSPORT_FINDING = 'output-bucket-allows-insecure-transport';
 
 const factory = new Ath002TfAdapterFactory();
 
@@ -63,9 +63,7 @@ describe('ATH-002 REQ-09 (Terraform): secure-transport Deny must apply to all re
     expect(result).not.toBeNull();
     expect(result?.check_id).toBe('ATH-002');
     expect(result?.resourceName).toBe('aws_athena_workgroup.analytics');
-    expect(result?.fix).toContain(
-      ath002Control.remediationScenarios.find(s => s.scenario === INSECURE_TRANSPORT_SCENARIO)?.intent,
-    );
+    expect(result?.fix).toContain(ath002Control.findings[INSECURE_TRANSPORT_FINDING].remediation);
   });
 
   it('flags a workgroup whose results bucket policy carves identities out of the Deny with a principal condition (literal bucket name form)', () => {

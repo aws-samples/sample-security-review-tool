@@ -1,69 +1,70 @@
-import { ControlAdapter, CfnContext, ControlFinding, IacContext, Priority, RemediationScenario, Resource, ScanResult, TfContext } from './types.js';
+import type { ControlAdapter, CfnContext, Finding, IacContext, Priority, Resource, ScanResult, TfContext } from './types.js';
 import { SrtLogger } from '../../../../shared/logging/srt-logger.js';
 import type { Remediation } from '../../remediation/types.js';
 
 export const RELATED_RULES_HEADING = '\n\nAdditional constraints (your fix must also satisfy these related rules):\n\n';
 
-export interface SecurityControlMetadata {
+export interface SecurityControlMetadata<TAdapter extends ControlAdapter, TFindingKey extends string> {
     readonly id: string;
     readonly priority: Priority;
     readonly description: string;
-    readonly remediationScenarios: RemediationScenario[];
+    readonly findings: Readonly<Record<TFindingKey, Finding<TAdapter>>>;
     readonly relatedRules?: readonly Remediation[];
     readonly supersedes?: readonly string[];
 }
 
-export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlAdapter> implements Remediation {
+export abstract class SecurityControl<
+    TAdapter extends ControlAdapter = ControlAdapter,
+    TFindingKey extends string = string,
+> implements Remediation {
     public readonly id: string;
     public readonly priority: Priority;
     public readonly description: string;
-    public readonly remediationScenarios: RemediationScenario[];
+    public readonly findings: Readonly<Record<TFindingKey, Finding<TAdapter>>>;
     public readonly relatedRules: readonly Remediation[];
     public readonly supersedes: readonly string[];
 
-    constructor(metadata: SecurityControlMetadata) {
+    constructor(metadata: SecurityControlMetadata<TAdapter, TFindingKey>) {
         this.id = metadata.id;
         this.priority = metadata.priority;
         this.description = metadata.description;
-        this.remediationScenarios = metadata.remediationScenarios;
+        this.findings = metadata.findings;
         this.relatedRules = metadata.relatedRules ?? [];
         this.supersedes = metadata.supersedes ?? [];
     }
 
-    public get intent(): string {
-        return this.remediationScenarios[0]?.intent ?? '';
+    public get remediation(): string {
+        const remediations = Object.keys(this.findings)
+            .map(key => this.findings[key as TFindingKey].remediation);
+        return [...new Set(remediations)].join('\n\n');
     }
 
-    protected abstract evaluate(adapter: TAdapter): ControlFinding | null;
+    protected abstract evaluate(adapter: TAdapter): TFindingKey | null;
 
     public run(adapter: TAdapter, context: IacContext): ScanResult | null {
-        const finding = this.evaluate(adapter);
-        if (!finding) return null;
-        const fix = this.buildRemediation(adapter, finding.scenario);
-        const result = this.buildScanResult(context, adapter, finding, fix);
-        if (this.requiresManualFix(finding.scenario)) result.manualFixRequired = true;
+        const findingKey = this.evaluate(adapter);
+        if (findingKey === null) return null;
+        const finding = this.findings[findingKey];
+        const remediation = this.buildRemediation(finding.remediation);
+        const issue = typeof finding.issue === 'function' ? finding.issue(adapter) : finding.issue;
+        const result = this.buildScanResult(context, adapter, issue, remediation);
+        if (finding.manualFixRequired) result.manualFixRequired = true;
         return result;
     }
 
-    private requiresManualFix(scenario: string): boolean {
-        return this.remediationScenarios.find(s => s.scenario === scenario)?.manualFixRequired === true;
-    }
-
-    private buildRemediation(adapter: TAdapter, scenario: string): string {
-        const def = this.remediationScenarios.find(s => s.scenario === scenario);
-        const primaryIntent = def?.intent ?? '';
-        const related = this.relatedRules.filter(rule => rule.intent.trim().length > 0);
-        if (related.length === 0) return primaryIntent;
+    private buildRemediation(primaryRemediation: string): string {
+        const related = this.relatedRules.filter(rule => rule.remediation.trim().length > 0);
+        if (related.length === 0) return primaryRemediation;
         const relatedGuidance = related.map(rule => this.describeRelatedRule(rule)).join('\n\n');
-        return `${primaryIntent}${RELATED_RULES_HEADING}${relatedGuidance}`;
+        return `${primaryRemediation}${RELATED_RULES_HEADING}${relatedGuidance}`;
     }
 
     private describeRelatedRule(rule: Remediation): string {
         const prefix = rule.description ? `[${rule.id}] ${rule.description}:` : `[${rule.id}]`;
-        return `${prefix} ${rule.intent}`;
+        return `${prefix} ${rule.remediation}`;
     }
 
-    private buildScanResult(context: IacContext, adapter: TAdapter, finding: ControlFinding, fix: string): ScanResult {
+    private buildScanResult(context: IacContext, adapter: TAdapter, issue: string, remediation: string): ScanResult {
         if ('stackName' in context) {
             const cfn = context as CfnContext;
             return {
@@ -71,8 +72,8 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
                 path: cfn.stackName,
                 resourceType: adapter.resourceType,
                 resourceName: adapter.resourceId,
-                issue: finding.issue ?? this.description,
-                fix,
+                issue,
+                fix: remediation,
                 priority: this.priority.toUpperCase(),
                 check_id: this.id,
                 status: 'Open',
@@ -87,8 +88,8 @@ export abstract class SecurityControl<TAdapter extends ControlAdapter = ControlA
             path: tf.projectName,
             resourceType: adapter.resourceType,
             resourceName: adapter.resourceId,
-            issue: finding.issue ?? this.description,
-            fix,
+            issue,
+            fix: remediation,
             priority: this.priority.toUpperCase(),
             check_id: this.id,
             status: 'Open',

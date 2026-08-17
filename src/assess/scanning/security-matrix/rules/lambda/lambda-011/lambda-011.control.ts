@@ -1,27 +1,31 @@
 import { SecurityControl } from '../../../controls/security-control.js';
-import { ControlFinding } from '../../../controls/types.js';
-import { Lambda011Adapter } from './lambda-011.adapter.js';
+import type { Finding } from '../../../controls/types.js';
+import type { Lambda011Adapter } from './lambda-011.adapter.js';
 
-const MISSING_ALARM_SCENARIO = 'missing-monitoring-alarm';
+const MISSING_ALARM_FINDING = 'missing-monitoring-alarm';
 
-export class Lambda011Control extends SecurityControl<Lambda011Adapter> {
+const FINDINGS = {
+  [MISSING_ALARM_FINDING]: {
+    issue: 'Lambda functions must have CloudWatch alarms for monitoring',
+    remediation: 'Add CloudWatch alarms to monitor key Lambda operational metrics (Errors, Throttles, Duration, ConcurrentExecutions).',
+  },
+} as const satisfies Record<string, Finding>;
+
+type FindingKey = keyof typeof FINDINGS;
+
+export class Lambda011Control extends SecurityControl<Lambda011Adapter, FindingKey> {
   constructor() {
     super({
       id: 'LAMBDA-011',
       priority: 'HIGH',
       description: 'Lambda functions must have CloudWatch alarms for monitoring',
-      remediationScenarios: [
-        {
-          scenario: MISSING_ALARM_SCENARIO,
-          intent: 'Add CloudWatch alarms to monitor key Lambda operational metrics (Errors, Throttles, Duration, ConcurrentExecutions).',
-        },
-      ],
+      findings: FINDINGS,
     });
   }
 
-  protected evaluate(adapter: Lambda011Adapter): ControlFinding | null {
+  protected evaluate(adapter: Lambda011Adapter): FindingKey | null {
     if (adapter.hasMonitoringAlarm()) return null;
-    return { scenario: MISSING_ALARM_SCENARIO };
+    return MISSING_ALARM_FINDING;
   }
 }
 

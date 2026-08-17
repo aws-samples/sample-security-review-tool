@@ -57,8 +57,7 @@ function runOnRole(extraAttachment: TerraformResource, roleRef = 'aws_iam_role.e
   return lambda005Control.run(adapter, context);
 }
 
-const broadScenarioIntent = lambda005Control.remediationScenarios
-  .find(scenario => scenario.scenario === 'overly-broad-managed-policy')?.intent;
+const broadManagedPolicyRemediation = lambda005Control.findings['overly-broad-managed-policy'].remediation;
 
 describe('LAMBDA-005 REQ-12 (Terraform): mixed narrow + admin-level attachments', () => {
   it('flags an execution role whose narrow attachments are accompanied by AdministratorAccess (reference form)', () => {
@@ -67,7 +66,7 @@ describe('LAMBDA-005 REQ-12 (Terraform): mixed narrow + admin-level attachments'
     expect(result).not.toBeNull();
     expect(result?.check_id).toBe('LAMBDA-005');
     expect(result?.resourceName).toBe('aws_iam_role.exec');
-    expect(result?.fix).toBe(broadScenarioIntent);
+    expect(result?.fix).toBe(broadManagedPolicyRemediation);
   });
 
   it('flags an execution role whose narrow attachments are accompanied by PowerUserAccess (literal role name form)', () => {
@@ -78,7 +77,7 @@ describe('LAMBDA-005 REQ-12 (Terraform): mixed narrow + admin-level attachments'
 
     expect(result).not.toBeNull();
     expect(result?.check_id).toBe('LAMBDA-005');
-    expect(result?.fix).toBe(broadScenarioIntent);
+    expect(result?.fix).toBe(broadManagedPolicyRemediation);
   });
 
   // Opposite outcome: identical fixture except the broad attachment is replaced by another

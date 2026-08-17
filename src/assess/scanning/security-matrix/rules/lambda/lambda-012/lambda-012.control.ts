@@ -1,30 +1,31 @@
 import { SecurityControl } from '../../../controls/security-control.js';
-import { ControlFinding } from '../../../controls/types.js';
-import { Lambda012Adapter } from './lambda-012.adapter.js';
+import type { Finding } from '../../../controls/types.js';
+import type { Lambda012Adapter } from './lambda-012.adapter.js';
 
-const SHARED_ROLE_SCENARIO = 'shared-execution-role';
+const SHARED_ROLE_FINDING = 'shared-execution-role';
 
-export class Lambda012Control extends SecurityControl<Lambda012Adapter> {
+const FINDINGS = {
+  [SHARED_ROLE_FINDING]: {
+    issue: 'This Lambda function shares its IAM execution role with another resource in the same template.',
+    remediation: 'Give each Lambda function its own dedicated IAM execution role scoped to only the permissions that function needs.',
+  },
+} as const satisfies Record<string, Finding>;
+
+type FindingKey = keyof typeof FINDINGS;
+
+export class Lambda012Control extends SecurityControl<Lambda012Adapter, FindingKey> {
   constructor() {
     super({
       id: 'LAMBDA-012',
       priority: 'HIGH',
       description: 'Lambda functions must have unique IAM execution roles',
-      remediationScenarios: [
-        {
-          scenario: SHARED_ROLE_SCENARIO,
-          intent: 'Give each Lambda function its own dedicated IAM execution role scoped to only the permissions that function needs.',
-        },
-      ],
+      findings: FINDINGS,
     });
   }
 
-  protected evaluate(adapter: Lambda012Adapter): ControlFinding | null {
+  protected evaluate(adapter: Lambda012Adapter): FindingKey | null {
     if (!adapter.sharesExecutionRole) return null;
-    return {
-      scenario: SHARED_ROLE_SCENARIO,
-      issue: 'This Lambda function shares its IAM execution role with another resource in the same template.',
-    };
+    return SHARED_ROLE_FINDING;
   }
 }
 

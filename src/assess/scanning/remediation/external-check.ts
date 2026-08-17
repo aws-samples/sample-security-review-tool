@@ -9,5 +9,10 @@ const REGISTRIES: Registry[] = [CheckovPolicies, BanditFixes, SemgrepFixes];
 
 export function externalCheck(checkId: string): Remediation {
     const row = REGISTRIES.map(registry => registry[checkId]).find(Boolean);
-    return { id: checkId, priority: row?.priority ?? 'INFO', description: row?.description, intent: row?.intent ?? '' };
+    return {
+        id: checkId,
+        priority: row?.priority ?? 'INFO',
+        description: row?.description,
+        remediation: row?.remediation ?? '',
+    };
 }

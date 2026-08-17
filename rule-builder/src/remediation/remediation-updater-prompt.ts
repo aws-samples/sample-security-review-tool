@@ -9,11 +9,11 @@ export class RemediationUpdaterPromptBuilder {
         - Write instructions for this rule only. Requirements of other rules are appended to your instructions automatically, so never restate another rule's requirements.`;
     }
 
-    public buildUserPrompt(failureDetails: FixValidationResult, failingIntent: string, fixtureContent: string, controlSource: string, adapterSource: string): string {
+    public buildUserPrompt(failureDetails: FixValidationResult, failingRemediation: string, fixtureContent: string, controlSource: string, adapterSource: string): string {
         return `${failureDetails.failureDescription} Update the remediation instructions to fix the problem.
 
         <failing-remediation-instructions>
-        ${failingIntent}
+        ${failingRemediation}
         </failing-remediation-instructions>
 
         <rule-source-defining-pass-fail-criteria>

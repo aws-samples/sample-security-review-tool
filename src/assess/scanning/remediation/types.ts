@@ -4,5 +4,5 @@ export interface Remediation {
     readonly id: string;
     readonly priority: Severity;
     readonly description?: string;
-    readonly intent: string;
+    readonly remediation: string;
 }

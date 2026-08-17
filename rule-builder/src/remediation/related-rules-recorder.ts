@@ -50,7 +50,7 @@ export class RelatedRulesRecorder {
     }
 
     private resolveExternalCheck(checkId: string): ResolvedRule | null {
-        if (!externalCheck(checkId).intent) return null;
+        if (!externalCheck(checkId).remediation) return null;
         return {
             checkId,
             reference: `externalCheck('${checkId}')`,

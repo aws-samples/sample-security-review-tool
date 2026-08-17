@@ -74,7 +74,7 @@ export class BanditScanner extends BaseScanner {
       path: customPath || path.normalize(result.filename) || 'unknown',
       line: result.line_number,
       issue: result.issue_text || 'No message',
-      fix: BanditFixes[result.test_id]?.intent,
+      fix: BanditFixes[result.test_id]?.remediation,
       check_id: result.test_id || 'unknown-rule',
       priority: BanditFixes[result.test_id]?.priority || ScannerUtils.mapSeverity(result.issue_severity),
       references: result.more_info || '',

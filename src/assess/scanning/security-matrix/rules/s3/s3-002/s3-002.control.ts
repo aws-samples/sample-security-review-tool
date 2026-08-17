@@ -1,9 +1,9 @@
 import { SecurityControl } from '../../../controls/security-control.js';
-import { ControlFinding } from '../../../controls/types.js';
-import { PolicyStatement, S3002Adapter } from './s3-002.adapter.js';
+import type { Finding } from '../../../controls/types.js';
+import type { PolicyStatement, S3002Adapter } from './s3-002.adapter.js';
 
-const WILDCARD_PRINCIPAL_SCENARIO = 'wildcard-principal-without-condition';
-const UNRESTRICTED_SERVICE_PRINCIPAL_SCENARIO = 'service-principal-without-source-scope';
+const WILDCARD_PRINCIPAL_FINDING = 'wildcard-principal-without-condition';
+const UNRESTRICTED_SERVICE_PRINCIPAL_FINDING = 'service-principal-without-source-scope';
 
 const SOURCE_SCOPE_CONDITION_KEYS = ['aws:SourceAccount', 'aws:SourceArn', 'aws:SourceOwner'];
 
@@ -28,45 +28,33 @@ const IDENTITY_SCOPE_CONDITION_KEYS = [
   'aws:PrincipalTag',
 ];
 
-export class S3002Control extends SecurityControl<S3002Adapter> {
+const FINDINGS = {
+  [WILDCARD_PRINCIPAL_FINDING]: {
+    issue: 'Bucket policy Allow statement grants access to a wildcard principal without any condition constraining who may assume it',
+    remediation: 'Restrict the bucket policy allow statement so it targets specific, trusted principals, or scope the wildcard principal with a condition that constrains who may assume it.',
+  },
+  [UNRESTRICTED_SERVICE_PRINCIPAL_FINDING]: {
+    issue: 'Bucket policy Allow statement grants access to an AWS service principal without a condition restricting the source account or source ARN',
+    remediation: 'Constrain the service-principal allow statement with a condition that binds it to a specific source account or source ARN so it cannot be invoked on behalf of arbitrary accounts.',
+  },
+} as const satisfies Record<string, Finding>;
+
+type FindingKey = keyof typeof FINDINGS;
+
+export class S3002Control extends SecurityControl<S3002Adapter, FindingKey> {
   constructor() {
     super({
       id: 'S3-002',
       priority: 'HIGH',
       description: 'S3 bucket policies must not grant access to untrusted principals',
-      remediationScenarios: [
-        {
-          scenario: WILDCARD_PRINCIPAL_SCENARIO,
-          intent:
-            'Restrict the bucket policy allow statement so it targets specific, trusted principals, ' +
-            'or scope the wildcard principal with a condition that constrains who may assume it.',
-        },
-        {
-          scenario: UNRESTRICTED_SERVICE_PRINCIPAL_SCENARIO,
-          intent:
-            'Constrain the service-principal allow statement with a condition that binds it to a ' +
-            'specific source account or source ARN so it cannot be invoked on behalf of arbitrary accounts.',
-        },
-      ],
+      findings: FINDINGS,
     });
   }
 
-  protected evaluate(adapter: S3002Adapter): ControlFinding | null {
+  protected evaluate(adapter: S3002Adapter): FindingKey | null {
     const statements = adapter.getPolicyStatements();
-    if (statements.some(isUnconditionalWildcardAllow)) {
-      return {
-        scenario: WILDCARD_PRINCIPAL_SCENARIO,
-        issue:
-          'Bucket policy Allow statement grants access to a wildcard principal without any condition constraining who may assume it',
-      };
-    }
-    if (statements.some(isUnrestrictedServicePrincipalAllow)) {
-      return {
-        scenario: UNRESTRICTED_SERVICE_PRINCIPAL_SCENARIO,
-        issue:
-          'Bucket policy Allow statement grants access to an AWS service principal without a condition restricting the source account or source ARN',
-      };
-    }
+    if (statements.some(isUnconditionalWildcardAllow)) return WILDCARD_PRINCIPAL_FINDING;
+    if (statements.some(isUnrestrictedServicePrincipalAllow)) return UNRESTRICTED_SERVICE_PRINCIPAL_FINDING;
     return null;
   }
 }

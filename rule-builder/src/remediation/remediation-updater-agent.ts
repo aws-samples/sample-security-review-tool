@@ -27,35 +27,35 @@ export class RemediationUpdaterAgent {
             structuredOutputSchema: RemediationSchema
         });
 
-        const failingIntent = this.failingIntentOf(details);
+        const failingRemediation = this.failingRemediationOf(details);
         const fixtureContent = await fs.readFile(path.join(this.fixtureType.outputFolderPath, this.fixtureType.resourceFileName), 'utf8');
         const controlSource = await fs.readFile(this.context.ruleControlFilePath, 'utf8');
         const adapterSource = await this.readAdapterSource();
-        const userPrompt = this.promptBuilder.buildUserPrompt(details, failingIntent, fixtureContent, controlSource, adapterSource);
+        const userPrompt = this.promptBuilder.buildUserPrompt(details, failingRemediation, fixtureContent, controlSource, adapterSource);
 
         const result = await agent.invoke(userPrompt);
         const structuredOutput = result.structuredOutput as z.infer<typeof RemediationSchema>;
 
-        await this.replaceRemediationInControl(failingIntent, structuredOutput.remediationInstructions);
+        await this.replaceRemediationInControl(failingRemediation, structuredOutput.remediationInstructions);
 
         return structuredOutput.remediationInstructions;
     }
 
-    private failingIntentOf(details: FixValidationResult): string {
+    private failingRemediationOf(details: FixValidationResult): string {
         const fix = details.targetIssue.fix;
         if (!fix) throw new Error(`Cannot update remediation for ${this.context.ruleId}: the failing finding has no fix text to replace.`);
         return fix.split(RELATED_RULES_HEADING)[0];
     }
 
-    private async replaceRemediationInControl(failingIntent: string, newInstructions: string): Promise<void> {
+    private async replaceRemediationInControl(failingRemediation: string, newInstructions: string): Promise<void> {
         const controlContent = await fs.readFile(this.context.ruleControlFilePath, 'utf8');
-        const existingIntent = this.escapeForStringLiteral(failingIntent);
-        if (!controlContent.includes(existingIntent)) {
+        const existingRemediation = this.escapeForStringLiteral(failingRemediation);
+        if (!controlContent.includes(existingRemediation)) {
             throw new Error(`Cannot update remediation for ${this.context.ruleId}: the current fix text was not found in ${this.context.ruleControlFilePath}. The control may have been edited independently.`);
         }
 
         const replacement = this.escapeForStringLiteral(newInstructions);
-        await fs.writeFile(this.context.ruleControlFilePath, controlContent.replaceAll(existingIntent, () => replacement), 'utf8');
+        await fs.writeFile(this.context.ruleControlFilePath, controlContent.replaceAll(existingRemediation, () => replacement), 'utf8');
     }
 
     private async readAdapterSource(): Promise<string> {
