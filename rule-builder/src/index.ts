@@ -5,6 +5,7 @@ import { BedrockConfig } from '../../src/config/aws/bedrock-config.js';
 import { RuleContext } from './shared/rule-context.js';
 import { RuleLocator } from './shared/rule-locator.js';
 import { BuildWorkflow } from './building/build-workflow.js';
+import { RequirementsWorkflow } from './requirements/requirements-workflow.js';
 import { ConversionWorkflow } from './converting/conversion-workflow.js';
 import { ExerciseWorkflow } from './exercise/exercise-workflow.js';
 import { RuleBuilderLogger } from './shared/logging/rule-builder-logger.js';
@@ -17,12 +18,14 @@ BedrockConfig.initialize('default', 'us-east-1');
 
 const logger = new RuleBuilderLogger();
 
-interface ParsedArgs { ruleId?: string; legacyRuleId?: string; service?: string; description?: string; regenerate: boolean; isFullBuild: boolean; }
+interface ParsedArgs { ruleId?: string; legacyRuleId?: string; service?: string; description?: string; regenerate: boolean; isFullBuild: boolean; requirementsOnly?: boolean; }
 
 async function main(): Promise<void> {
     const args = parseArgs(process.argv.slice(2));
     if (args.legacyRuleId) {
         await convert(args);
+    } else if (args.requirementsOnly) {
+        await requirements(args);
     } else if (args.isFullBuild) {
         await build(args);
     } else {
@@ -46,6 +49,14 @@ function buildContext(args: ParsedArgs): RuleContext {
     return new RuleLocator(args.ruleId!).locate();
 }
 
+async function requirements(args: ParsedArgs): Promise<void> {
+    const context = buildContext(args);
+    logger.runStart(context.ruleId, context.description);
+    const spec = await new RequirementsWorkflow(context).run({ regenerate: true });
+    logger.info(`${spec.requirements.length} requirements written to ${context.requirementsFilePath}`);
+    logger.runComplete(context.ruleId);
+}
+
 async function exercise(args: ParsedArgs): Promise<void> {
     const context = new RuleLocator(args.ruleId!).locate();
     logger.runStart(context.ruleId, context.description);
@@ -59,6 +70,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     let service: string | undefined;
     let description: string | undefined;
     let regenerate = false;
+    let requirementsOnly = false;
 
     for (let i = 0; i < argv.length; i++) {
         const arg = argv[i];
@@ -85,6 +97,9 @@ function parseArgs(argv: string[]): ParsedArgs {
             case '--regenerate':
                 regenerate = true;
                 break;
+            case '--requirements':
+                requirementsOnly = true;
+                break;
             case '-h':
             case '--help':
                 printUsage();
@@ -97,10 +112,13 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     if (legacyRuleId) {
         if (ruleId || service || description) throw new Error('--convert reads the rule id, service, and description from the existing rule; do not pass --rule, --service, or --description alongside it');
+        if (requirementsOnly) throw new Error('--requirements cannot be combined with --convert; pass --rule instead');
         return { legacyRuleId, regenerate, isFullBuild: false };
     }
 
     if (!ruleId) throw new Error('--rule is required');
+
+    if (requirementsOnly) return { ruleId, service, description, regenerate, isFullBuild: false, requirementsOnly };
 
     const hasService = !!service;
     const hasDescription = !!description;
@@ -123,6 +141,9 @@ function printUsage(): void {
   Rebuild an existing rule (same 5-phase pipeline, details read from requirements.json):
     bun src/index.ts --rule <checkId> --regenerate
 
+  Regenerate only the requirements specification (phase 1, nothing downstream):
+    bun src/index.ts --rule <checkId> --requirements
+
   Exercise an existing rule (run its unit tests + remediation against existing fixtures):
     bun src/index.ts --rule <checkId>
 
@@ -133,6 +154,9 @@ Options:
   --service <service>     Service folder name (e.g. s3, dynamodb, lambda). Required only for a new rule.
   --description <desc>    Description of the rule. Required only for a new rule.
   --regenerate            Clear tests, control, and adapter files before running (keeps cached requirements)
+  --requirements          Regenerate the requirements specification and stop. Service and description
+                          come from the existing requirements.json unless --service and --description
+                          are given.
   -h, --help              Show this help message
 
 With only --rule, service and description are recovered from the rule's

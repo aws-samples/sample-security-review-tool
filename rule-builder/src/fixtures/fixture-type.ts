@@ -2,7 +2,7 @@ import { InvokableTool } from '@strands-agents/sdk';
 import { RuleContext } from '../shared/rule-context.js';
 import { AgentToolFactory } from '../implementation/agent-tools.js';
 import { PREPROCESSING_BEHAVIOR } from '../implementation/preprocessing-behavior.js';
-import { TERRAFORM_PLAN_BEHAVIOR } from '../implementation/terraform-plan-behavior.js';
+import { TERRAFORM_SOURCE_BEHAVIOR } from '../implementation/terraform-source-behavior.js';
 
 const RESOLVABILITY_STEER = `## A triggering value must be statically resolvable
 
@@ -17,7 +17,7 @@ Do NOT derive a triggering value from a CREATED resource's runtime attribute. In
 If a rule genuinely cannot be triggered by any statically resolvable value, do not fabricate one — add a comment naming the scenario and explaining why it cannot be triggered.`;
 
 const CFN_PREPROCESSING_SECTION = `\n\n${RESOLVABILITY_STEER}\n\n## CloudFormation Template Preprocessing\n\n${PREPROCESSING_BEHAVIOR}`;
-const TERRAFORM_PLAN_SECTION = `\n\n## Terraform Plan Behavior\n\n${TERRAFORM_PLAN_BEHAVIOR}`;
+const TERRAFORM_SOURCE_SECTION = `\n\n## Terraform Source Behavior\n\n${TERRAFORM_SOURCE_BEHAVIOR}`;
 
 const CDK_SYSTEM_PROMPT = `You write CDK fixture stacks that trigger security rule scenarios for remediation testing.
 
@@ -83,7 +83,7 @@ export class FixtureType {
     }
 
     static terraform(context: RuleContext): FixtureType {
-        return new FixtureType('Terraform', context.terraformFixtureOutputFolderPath, context.terraformFixtureTemplateFolderPath, context.terraformFixtureResourceFilePath, 'main.tf', context.ruleAdapterTfFilePath, TERRAFORM_SYSTEM_PROMPT + TERRAFORM_PLAN_SECTION, () => AgentToolFactory.createTerraformValidateTool(context.terraformFixtureOutputFolderPath));
+        return new FixtureType('Terraform', context.terraformFixtureOutputFolderPath, context.terraformFixtureTemplateFolderPath, context.terraformFixtureResourceFilePath, 'main.tf', context.ruleAdapterTfFilePath, TERRAFORM_SYSTEM_PROMPT + TERRAFORM_SOURCE_SECTION, () => AgentToolFactory.createTerraformValidateTool(context.terraformFixtureOutputFolderPath));
     }
 
     static cloudFormation(context: RuleContext): FixtureType {

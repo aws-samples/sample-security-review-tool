@@ -4,7 +4,12 @@ import { RuleContext } from '../shared/rule-context.js';
 import type { LegacyRule } from './legacy-rule-reader.js';
 
 const LEGACY_RULE_FILE_SUFFIX_PATTERN = /\.(cf|tf)\.ts$/;
-const RULE_IMPORT_PATTERN = /^import\s+(\w+)\s+from\s+'\.\/(.+)'/;
+const MODULE_SPECIFIER_PATTERN = /\bfrom\s+'\.\/(.+?)'/;
+const BINDING_PATTERNS = [
+    /^import\s+(\w+)\s+from\s+'\.\//,
+    /^export\s*\{\s*default\s+as\s+(\w+)\s*\}\s*from\s+'\.\//,
+];
+const LOCAL_MODULE_PATTERN = /\bfrom\s+'\.\//;
 const EXPORTED_ARRAY_PATTERN = /^export const (\w+)/gm;
 
 export class LegacyRuleRemover {
@@ -36,7 +41,10 @@ export class LegacyRuleRemover {
 
         const content = fs.readFileSync(indexPath, 'utf8');
         const lines = content.split('\n');
-        const remaining = lines.filter(line => !this.mentionsAny(line, this.importedRuleNames(lines)));
+        const legacyLines = lines.filter(line => this.referencesLegacyModule(line));
+        const boundNames = legacyLines.flatMap(line => this.boundNames(line));
+
+        const remaining = lines.filter(line => !legacyLines.includes(line) && !this.mentionsAny(line, boundNames));
 
         if (this.stillRegistersRules(remaining)) {
             fs.writeFileSync(indexPath, remaining.join('\n'));
@@ -47,20 +55,27 @@ export class LegacyRuleRemover {
         return [indexPath, ...this.deregisterService(content)];
     }
 
-    private importedRuleNames(lines: string[]): string[] {
+    private referencesLegacyModule(line: string): boolean {
+        const specifier = MODULE_SPECIFIER_PATTERN.exec(line);
+        if (!specifier) return false;
+
         const legacyModuleNames = this.legacy.sourceFilePaths.map(filePath => path.basename(filePath).replace(/\.ts$/, '.js'));
-        return lines
-            .map(line => RULE_IMPORT_PATTERN.exec(line))
-            .filter(match => match !== null && legacyModuleNames.includes(match[2]))
+        return legacyModuleNames.includes(specifier[1]);
+    }
+
+    private boundNames(line: string): string[] {
+        return BINDING_PATTERNS
+            .map(pattern => pattern.exec(line))
+            .filter(match => match !== null)
             .map(match => match![1]);
     }
 
     private mentionsAny(line: string, names: string[]): boolean {
-        return names.some(name => new RegExp(`\\b${name}\\b`).test(line));
+        return names.length > 0 && names.some(name => new RegExp(`\\b${name}\\b`).test(line));
     }
 
     private stillRegistersRules(lines: string[]): boolean {
-        return lines.some(line => RULE_IMPORT_PATTERN.test(line));
+        return lines.some(line => LOCAL_MODULE_PATTERN.test(line));
     }
 
     private deregisterService(serviceIndexContent: string): string[] {

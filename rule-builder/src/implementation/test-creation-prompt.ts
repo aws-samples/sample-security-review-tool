@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
 import { PREPROCESSING_BEHAVIOR } from './preprocessing-behavior.js';
-import { TERRAFORM_PLAN_BEHAVIOR } from './terraform-plan-behavior.js';
+import { TERRAFORM_SOURCE_BEHAVIOR } from './terraform-source-behavior.js';
 
 export class TestCreationPromptBuilder {
     constructor(private readonly context: RuleContext) { }
@@ -32,9 +32,9 @@ Write the tests from the requirement, not from the implementation. The source fi
 
 ${PREPROCESSING_BEHAVIOR}
 
-## Terraform Plan Behavior
+## Terraform Source Behavior
 
-${TERRAFORM_PLAN_BEHAVIOR}`;
+${TERRAFORM_SOURCE_BEHAVIOR}`;
     }
 
     public buildUserPrompt(spec: RequirementsSpec, requirement: RuleRequirement, problems: string[] = []): string {

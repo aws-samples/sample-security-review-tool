@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { RuleContext } from '../shared/rule-context.js';
 import type { RequirementsSpec, RuleRequirement } from '../shared/types/requirements.js';
 import { PREPROCESSING_BEHAVIOR } from './preprocessing-behavior.js';
-import { TERRAFORM_PLAN_BEHAVIOR } from './terraform-plan-behavior.js';
+import { TERRAFORM_SOURCE_BEHAVIOR } from './terraform-source-behavior.js';
 
 export class RuleImplementationPromptBuilder {
     constructor(private readonly context: RuleContext) { }
@@ -27,9 +27,9 @@ Bad: 'Configure a CloudTrail trail with a data event selector for AWS::DynamoDB:
 
 ${PREPROCESSING_BEHAVIOR}
 
-## Terraform Plan Behavior
+## Terraform Source Behavior
 
-${TERRAFORM_PLAN_BEHAVIOR}
+${TERRAFORM_SOURCE_BEHAVIOR}
 
 ## Conflict Detection & Structured Output
 
