@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for AS-006 - Auto Scaling groups must span at least two
+  Availability Zones via AvailabilityZones and/or VPCZoneIdentifier.
+
+Resources:
+  FixtureVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  SubnetShared1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FixtureVpc
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-east-1a
+
+  SubnetShared2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FixtureVpc
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: us-east-1a
+
+  SubnetOther:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref FixtureVpc
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: us-east-1b
+
+  FixtureLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: ami-0123456789abcdef0
+      InstanceType: t3.micro
+
+  # Scenario: no-placement-specified
+  # No AvailabilityZones and no VPCZoneIdentifier declared.
+  AsgNoPlacement:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref FixtureLaunchConfig
+      MinSize: '1'
+      MaxSize: '2'
+
+  # Scenario: single-availability-zone
+  # A single Availability Zone declared and no subnets.
+  AsgSingleZone:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref FixtureLaunchConfig
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones:
+        - us-east-1a
+
+  # Scenario: single-subnet
+  # No Availability Zones declared and only one subnet referenced.
+  AsgSingleSubnet:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref FixtureLaunchConfig
+      MinSize: '1'
+      MaxSize: '2'
+      VPCZoneIdentifier:
+        - !Ref SubnetShared1
+
+  # Scenario: subnets-in-single-availability-zone
+  # No Availability Zones declared; both referenced subnets share the same AZ.
+  AsgSharedSubnetZone:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref FixtureLaunchConfig
+      MinSize: '1'
+      MaxSize: '2'
+      VPCZoneIdentifier:
+        - !Ref SubnetShared1
+        - !Ref SubnetShared2
+
+  # Scenario: placement-in-single-availability-zone
+  # Declared AZ and the subnets' AZ are the same single zone, so the union is one zone.
+  AsgSharedCombinedZone:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref FixtureLaunchConfig
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones:
+        - us-east-1a
+      VPCZoneIdentifier:
+        - !Ref SubnetShared1
+        - !Ref SubnetShared2
+
+  # Scenario: subnet-outside-declared-availability-zones
+  # Declared AZ (us-east-1a) does not match the referenced subnet's AZ (us-east-1b),
+  # so declared zones and subnet zones cover two zones without either dimension
+  # alone reaching two.
+  AsgMismatchedSubnetZone:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref FixtureLaunchConfig
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones:
+        - us-east-1a
+      VPCZoneIdentifier:
+        - !Ref SubnetOther
