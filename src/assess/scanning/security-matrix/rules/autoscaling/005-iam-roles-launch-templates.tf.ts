@@ -3,7 +3,7 @@ import { ScanResult } from '../../../base-scanner.js';
 
 export class TfAutoscaling001Rule extends BaseTerraformRule {
   constructor() {
-    super('AUTOSCALING-001', 'HIGH', 'Auto Scaling Group does not use launch template with IAM role configuration', ['aws_autoscaling_group']);
+    super('AS-005', 'HIGH', 'Auto Scaling Group does not use launch template with IAM role configuration', ['aws_autoscaling_group']);
   }
 
   public evaluate(resource: TerraformResource, projectName: string, allResources: TerraformResource[]): ScanResult | null {

@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for AS-003 - Auto Scaling Groups must have notification
+  configurations set up to send scaling event notifications.
+
+Resources:
+
+  FixtureLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: as-003-fixture-lt
+      LaunchTemplateData:
+        InstanceType: t3.micro
+        ImageId: ami-0123456789abcdef0
+
+  # Scenario: missing-notification-configuration
+  # No NotificationConfigurations property is present at all.
+  AsgMissingNotificationConfiguration:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: as-003-missing-notification-configuration
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      AvailabilityZones: !GetAZs ''
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+
+  # Scenario: test-notification-only
+  # Notification configuration only covers the TEST_NOTIFICATION event.
+  AsgTestNotificationOnly:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: as-003-test-notification-only
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      AvailabilityZones: !GetAZs ''
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+      NotificationConfigurations:
+        - TopicARN: arn:aws:sns:us-east-1:123456789012:as-003-fixture-topic
+          NotificationTypes:
+            - autoscaling:TEST_NOTIFICATION
+
+  # Scenario: empty-event-type-list
+  # Notification configuration has a real topic but no event types listed.
+  AsgEmptyEventTypeList:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: as-003-empty-event-type-list
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      AvailabilityZones: !GetAZs ''
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+      NotificationConfigurations:
+        - TopicARN: arn:aws:sns:us-east-1:123456789012:as-003-fixture-topic
+          NotificationTypes: []
+
+  # Scenario: unrecognized-event-type
+  # Notification configuration lists only an event type Auto Scaling does not recognize.
+  AsgUnrecognizedEventType:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: as-003-unrecognized-event-type
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      AvailabilityZones: !GetAZs ''
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+      NotificationConfigurations:
+        - TopicARN: arn:aws:sns:us-east-1:123456789012:as-003-fixture-topic
+          NotificationTypes:
+            - autoscaling:UNRECOGNIZED_EVENT
+
+  # Scenario: empty-destination-topic
+  # Notification configuration names an empty destination topic.
+  AsgEmptyDestinationTopic:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: as-003-empty-destination-topic
+      MinSize: '1'
+      MaxSize: '1'
+      DesiredCapacity: '1'
+      AvailabilityZones: !GetAZs ''
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+      NotificationConfigurations:
+        - TopicARN: ''
+          NotificationTypes:
+            - autoscaling:EC2_INSTANCE_LAUNCH

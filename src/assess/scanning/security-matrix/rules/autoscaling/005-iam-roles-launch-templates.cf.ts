@@ -9,7 +9,7 @@ import { BaseRule, CloudFormationResource } from '../../security-rule-base.js';
 export class AUTOSCALING001Rule extends BaseRule {
   constructor() {
     super(
-      'AUTOSCALING-001',
+      'AS-005',
       'HIGH',
       'Auto Scaling Group does not use launch template with IAM role configuration',
       ['AWS::AutoScaling::AutoScalingGroup']
