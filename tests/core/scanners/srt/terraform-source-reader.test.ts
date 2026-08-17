@@ -145,7 +145,7 @@ describe('TerraformSourceReader', () => {
     expect(isUnresolved(group.values.default_cooldown)).toBe(true);
   });
 
-  it('marks a variable declared in another file as unresolved, because defaults resolve per file', async () => {
+  it('resolves a variable declared in another file of the root module', async () => {
     const projectDir = await writeProject({
       'variables.tf': 'variable "cooldown" { default = 300 }',
       'main.tf': 'resource "aws_autoscaling_group" "a" { default_cooldown = var.cooldown }'
@@ -153,6 +153,36 @@ describe('TerraformSourceReader', () => {
 
     const group = (await readTerraformSource(projectDir)).find(resource => resource.type === 'aws_autoscaling_group')!;
 
+    expect(group.values.default_cooldown).toBe(300);
+  });
+
+  it('resolves a zero declared in another file, rather than reading it as absent', async () => {
+    const projectDir = await writeProject({
+      'variables.tf': 'variable "cooldown" { default = 0 }',
+      'main.tf': 'resource "aws_autoscaling_group" "a" { default_cooldown = var.cooldown }'
+    });
+
+    const group = (await readTerraformSource(projectDir)).find(resource => resource.type === 'aws_autoscaling_group')!;
+
+    expect(group.values.default_cooldown).toBe(0);
+  });
+
+  it('leaves a downloaded module\'s cross-file variable unresolved, since its caller supplies the value', async () => {
+    const projectDir = await writeProject({
+      'main.tf': 'resource "aws_s3_bucket" "root" { bucket = "root" }',
+      '.terraform/modules/modules.json': JSON.stringify({
+        Modules: [
+          { Key: '', Dir: '.' },
+          { Key: 'sizing', Dir: '.terraform/modules/sizing' }
+        ]
+      }),
+      '.terraform/modules/sizing/variables.tf': 'variable "cooldown" { default = 300 }',
+      '.terraform/modules/sizing/main.tf': 'resource "aws_autoscaling_group" "inner" { default_cooldown = var.cooldown }'
+    });
+
+    const group = (await readTerraformSource(projectDir)).find(resource => resource.type === 'aws_autoscaling_group')!;
+
+    expect(group.address).toBe('module.sizing.aws_autoscaling_group.inner');
     expect(isUnresolved(group.values.default_cooldown)).toBe(true);
   });
 

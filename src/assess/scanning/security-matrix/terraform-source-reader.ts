@@ -7,6 +7,7 @@ import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 interface ModuleSource {
   addressPrefix: string;
   directory: string;
+  isRootModule: boolean;
 }
 
 interface ModuleManifestEntry {
@@ -40,7 +41,7 @@ export class TerraformSourceReader {
   }
 
   private async moduleSources(projectRootPath: string): Promise<ModuleSource[]> {
-    const root: ModuleSource = { addressPrefix: '', directory: projectRootPath };
+    const root: ModuleSource = { addressPrefix: '', directory: projectRootPath, isRootModule: true };
     const manifestPath = path.join(projectRootPath, '.terraform', 'modules', 'modules.json');
 
     const manifest = await fs
@@ -52,7 +53,8 @@ export class TerraformSourceReader {
 
     const downloaded = manifest.Modules.filter(entry => entry.Key !== '').map(entry => ({
       addressPrefix: this.addressPrefixFor(entry.Key),
-      directory: path.resolve(projectRootPath, entry.Dir)
+      directory: path.resolve(projectRootPath, entry.Dir),
+      isRootModule: false
     }));
 
     return [root, ...downloaded];
@@ -63,16 +65,38 @@ export class TerraformSourceReader {
   }
 
   private async readModule(module: ModuleSource): Promise<TerraformResource[]> {
-    const files = await fs.readdir(module.directory).catch(() => []);
-    const resources: TerraformResource[] = [];
+    const bodies = await this.parseModule(module);
+    const shared = module.isRootModule ? this.mergedVariableDefaults(bodies) : null;
 
-    for (const file of files.filter(name => name.endsWith('.tf'))) {
-      const filePath = path.join(module.directory, file);
-      const body = await this.parseFile(filePath);
-      if (body) resources.push(...this.extractResources(body, module.addressPrefix));
+    return bodies.flatMap(body => this.extractResources(body, module.addressPrefix, shared ?? this.variableDefaults(body)));
+  }
+
+  private async parseModule(module: ModuleSource): Promise<Record<string, any>[]> {
+    const files = await fs.readdir(module.directory).catch(() => []);
+    const bodies: Record<string, any>[] = [];
+
+    for (const file of files.filter(name => name.endsWith('.tf')).sort()) {
+      const body = await this.parseFile(path.join(module.directory, file));
+      if (body) bodies.push(body);
     }
 
-    return resources;
+    return bodies;
+  }
+
+  /**
+   * Variables are declared in one file and used in another — `variables.tf` and `main.tf` is the
+   * usual split — so the root module's declarations are pooled before any resource is resolved.
+   * A downloaded module's variables are its caller's arguments, and the value passed in is not
+   * read here, so its declared defaults stay file-scoped rather than standing in for one.
+   */
+  private mergedVariableDefaults(bodies: Record<string, any>[]): Map<string, unknown> {
+    const merged = new Map<string, unknown>();
+
+    for (const body of bodies) {
+      for (const [name, value] of this.variableDefaults(body)) merged.set(name, value);
+    }
+
+    return merged;
   }
 
   private async parseFile(filePath: string): Promise<Record<string, any> | null> {
@@ -85,8 +109,7 @@ export class TerraformSourceReader {
     }
   }
 
-  private extractResources(body: Record<string, any>, addressPrefix: string): TerraformResource[] {
-    const variableDefaults = this.variableDefaults(body);
+  private extractResources(body: Record<string, any>, addressPrefix: string, variableDefaults: Map<string, unknown>): TerraformResource[] {
     const resources: TerraformResource[] = [];
 
     for (const [type, byName] of Object.entries(body.resource ?? {})) {
