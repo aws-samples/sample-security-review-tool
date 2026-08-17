@@ -1,7 +1,7 @@
 import { parse } from '@cdktf/hcl2json';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { TerraformResource } from './terraform-rule-base.js';
+import { TerraformResource, unresolved } from './terraform-rule-base.js';
 import { SrtLogger } from '../../../shared/logging/srt-logger.js';
 
 interface ModuleSource {
@@ -15,6 +15,8 @@ interface ModuleManifestEntry {
 }
 
 const SINGLE_INTERPOLATION = /^\$\{([^${}]+)\}$/;
+
+const NON_RESOURCE_NAMESPACES = new Set(['var', 'local', 'module', 'data', 'each', 'count', 'path', 'self', 'terraform']);
 
 export async function readTerraformSource(projectRootPath: string): Promise<TerraformResource[]> {
   return new TerraformSourceReader().read(projectRootPath);
@@ -140,7 +142,7 @@ export class TerraformSourceReader {
     const variableDefault = this.variableDefault(expression, variableDefaults);
     if (variableDefault !== undefined) return variableDefault;
 
-    return this.referenceAddress(expression) ?? value;
+    return this.resourceAddress(expression) ?? unresolved(expression);
   }
 
   private variableDefault(expression: string, variableDefaults: Map<string, unknown>): unknown {
@@ -148,11 +150,12 @@ export class TerraformSourceReader {
     return variableDefaults.get(expression.slice('var.'.length));
   }
 
-  private referenceAddress(expression: string): string | null {
+  private resourceAddress(expression: string): string | null {
     if (!/^[A-Za-z_][A-Za-z0-9_.[\]"-]*$/.test(expression)) return null;
 
     const segments = expression.split('.');
     if (segments.length < 2) return null;
+    if (NON_RESOURCE_NAMESPACES.has(segments[0])) return null;
 
     return segments.slice(0, 2).join('.');
   }

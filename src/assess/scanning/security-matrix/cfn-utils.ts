@@ -90,7 +90,7 @@ export const parseCfnTemplate = (template: Template): Template => {
 
             // Check Parameters
             if (template.Parameters && refValue in template.Parameters) {
-                return template.Parameters[refValue].Default || "DEFAULT";
+                return template.Parameters[refValue].Default ?? "DEFAULT";
             }
 
             // Check Resources - return the logical resource ID
@@ -121,7 +121,7 @@ export const parseCfnTemplate = (template: Template): Template => {
         if (typeof val === "string") {
             if (template.Parameters) {
                 Object.keys(template.Parameters).forEach((key) => {
-                    const value = template.Parameters![key].Default || "DEFAULT";
+                    const value = String(template.Parameters![key].Default ?? "DEFAULT");
                     if (typeof val === "string") {
                         val = val.replace("${" + key + "}", value);
                     }
@@ -148,7 +148,7 @@ export const parseCfnTemplate = (template: Template): Template => {
             // Replace Parameters if they exist
             if (template.Parameters) {
                 Object.keys(template.Parameters).forEach((key) => {
-                    const value = template.Parameters![key].Default || "DEFAULT";
+                    const value = String(template.Parameters![key].Default ?? "DEFAULT");
                     if (typeof result === "string") {
                         result = result.replace("${" + key + "}", value);
                     }

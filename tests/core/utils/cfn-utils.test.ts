@@ -70,6 +70,28 @@ describe('parseCfnTemplate', () => {
       const result = parseCfnTemplate(template);
       expect(result.Resources?.MyBucket?.Properties?.Tags[0].Value).toBe('DEFAULT');
     });
+
+    it('should keep a zero default rather than treating it as no default', () => {
+      const template: Template = {
+        Parameters: {
+          Cooldown: {
+            Type: 'Number',
+            Default: 0
+          }
+        },
+        Resources: {
+          MyGroup: {
+            Type: 'AWS::AutoScaling::AutoScalingGroup',
+            Properties: {
+              Cooldown: { Ref: 'Cooldown' }
+            }
+          }
+        }
+      };
+
+      const result = parseCfnTemplate(template);
+      expect(result.Resources?.MyGroup?.Properties?.Cooldown).toBe(0);
+    });
   });
 
   describe('filterRef - Pseudo-parameters', () => {

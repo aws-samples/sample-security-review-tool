@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { readTerraformSource } from '../../../../src/assess/scanning/security-matrix/terraform-source-reader.js';
+import { isUnresolved } from '../../../../src/assess/scanning/security-matrix/terraform-rule-base.js';
 
 describe('TerraformSourceReader', () => {
   let tmpDir: string;
@@ -108,6 +109,85 @@ describe('TerraformSourceReader', () => {
     const [bucket] = await readTerraformSource(projectDir);
 
     expect(bucket.values.bucket).toBe('my-bucket');
+  });
+
+  it('keeps a zero default rather than treating it as absent', async () => {
+    const projectDir = await writeProject({
+      'main.tf': `
+        variable "cooldown" {
+          default = 0
+        }
+        resource "aws_autoscaling_group" "a" {
+          default_cooldown = var.cooldown
+        }
+      `
+    });
+
+    const [group] = await readTerraformSource(projectDir);
+
+    expect(group.values.default_cooldown).toBe(0);
+  });
+
+  it('marks a variable with no default as unresolved', async () => {
+    const projectDir = await writeProject({
+      'main.tf': `
+        variable "cooldown" {
+          type = number
+        }
+        resource "aws_autoscaling_group" "a" {
+          default_cooldown = var.cooldown
+        }
+      `
+    });
+
+    const [group] = await readTerraformSource(projectDir);
+
+    expect(isUnresolved(group.values.default_cooldown)).toBe(true);
+  });
+
+  it('marks a variable declared in another file as unresolved, because defaults resolve per file', async () => {
+    const projectDir = await writeProject({
+      'variables.tf': 'variable "cooldown" { default = 300 }',
+      'main.tf': 'resource "aws_autoscaling_group" "a" { default_cooldown = var.cooldown }'
+    });
+
+    const group = (await readTerraformSource(projectDir)).find(resource => resource.type === 'aws_autoscaling_group')!;
+
+    expect(isUnresolved(group.values.default_cooldown)).toBe(true);
+  });
+
+  it('marks locals, data sources and module outputs as unresolved', async () => {
+    const projectDir = await writeProject({
+      'main.tf': `
+        resource "aws_autoscaling_group" "a" {
+          from_local  = local.cooldown
+          from_data   = data.aws_ami.chosen.id
+          from_module = module.sizing.cooldown
+        }
+      `
+    });
+
+    const [group] = await readTerraformSource(projectDir);
+
+    expect(isUnresolved(group.values.from_local)).toBe(true);
+    expect(isUnresolved(group.values.from_data)).toBe(true);
+    expect(isUnresolved(group.values.from_module)).toBe(true);
+  });
+
+  it('treats a resource reference as an address, not as an unresolved value', async () => {
+    const projectDir = await writeProject({
+      'main.tf': `
+        resource "aws_launch_template" "lt" { name = "lt" }
+        resource "aws_autoscaling_group" "a" {
+          launch_template_id = aws_launch_template.lt.id
+        }
+      `
+    });
+
+    const group = (await readTerraformSource(projectDir)).find(resource => resource.type === 'aws_autoscaling_group')!;
+
+    expect(group.values.launch_template_id).toBe('aws_launch_template.lt');
+    expect(isUnresolved(group.values.launch_template_id)).toBe(false);
   });
 
   it('reads resources from downloaded modules using plan-style addresses', async () => {

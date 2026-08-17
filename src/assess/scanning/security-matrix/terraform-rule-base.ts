@@ -7,6 +7,21 @@ export interface TerraformResource {
   values: Record<string, any>;
 }
 
+const UNRESOLVED_MARKER = '__unresolved__:';
+
+export function unresolved(expression: string): string {
+  return `${UNRESOLVED_MARKER}${expression}`;
+}
+
+/**
+ * A value the scanner could not work out: a variable with no reachable default, a local, a
+ * data source, a module output, or any expression left partly interpolated. The configuration
+ * is unknown rather than wrong, so a rule must not report a finding on one.
+ */
+export function isUnresolved(value: unknown): boolean {
+  return typeof value === 'string' && (value.startsWith(UNRESOLVED_MARKER) || value.includes('${'));
+}
+
 export abstract class BaseTerraformRule {
   constructor(
     public id: string,
