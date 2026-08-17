@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as url from 'node:url';
+import type { RequirementsSpec } from './types/requirements.js';
 
 export class RuleContext {
     private static cachedSrtRoot: string | undefined;
@@ -55,6 +56,11 @@ export class RuleContext {
         this.serviceControlsIndexPath = this.getServiceControlsIndexPath();
         this.controlsRegistryPath = this.getControlsRegistryPath();
         this.ruleFixtureFilePath = this.getRuleFixtureFilePath();
+    }
+
+    public writeRequirements(spec: RequirementsSpec): void {
+        fs.mkdirSync(path.dirname(this.requirementsFilePath), { recursive: true });
+        fs.writeFileSync(this.requirementsFilePath, JSON.stringify(spec, null, 2));
     }
 
     public static srtRootFolderPath(): string {

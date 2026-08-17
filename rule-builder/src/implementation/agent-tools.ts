@@ -105,17 +105,21 @@ export class AgentToolFactory {
         });
     }
 
+    /** cfn-lint is installed and launched through uv rather than being on the PATH. */
+    public static async runCfnLint(templatePath: string, extraArgs: string[] = [], timeoutMs = 60_000) {
+        const uvPath = await UvManager.ensureUvAvailable();
+        const toolArgs = ScannerToolManager.getToolRunArgs(ScanTool.CFN_LINT);
+
+        return spawnSync(uvPath, [...toolArgs, ...extraArgs, templatePath], { encoding: 'utf8', timeout: timeoutMs });
+    }
+
     public static createCfnLintTool(cfnProjectPath: string) {
         return tool({
             name: 'run_cfn_lint',
             description: 'Run cfn-lint against the CloudFormation fixture template (template.yaml) to check for syntax and schema errors. Returns pass/fail and any error messages.',
             callback: async () => {
-                const uvPath = await UvManager.ensureUvAvailable();
-                const toolArgs = ScannerToolManager.getToolRunArgs(ScanTool.CFN_LINT);
-                const templatePath = path.join(cfnProjectPath, 'template.yaml');
-                const result = spawnSync(uvPath, [...toolArgs, templatePath], { encoding: 'utf8', timeout: 60_000 });
-                const output = ((result.stdout ?? '') + (result.stderr ?? ''));
-                return { passed: result.status === 0, output };
+                const result = await AgentToolFactory.runCfnLint(path.join(cfnProjectPath, 'template.yaml'));
+                return { passed: result.status === 0, output: (result.stdout ?? '') + (result.stderr ?? '') };
             },
         });
     }

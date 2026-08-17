@@ -7,10 +7,6 @@ import type { ImplementationResult } from './implementation-result-schema.js';
 import { OpusAgent } from '../shared/agents/opus-agent.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
-export interface ConflictResolution {
-    removedRequirementId: string;
-}
-
 const ConflictDecisionSchema = z.object({
     removedRequirementId: z.string().describe('The id of the requirement to remove (e.g. REQ-05)'),
     reason: z.string().describe('Why this requirement is the wrong one and the other is worth keeping'),
@@ -21,7 +17,7 @@ export class ImplementationConflictResolver {
 
     constructor(private readonly context: RuleContext) {}
 
-    public async resolve(conflict: ImplementationResult, spec: RequirementsSpec): Promise<ConflictResolution> {
+    public async resolve(conflict: ImplementationResult, spec: RequirementsSpec): Promise<string> {
         const current = this.findRequirement(spec, conflict.currentRequirementId!);
         const conflicting = this.findRequirement(spec, conflict.conflictingRequirementId!);
 
@@ -34,8 +30,8 @@ export class ImplementationConflictResolver {
         this.deleteTestFiles(removed.id);
         this.recordRemoval(spec, removed, this.otherOf(removed, current, conflicting), decision.reason);
         this.removeRequirementFromSpec(removed.id, spec);
-        this.persistSpec(spec);
-        return { removedRequirementId: removed.id };
+        this.context.writeRequirements(spec);
+        return removed.id;
     }
 
     private findRequirement(spec: RequirementsSpec, id: string): RuleRequirement {
@@ -76,14 +72,12 @@ export class ImplementationConflictResolver {
         return [
             `## Rule\n\n${spec.description}`,
             `## Why They Cannot Both Hold\n\n${explanation}`,
-            `## ${current.id} (${current.category}) → ${current.expectedBehavior}\n\n${current.description}\n\nRationale: ${current.rationale}`,
-            `## ${conflicting.id} (${conflicting.category}) → ${conflicting.expectedBehavior}\n\n${conflicting.description}\n\nRationale: ${conflicting.rationale}`,
+            `## ${current.id} → ${current.expectedBehavior}\n\n${current.description}\n\nRationale: ${current.rationale}`,
+            `## ${conflicting.id} → ${conflicting.expectedBehavior}\n\n${conflicting.description}\n\nRationale: ${conflicting.rationale}`,
             'Choose which one to remove.',
         ].join('\n\n');
     }
 
-    // Carries the removed requirement's ambiguity across with it. It is the only record of how that
-    // question was decided, and deleting the requirement would otherwise delete it too.
     private recordRemoval(spec: RequirementsSpec, removed: RuleRequirement, kept: RuleRequirement, reason: string): void {
         spec.removedRequirements = [
             ...(spec.removedRequirements ?? []),
@@ -91,8 +85,7 @@ export class ImplementationConflictResolver {
                 id: removed.id,
                 description: removed.description,
                 conflictedWith: kept.id,
-                reason,
-                ...(removed.ambiguity && { ambiguity: removed.ambiguity }),
+                reason: `${reason} (research had settled it as: ${removed.rationale})`,
             },
         ];
     }
@@ -101,8 +94,8 @@ export class ImplementationConflictResolver {
         const cfnPath = path.join(this.context.testsFolderPath, `${requirementId}.cfn.test.ts`);
         const tfPath = path.join(this.context.testsFolderPath, `${requirementId}.tf.test.ts`);
 
-        if (fs.existsSync(cfnPath)) fs.unlinkSync(cfnPath);
-        if (fs.existsSync(tfPath)) fs.unlinkSync(tfPath);
+        fs.rmSync(cfnPath, { force: true });
+        fs.rmSync(tfPath, { force: true });
 
         this.logger.step(`Deleted test files for ${requirementId}`);
     }
@@ -111,9 +104,6 @@ export class ImplementationConflictResolver {
         spec.requirements = spec.requirements.filter(r => r.id !== requirementId);
     }
 
-    private persistSpec(spec: RequirementsSpec): void {
-        fs.writeFileSync(this.context.requirementsFilePath, JSON.stringify(spec, null, 2));
-    }
 }
 
 const CONFLICT_SYSTEM_PROMPT = `Two requirements in a security rule's specification prescribe opposite outcomes for an input the implementation cannot tell apart. One of them must be removed, along with its tests. Choose which.

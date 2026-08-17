@@ -77,16 +77,15 @@ export class ImplementationWorkflow {
         return [`${requirement.id}.cfn.test.ts`, `${requirement.id}.tf.test.ts`];
     }
 
-    private async implementWithConflictResolution(spec: RequirementsSpec, requirement: RuleRequirement): Promise<boolean> {
+    private async implementWithConflictResolution(spec: RequirementsSpec, requirement: RuleRequirement): Promise<void> {
         for (let attempt = 0; attempt < MAX_CONFLICT_ESCALATIONS; attempt++) {
             const result = await this.ruleImplementationAgent.implement(spec, requirement);
-            if (result.status === 'success') return false;
+            if (result.status === 'success') return;
 
-            const resolution = await this.conflictResolver.resolve(result, spec);
-            if (resolution.removedRequirementId === requirement.id) return true;
+            const removedRequirementId = await this.conflictResolver.resolve(result, spec);
+            if (removedRequirementId === requirement.id) return;
         }
 
         this.logger.warning(`Max conflict escalations reached for ${requirement.id}. Skipping.`);
-        return false;
     }
 }

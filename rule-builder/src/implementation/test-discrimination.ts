@@ -133,6 +133,6 @@ function readReport(reportPath: string, exitCode: number | null, stderr: string)
     }
 }
 
-function firstLine(text: string): string {
+export function firstLine(text: string): string {
     return text.split('\n').map(line => line.trim()).find(line => line.length > 0) ?? '';
 }
