@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for AS-001 - Auto Scaling Groups must have a default cooldown period
+  configured (set to a nonzero value). Each AutoScalingGroup below is
+  intentionally non-compliant to trigger a distinct remediation scenario.
+
+Resources:
+  FixtureLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: ami-0abcdef0123456789
+        InstanceType: t3.micro
+
+  # Scenario: zero-cooldown
+  ZeroCooldownAsg:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      MinSize: '1'
+      MaxSize: '2'
+      Cooldown: '0'
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+
+  # Scenario: negative-cooldown
+  NegativeCooldownAsg:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      MinSize: '1'
+      MaxSize: '2'
+      Cooldown: '-30'
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+
+  # Scenario: empty-cooldown
+  EmptyCooldownAsg:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      MinSize: '1'
+      MaxSize: '2'
+      Cooldown: ''
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'
+
+  # Scenario: non-numeric-cooldown
+  NonNumericCooldownAsg:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: !GetAZs ''
+      MinSize: '1'
+      MaxSize: '2'
+      Cooldown: 'not-a-number'
+      LaunchTemplate:
+        LaunchTemplateId: !Ref FixtureLaunchTemplate
+        Version: '1'

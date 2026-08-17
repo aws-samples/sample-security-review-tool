@@ -1,0 +1,156 @@
+{
+  "ruleId": "AS-001",
+  "generatedAt": "2026-08-17T16:47:40.385Z",
+  "description": "Auto Scaling Groups must have a default cooldown period configured (set to a nonzero value)",
+  "cfnResources": [
+    "AWS::AutoScaling::AutoScalingGroup"
+  ],
+  "tfResources": [
+    "aws_autoscaling_group"
+  ],
+  "decisionPoints": [
+    {
+      "id": "DP-1",
+      "description": "Whether a default cooldown setting is present on the Auto Scaling group at all, or omitted so the service default applies",
+      "noFailingCase": "This decision point only governs presence versus absence of a default cooldown setting on the Auto Scaling group. AWS documentation states that when the default cooldown is not defined, Amazon EC2 Auto Scaling applies its own default of 300 seconds (5 minutes) — so any group omitting the setting still ends up with a nonzero cooldown, exactly the state the rule requires. Absence therefore cannot produce a breach, and the only remaining possibility (the setting being present) is compliant by presence alone at this decision point; whether an explicitly supplied value is zero or otherwise unacceptable is a question of the value itself, which falls to a different decision point, not this one. Hence no configuration within this decision point's scope owes a finding."
+    },
+    {
+      "id": "DP-2",
+      "description": "The numeric value of the default cooldown, specifically whether it is zero, a nonzero positive number (including the smallest nonzero value), or a negative number"
+    },
+    {
+      "id": "DP-3",
+      "description": "Whether the default cooldown value can be resolved at analysis time, or derives from an input only known at deployment"
+    },
+    {
+      "id": "DP-4",
+      "description": "Whether the default cooldown holds a value that is not a number at all (empty text or non-numeric text), where the format permits an unconstrained string"
+    },
+    {
+      "id": "DP-5",
+      "description": "The scope the cooldown setting applies to: the group's own default cooldown versus a cooldown declared on a separate simple scaling policy attached to the group"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "decisionPointId": "DP-1",
+      "description": "Auto Scaling group is declared with capacity and launch settings, no default cooldown setting, and no scaling policies attached",
+      "expectedBehavior": "pass",
+      "rationale": "An Auto Scaling group that omits the cooldown property is created with the service default of 300 seconds, which is a nonzero cooldown, so the group already ends up in the state the rule requires.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on what Amazon EC2 Auto Scaling does when the default cooldown is absent from an Auto Scaling group declaration. Searched the CloudFormation template reference for AWS::AutoScaling::AutoScalingGroup and the Auto Scaling API/SDK model for DefaultCooldown. The CloudFormation reference for the `Cooldown` property of AWS::AutoScaling::AutoScalingGroup states: \"Only needed if you use simple scaling policies. The amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies... Default: `300` seconds\", and the property is \"Required: No\". The Auto Scaling CreateAutoScalingGroup model (defaultCooldown) confirms the same \"Default: 300 seconds\". So an omitted cooldown is not an unset cooldown — the created group runs with a 300-second default cooldown, a nonzero value satisfying the rule. The absence of scaling policies is not adverse either: the docs note the default cooldown only takes effect for simple scaling policies, so with no policies attached there is no scaling-activity behavior left unprotected. Neither the capacity/launch settings nor any deployment-time-resolved input affects this outcome. Therefore the configuration is compliant and the rule owes no finding."
+    },
+    {
+      "id": "REQ-02",
+      "decisionPointId": "DP-2",
+      "description": "Auto Scaling group specifies a default cooldown of 0 seconds",
+      "expectedBehavior": "flag",
+      "rationale": "An explicit default cooldown of 0 seconds overrides the service's 300-second default and leaves the group with no cooldown at all, so the rule's requirement of a configured nonzero cooldown is not met.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-scaling-cooldowns.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on whether an explicitly supplied value of 0 counts as \"configured\" for the DefaultCooldown/defaultCooldown setting. Searched AWS documentation for \"Auto Scaling default cooldown DefaultCooldown 0 seconds\" and \"scaling cooldown period default 300 seconds Auto Scaling group\". The EC2 Auto Scaling User Guide page \"Scaling cooldowns for Amazon EC2 Auto Scaling\" (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-scaling-cooldowns.html) states that the default cooldown period is 300 seconds and that it is the interval Amazon EC2 Auto Scaling waits after a simple scaling activity completes before another simple-scaling activity can start; the purpose is to prevent launching or terminating additional instances before the effects of previous activity are visible (also stated on the console help page \"Change the default cooldown\"). The SDK reference describes defaultCooldown simply as \"The duration of the default cooldown period, in seconds, for the Auto Scaling group.\" Here the value is not absent — 300 would have applied and satisfied the rule — it is explicitly set to 0, which overrides the 300-second default and reduces the wait interval to nothing, i.e. the cooldown protection is effectively disabled. Since the rule requires a nonzero default cooldown, this configuration breaches it and the value is fully known at analysis time, so no intrinsic exception applies."
+    },
+    {
+      "id": "REQ-03",
+      "decisionPointId": "DP-2",
+      "description": "Auto Scaling group specifies a default cooldown of 1 second, the smallest nonzero value",
+      "expectedBehavior": "pass",
+      "rationale": "A default cooldown of 1 second is an explicitly configured, nonzero value, which is exactly what the rule requires — the rule sets no minimum duration beyond being nonzero.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md",
+      "settledBy": "documentation",
+      "evidence": "The rule requires only that an Auto Scaling group have a default cooldown period configured to a nonzero value; it states no lower bound other than \"nonzero\". I searched the CloudFormation resource reference for AWS::AutoScaling::AutoScalingGroup's Cooldown property (topics: cloudformation, reference_documentation) to confirm the property's semantics, accepted form, and default. The reference states: Cooldown is \"The amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies\", Required: No, Type: String, \"Default: 300 seconds\". So Cooldown accepts an arbitrary number of seconds, and a value of 1 is a valid, explicitly supplied setting rather than an omission falling back to the 300-second default. Since 1 is nonzero and the property is present, the resource satisfies the rule as written, and the rule owes this configuration no finding. Note that the documented default (300) is also nonzero, so the boundary the rule cares about is specifically 0/absent-with-unsafe-default, neither of which applies here."
+    },
+    {
+      "id": "REQ-04",
+      "decisionPointId": "DP-2",
+      "description": "Auto Scaling group specifies a default cooldown of 300 seconds",
+      "expectedBehavior": "pass",
+      "rationale": "The group sets a default cooldown of 300 seconds, an explicitly configured nonzero value, which is exactly what the rule requires.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md",
+      "settledBy": "documentation",
+      "evidence": "The rule turns on whether the Auto Scaling group has a default cooldown configured to a nonzero value. Here the configuration explicitly specifies 300 seconds. I confirmed via the CloudFormation resource reference for AWS::AutoScaling::AutoScalingGroup (Cooldown property): \"The amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies... Default: 300 seconds\" — so 300 is a valid, accepted cooldown value (and indeed the service default), meaning the deployed group will run with a 300-second cooldown between simple scaling activities. CDK API docs corroborate (Duration.minutes(5) default). Since 300 > 0 and the value is explicitly present, the resource satisfies the rule and no finding is owed."
+    },
+    {
+      "id": "REQ-05",
+      "decisionPointId": "DP-2",
+      "description": "Auto Scaling group specifies a negative default cooldown value, such as minus one second",
+      "expectedBehavior": "flag",
+      "rationale": "A negative default cooldown such as -1 second is not a valid cooldown duration — a cooldown is an amount of time in seconds that elapses after a scaling activity, so a negative figure describes no waiting period at all and leaves the group with no effective cooldown, which is exactly what the rule requires to be present.",
+      "docReference": null,
+      "settledBy": "strict-default",
+      "evidence": "Searched the CloudFormation resource reference for AWS::AutoScaling::AutoScalingGroup Cooldown, the EC2 Auto Scaling user guide page \"Scaling cooldowns for Amazon EC2 Auto Scaling\", and the CreateAutoScalingGroup/UpdateAutoScalingGroup DefaultCooldown API/SDK references. The docs establish (a) the property is \"the amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies\", and (b) when it is omitted the service applies a default of 300 seconds. None of the pages consulted publishes an explicit valid-value range or minimum for DefaultCooldown, so no document directly states what the service does with a negative input such as -1. What the documentation does settle is the semantics: the value is a duration of waiting time. A negative duration cannot express a waiting period, so under any reading the resource ends up with no enforced cooldown — either the request is rejected as an invalid value, or the group behaves as if there were zero delay between scaling activities. Either outcome is the condition the rule targets: no meaningful, nonzero cooldown period in effect. This is also not the omitted-value case, where the documented 300-second default would satisfy the rule; here a value is explicitly supplied, so the service default does not apply. The value is a literal in the configuration, not an input resolved at deployment time, so the intrinsic-exception does not apply. Because no consulted document decides negative-value handling outright, this is recorded as a strict default with no doc reference rather than dressed up as a documented fact."
+    },
+    {
+      "id": "REQ-06",
+      "decisionPointId": "DP-3",
+      "description": "Auto Scaling group's default cooldown references a deployment-time input parameter that declares no value in the template",
+      "expectedBehavior": "pass",
+      "rationale": "The cooldown value comes from a template parameter that declares no value, so it is supplied at stack creation and could be any number — the scanner cannot know at analysis time whether the deployed group ends up with a nonzero cooldown, and not every possible input breaches the rule.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.md",
+      "settledBy": "intrinsic-exception",
+      "evidence": "What the verdict turns on: whether the scanner can determine, at analysis time, that the Auto Scaling group's default cooldown will be zero/unconfigured. Here the property is present but its value is a reference to a deployment-time input parameter that declares no value in the template.\n\nSearches performed: (1) \"AWS::AutoScaling::AutoScalingGroup Cooldown default 300 seconds\" — the CloudFormation resource reference for AWS::AutoScaling::AutoScalingGroup states for `Cooldown`: \"The amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies... Default: 300 seconds\", Required: No, Type: String (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md). This confirms the service default is a nonzero 300 seconds, so an omitted property would itself be compliant; but here the property is not omitted — it is parameterized. (2) \"CloudFormation parameter without Default value resolved at deployment time\" — the Parameters section reference confirms that \"For parameters without default values, users must specify a ... value at stack creation. If they don't, CloudFormation fails to create the stack\" (https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.md). So the effective cooldown is chosen by whoever deploys the stack and is not knowable from the template.\n\nWhy this decides pass: the deciding value is a genuine analysis-time unknown supplied at deployment, not merely an absent or empty value. The parameter, being unconstrained in the template, can legitimately be given a nonzero cooldown (e.g. 300), which satisfies the rule; it is not the case that every possible input breaches the rule, so the outcome is not known regardless of choice. A scanner therefore cannot assert a breach and the rule owes no finding. This falls under the deployment-time-input exception rather than a documented default or a strict tie-break."
+    },
+    {
+      "id": "REQ-07",
+      "decisionPointId": "DP-4",
+      "description": "Auto Scaling group's default cooldown is present but holds an empty text value",
+      "expectedBehavior": "flag",
+      "rationale": "An empty text value supplies no parsable number of seconds, so the group has no usable cooldown setting and nothing in the AWS documentation says an empty string is normalized to the 300-second default that applies when the property is omitted entirely.",
+      "docReference": null,
+      "settledBy": "strict-default",
+      "evidence": "Searched CloudFormation and Auto Scaling API references for the cooldown default: the AWS::AutoScaling::AutoScalingGroup reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md) documents `Cooldown` as Type: String, Required: No, \"Default: 300 seconds\", and the CDK/SDK mirrors (CfnAutoScalingGroupMixinProps, CreateAutoScalingGroup defaultCooldown) repeat the same 300-second default. That documented default is stated for the case where the property is not supplied at all. No documentation found — in the CFN resource reference, the Auto Scaling User Guide cooldown page, or the CreateAutoScalingGroup/UpdateAutoScalingGroup API reference — states how an explicitly supplied empty string is handled: whether it is coerced to the 300-second default, rejected at validation, or treated as 0. Because the property is present, the \"omitted value falls back to a safe documented default\" reasoning does not cleanly apply, and the underlying API expects an integer number of seconds, which an empty string is not. The value is also not a deployment-time unknown — it is a literal empty string, fully visible at analysis time — so the intrinsic-exception path does not apply. With no doc settling the empty-string case, the strict default governs: flag, so a reviewer sees and can dismiss it, rather than silently passing a group whose cooldown may resolve to nothing usable."
+    },
+    {
+      "id": "REQ-08",
+      "decisionPointId": "DP-4",
+      "description": "Auto Scaling group's default cooldown is present but holds non-numeric text rather than a number of seconds",
+      "expectedBehavior": "flag",
+      "rationale": "A cooldown of non-numeric text is not a number of seconds at all — the property is documented as an amount of time in seconds (an Integer in the Auto Scaling API), so such a value can never satisfy the requirement for a nonzero cooldown period and the group has no valid cooldown configured.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.html#cfn-autoscaling-autoscalinggroup-cooldown",
+      "settledBy": "documentation",
+      "evidence": "Searched CloudFormation and Auto Scaling reference docs for the Cooldown/DefaultCooldown property. The AWS::AutoScaling::AutoScalingGroup reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.html#cfn-autoscaling-autoscalinggroup-cooldown) defines Cooldown as \"The amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies\", Type: String, Default: 300 seconds. The underlying API models it as an integer: the SDK types for CreateAutoScalingGroup/UpdateAutoScalingGroup expose default_cooldown ⇒ Integer, \"The amount of time, in seconds, ... The default value is 300\", and the user guide (https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-scaling-cooldowns.html) confirms 300 seconds is used when the value is not defined. So although CloudFormation accepts the property as a String, the only meaningful contents are digits representing seconds; non-numeric text is not a valid seconds value and cannot be interpreted as a nonzero cooldown period. This is not the \"absent value takes a safe default\" case — the property is present and holds a value the service cannot accept as a duration, so the documented 300-second default for an omitted property does not rescue it. Nor is it a deployment-time unknown: the literal text is fully visible at analysis time, and no possible reading of non-numeric text yields a nonzero number of seconds. The rule's requirement — a default cooldown configured to a nonzero value — is therefore not met, and the rule should fire."
+    },
+    {
+      "id": "REQ-09",
+      "decisionPointId": "DP-5",
+      "description": "Auto Scaling group has no default cooldown of its own, while a simple scaling policy attached to that group declares its own nonzero cooldown period",
+      "expectedBehavior": "pass",
+      "rationale": "An Auto Scaling group that omits its own default cooldown still runs with the service default of 300 seconds, which is nonzero and satisfies the rule, and the policy-level cooldown only overrides that value for the one simple scaling policy without removing the group's 300-second default.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on what the group's default cooldown is when the property is absent. Searched CloudFormation reference for AWS::AutoScaling::AutoScalingGroup Cooldown: the `Cooldown` property (the group's default cooldown) is \"Required: No\" and documents \"Default: `300` seconds\" (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.html). So an omitted value does not leave the group with no cooldown or a zero cooldown — the service applies 300 seconds, a nonzero default cooldown, which is exactly what the rule requires. Also searched the EC2 Auto Scaling user guide on scaling cooldowns: \"By default, all simple scaling policies use the default cooldown period that is defined for the Auto Scaling group... When a cooldown period is specified for a policy, it overrides the default cooldown,\" and it refers to \"The default cooldown period of 300 seconds.\" This confirms the policy-specific nonzero cooldown merely overrides the group default for that policy; it neither zeroes nor removes the group's own 300-second default. Both the group-level state and the effective behavior of the attached policy are therefore nonzero cooldowns, so nothing is owed a finding here."
+    },
+    {
+      "id": "REQ-10",
+      "decisionPointId": "DP-3",
+      "description": "Auto Scaling group's default cooldown references a template input parameter that carries a nonzero default value resolvable at analysis time",
+      "expectedBehavior": "pass",
+      "rationale": "The cooldown resolves at analysis time to the referenced parameter's nonzero default, so the group runs with a nonzero cooldown — and even an omitted Cooldown would fall back to the documented 300-second service default, so nothing here leaves the cooldown at zero.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md",
+      "settledBy": "documentation",
+      "evidence": "What the verdict turns on: whether a Cooldown/DefaultCooldown expressed as a reference to a template input parameter yields a known, nonzero cooldown at scan time. Here the referenced parameter carries a nonzero default that the scanner can resolve, so the effective configuration is knowable — this is not an analysis-time unknown, and the intrinsic/deploy-time exception does not apply.\n\nSearched CloudFormation and SDK reference documentation for the Auto Scaling group cooldown property and its default. The AWS::AutoScaling::AutoScalingGroup resource reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md) documents `Cooldown` as \"The amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies ... Default: `300` seconds\", and the CreateAutoScalingGroup SDK reference for `defaultCooldown` states the same \"Default: 300 seconds\". So the service never leaves this at zero on its own.\n\nApplying that: the resolved parameter default is nonzero, which directly satisfies the rule's requirement of a configured nonzero cooldown. Even in the worst reading — a deploy-time override supplying something else — the property as written is populated and the service default is a safe 300 seconds, so there is no state described by this configuration that the rule should flag. Verdict: pass, decided by the documented property semantics and default rather than by a strict fallback."
+    },
+    {
+      "id": "REQ-11",
+      "decisionPointId": "DP-5",
+      "description": "Auto Scaling group specifies its own default cooldown of 0 seconds while a simple scaling policy attached to that group declares a nonzero cooldown period",
+      "expectedBehavior": "flag",
+      "rationale": "The group's own default cooldown is explicitly set to 0 seconds, and a policy-level cooldown only overrides the default for that one simple scaling policy rather than giving the group a nonzero default, so the group still runs with no cooldown for every other simple scaling activity.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-scaling-cooldowns.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on (a) whether the ASG's `Cooldown`/DefaultCooldown of 0 is the effective group default, and (b) whether a nonzero cooldown declared on an attached simple scaling policy repairs it. Searched the CloudFormation reference for AWS::AutoScaling::AutoScalingGroup: the `Cooldown` property is \"the amount of time, in seconds, between one scaling activity ending and another one starting due to simple scaling policies. Default: 300 seconds.\" Here the default is not in play — the template supplies an explicit value of 0, so the deployed group's default cooldown is 0 seconds, i.e. no cooldown, which is exactly the state the rule prohibits. Searched the EC2 Auto Scaling User Guide on scaling cooldowns (\"Set a cooldown period for specific simple scaling policies\"): \"By default, all simple scaling policies use the default cooldown period that is defined for the Auto Scaling group. To set a cooldown period for specific simple scaling policies, use the optional cooldown parameter... When a cooldown period is specified for a policy, it overrides the default cooldown.\" The override is scoped to that individual policy only; it does not alter the group-level default, so any other simple scaling policy on the group (existing or later added), and any scaling activity that falls back to the group default, proceeds with a 0-second cooldown. The rule is stated about the Auto Scaling group's default cooldown, and that value is a configured, known zero. Both values are literals in the configuration, so no deployment-time unknown applies."
+    },
+    {
+      "id": "REQ-12",
+      "decisionPointId": "DP-3",
+      "description": "Auto Scaling group's default cooldown references a deployment-time input parameter that declares a default value of zero, with no value supplied at deployment",
+      "expectedBehavior": "flag",
+      "rationale": "The parameter it references declares a default of zero and no value is supplied at deployment, so the group is created with DefaultCooldown explicitly set to 0 — an effectively disabled cooldown rather than the service's 300-second default — which is exactly the state the rule prohibits.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md",
+      "settledBy": "documentation",
+      "evidence": "What the verdict turns on: which cooldown value the Auto Scaling group actually ends up with when DefaultCooldown is wired to a deployment-time parameter whose declared default is 0 and no override is provided. Searched the AWS docs for the DefaultCooldown default (\"Auto Scaling group DefaultCooldown default value 300 seconds\") and for cooldown-of-zero semantics. The CloudFormation reference for AWS::AutoScaling::AutoScalingGroup (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md) and the CreateAutoScalingGroup API model (defaultCooldown, \"Default: 300 seconds\") confirm that 300 seconds is the value applied only when the property is absent. Here the property is present: it resolves through the parameter, and because the template author declared a default of 0 and the deployment supplies nothing, CloudFormation substitutes 0. So the deployed group carries DefaultCooldown = 0, which suppresses the cooldown between simple-scaling activities instead of inheriting the 300-second default — a nonzero cooldown is precisely what the rule requires. This is not an analysis-time unknown: the parameter's declared default is present in the template and no supplied value competes with it, so the resulting configuration is fully determined at scan time and the deployment-time-input exception does not apply. Verdict rests on documented property semantics plus the resolved parameter default, so flag."
+    }
+  ]
+}
