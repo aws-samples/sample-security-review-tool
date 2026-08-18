@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for AS-005 - Auto Scaling groups must use a launch template rather
+  than a launch configuration. Each AutoScalingGroup below is crafted to hit
+  exactly one finding in the control's evaluate() chain.
+
+Resources:
+
+  # FINDING: LAUNCH_CONFIGURATION_ONLY
+  # Uses only a launch configuration name; no launch template, mixed
+  # instances policy, or instance id present.
+  LaunchConfigOnlyGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: legacy-launch-configuration
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones: !GetAZs ''
+
+  # FINDING: EXISTING_INSTANCE_SOURCE
+  # Configuration is derived from an existing EC2 instance id; no launch
+  # configuration, launch template, or mixed instances policy present.
+  ExistingInstanceGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      InstanceId: i-0123456789abcdef0
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones: !GetAZs ''
+
+  # FINDING: MIXED_INSTANCES_POLICY_WITHOUT_LAUNCH_TEMPLATE
+  # Declares a mixed instances policy, but the nested launch template
+  # specification names neither a LaunchTemplateId nor a LaunchTemplateName,
+  # so no launch template is actually in effect. No top-level LaunchTemplate
+  # property is set. (The LaunchTemplateId/LaunchTemplateName conditional
+  # requirement is intentionally violated to trigger this finding, so the
+  # E3014 check is suppressed for this resource.)
+  MixedInstancesNoTemplateGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3014
+    Properties:
+      MixedInstancesPolicy:
+        LaunchTemplate:
+          LaunchTemplateSpecification:
+            Version: '$Latest'
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones: !GetAZs ''
+
+  # FINDING: UNUSABLE_LAUNCH_TEMPLATE_REFERENCE
+  # Declares a top-level launch template reference, but it supplies neither
+  # a LaunchTemplateId nor a LaunchTemplateName, so the reference identifies
+  # no usable launch template. (E3014 suppressed for the same reason as
+  # above.)
+  UnusableLaunchTemplateRefGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3014
+    Properties:
+      LaunchTemplate:
+        Version: '$Latest'
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones: !GetAZs ''
+
+  # FINDING: NO_LAUNCH_SOURCE
+  # No LaunchConfigurationName, LaunchTemplate, MixedInstancesPolicy, or
+  # InstanceId is declared at all. (E3014 suppressed because the missing
+  # instance-configuration source is exactly what this finding detects.)
+  NoLaunchSourceGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3014
+    Properties:
+      MinSize: '1'
+      MaxSize: '2'
+      AvailabilityZones: !GetAZs ''
