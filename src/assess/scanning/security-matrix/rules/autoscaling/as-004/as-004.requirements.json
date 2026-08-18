@@ -1,0 +1,209 @@
+{
+  "ruleId": "AS-004",
+  "generatedAt": "2026-08-18T17:47:18.435Z",
+  "description": "Auto Scaling Groups attached to a load balancer or target group must use Elastic Load Balancing health checks rather than EC2 instance status checks alone",
+  "cfnResources": [
+    "AWS::AutoScaling::AutoScalingGroup"
+  ],
+  "tfResources": [
+    "aws_autoscaling_group",
+    "aws_autoscaling_attachment",
+    "aws_autoscaling_traffic_source_attachment"
+  ],
+  "decisionPoints": [
+    {
+      "id": "DP-1",
+      "description": "Whether the Auto Scaling group is attached to a load balancer, target group, or other traffic source, including no attachment, empty attachment collections, multiple entries, and attachments only known at deployment time"
+    },
+    {
+      "id": "DP-2",
+      "description": "Which health check service or services the Auto Scaling group is configured to use, including Elastic Load Balancing, EC2 instance status only, omission, multi-value combinations, values outside the accepted set, and values only known at deployment time"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "decisionPointId": "DP-1",
+      "description": "Group lists one classic load balancer name and its health check type is EC2 instance status only",
+      "expectedBehavior": "flag",
+      "rationale": "The group is attached to a classic load balancer but runs with health check type EC2, which per AWS documentation only checks that the instance is running and free of hardware/software impairment — load balancer health reporting is a separate check that must be explicitly turned on, so unhealthy-but-running instances behind the load balancer will never be replaced.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "Searched AWS docs for \"Auto Scaling group HealthCheckType ELB load balancer health checks\" and the CloudFormation reference for AWS::AutoScaling::AutoScalingGroup HealthCheckType. The Amazon EC2 Auto Scaling User Guide page \"About the health checks for your Auto Scaling group\" (https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html) states that Amazon EC2 status checks and scheduled events \"Checks that the instance is running\" and \"Checks for underlying hardware or software issues\" and is \"the default health check type for an Auto Scaling group\", while Elastic Load Balancing health checks \"Checks whether the load balancer reports the instance as healthy, confirming whether the instance is available to handle requests. To run this health check type, you must turn it on for your Auto Scaling group.\" The AWS SDK reference for CreateAutoScalingGroup confirms the valid values are EC2 (default) and ELB, and that only with ELB does the group consider an instance unhealthy when it fails the load balancer health checks. Here the deciding value is not absent — the group explicitly uses EC2 instance status checks only while a classic load balancer name is attached (LoadBalancerNames), so ELB health checking is definitively off and application-level failures on running instances go undetected and unreplaced. That is exactly the state the rule prohibits, so the finding is owed."
+    },
+    {
+      "id": "REQ-02",
+      "decisionPointId": "DP-1",
+      "description": "Group lists one target group and its health check type is EC2 instance status only",
+      "expectedBehavior": "flag",
+      "rationale": "The group is attached to a target group but its health check type is EC2 only, and Elastic Load Balancing health checks are off unless explicitly turned on, so the group will replace instances only for EC2 status-check failures and will keep serving instances the target group reports unhealthy.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "Searched AWS docs for the Auto Scaling health check type semantics and defaults. The EC2 Auto Scaling User Guide page \"About the health checks for your Auto Scaling group\" (health-checks-overview.html) states that Amazon EC2 status checks and scheduled events are \"the default health check type for an Auto Scaling group,\" and that for Elastic Load Balancing health checks \"you must turn it on for your Auto Scaling group.\" The CloudFormation reference for AWS::AutoScaling::AutoScalingGroup confirms HealthCheckType is a comma-separated list of EC2, EBS, ELB, VPC_LATTICE, that EC2 \"is the default health check and cannot be disabled,\" and that ELB must be listed to be active (\"Only specify EC2 if you must clear a value that was previously set\"). Here the configuration explicitly selects EC2 instance status checks only while the group lists a target group, so at runtime the service performs no ELB/target-group-based health evaluation for scaling replacement — exactly the state the rule prohibits. No deployment-time-unknown value is involved; the health check type is stated, so no intrinsic exception applies."
+    },
+    {
+      "id": "REQ-03",
+      "decisionPointId": "DP-1",
+      "description": "Group declares a traffic source attachment referencing a target group and its health check type is EC2 instance status only",
+      "expectedBehavior": "flag",
+      "rationale": "The group is attached to a target group (via a traffic source) but its health check type is EC2 only, so Amazon EC2 Auto Scaling explicitly ignores the Elastic Load Balancing health check results and will not replace instances the target group reports unhealthy — exactly the gap the rule targets.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "Searched AWS docs for Auto Scaling health check types, the default when HealthCheckType is unset, and the interaction with attached load balancers/target groups. The Amazon EC2 Auto Scaling User Guide \"About the health checks for your Auto Scaling group\" states EC2 status checks are the default type, and that Elastic Load Balancing health checks \"must be turned on for your Auto Scaling group\"; it further states \"By default, Amazon EC2 Auto Scaling ignores the results of the Elastic Load Balancing health checks. After you turn on these health checks ... when Elastic Load Balancing reports a registered instance as Unhealthy, Amazon EC2 Auto Scaling marks the instance Unhealthy on its next periodic health check and replaces it.\" The companion page \"Prepare to attach an Elastic Load Balancing load balancer\" repeats: \"By default, Amazon EC2 Auto Scaling does not consider an instance unhealthy and replace it if it fails the Elastic Load Balancing health checks. The default health checks for an Auto Scaling group are EC2 health checks only.\" Here the deciding value is present and explicit (health check type = EC2 only) alongside a TrafficSources attachment to a target group, so there is no absent-default or deploy-time-unknown question: the deployed group will run with ELB/target-group health results ignored while serving load-balanced traffic, meaning an instance that fails target-group health checks but keeps passing EC2 status checks stays in service and is never replaced. That is the precise condition the rule requires to be avoided, so a finding is owed. (Note: a traffic source of type elbv2/vpc-lattice target group is the load-balancer attachment form the rule names; nothing in the docs exempts TrafficSources attachments from needing the ELB health check type to be enabled.)"
+    },
+    {
+      "id": "REQ-04",
+      "decisionPointId": "DP-1",
+      "description": "Group declares no classic load balancer names, no target groups, and no traffic sources, and its health check type is EC2 instance status only",
+      "expectedBehavior": "pass",
+      "rationale": "The rule only governs Auto Scaling groups that are attached to a load balancer or target group, and this group has no classic load balancer names, target group ARNs, or traffic sources, so EC2 status checks — the service default health check type — are the complete and appropriate health signal for it.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "Searched AWS docs for the Auto Scaling health check types and their defaults, and for the CloudFormation AutoScalingGroup attachment properties. \"About the health checks for your Auto Scaling group\" (autoscaling/ec2/userguide/health-checks-overview.html) states that Amazon EC2 status checks and scheduled events are \"the default health check type for an Auto Scaling group,\" while Elastic Load Balancing health checks must be explicitly turned on; the CDK aws_autoscaling README repeats that EC2 is the default and cannot be disabled. The CloudFormation reference for AWS::AutoScaling::AutoScalingGroup shows attachment to load balancing is expressed via LoadBalancerNames, TargetGroupARNs, or TrafficSources (TrafficSourceIdentifier covering CLB names, ALB/NLB/GWLB target group ARNs, and VPC Lattice target groups) — all optional. ELB health checks are only meaningful when a load balancer is registered, since the check asks whether the load balancer reports the instance healthy; with no CLB names, no target group ARNs, and no traffic sources, there is no load balancer to report health, so the rule's precondition (\"attached to a load balancer or target group\") is not met. HealthCheckType EC2 here is simply the documented default operating in a standalone group, not a downgrade from an available ELB check. No finding is owed."
+    },
+    {
+      "id": "REQ-05",
+      "decisionPointId": "DP-1",
+      "description": "Group declares an empty classic load balancer name collection and an empty target group collection, and its health check type is EC2 instance status only",
+      "expectedBehavior": "pass",
+      "rationale": "With both the classic load balancer name collection and the target group collection empty, no load balancer or target group is attached to the group, so ELB health checks are neither applicable nor available and the service's default EC2-only health check is the correct end state.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/getting-started-elastic-load-balancing.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on the rule's precondition: it only requires ELB health checks for groups \"attached to a load balancer or target group.\" Here both attachment collections are present but empty, meaning zero Classic Load Balancers and zero target groups are associated — an empty collection resolves to no attachment, not an unknown one. Searched AWS docs for Auto Scaling health check type and load balancer attachment. \"Prepare to attach an Elastic Load Balancing load balancer\" (https://docs.aws.amazon.com/autoscaling/ec2/userguide/getting-started-elastic-load-balancing.html) states: \"Before you can turn on Elastic Load Balancing health checks for your Auto Scaling group, you must configure an Elastic Load Balancing load balancer and configure a health check for it\" and \"The default health checks for an Auto Scaling group are EC2 health checks only.\" \"About the health checks for your Auto Scaling group\" (health-checks-overview.html) likewise ties ELB health check usefulness to an attached load balancer whose registered instances it reports on. The API/CFN references confirm EC2 is the default and valid value for HealthCheckType (e.g. Aws::AutoScaling::Types::CreateAutoScalingGroupType: \"valid values are EC2 (default) and ELB\"). Since there is no load balancer attached, ELB health checks would have nothing to evaluate and cannot meaningfully be enabled; the group's declared EC2-only health check type is the service-default, supported configuration and carries none of the risk the rule targets (instances failing load balancer health checks going unreplaced). The rule therefore owes this configuration no finding."
+    },
+    {
+      "id": "REQ-06",
+      "decisionPointId": "DP-1",
+      "description": "Group's target group attachment list comes entirely from a value only known at deployment time, while health check type is EC2 instance status only",
+      "expectedBehavior": "pass",
+      "rationale": "Whether the rule even applies depends on the target group attachment list, which resolves only at deployment time and could legitimately resolve to an empty list (no load balancer attached, in which case EC2-only health checks are acceptable), so the scanner cannot assert a breach.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/getting-started-elastic-load-balancing.html",
+      "settledBy": "intrinsic-exception",
+      "evidence": "The rule has two parts: (a) a precondition — the group is attached to a load balancer or target group — and (b) the breach condition — health check type is EC2 instance status only. Part (b) is known here and is the unsafe state: per the CloudFormation reference for AWS::AutoScaling::AutoScalingGroup, HealthCheckType accepts EC2, EBS, ELB and VPC_LATTICE, \"EC2 is the default health check and cannot be disabled\", and the EC2 Auto Scaling User Guide (\"Prepare to attach an Elastic Load Balancing load balancer\") states \"By default, Amazon EC2 Auto Scaling does not consider an instance unhealthy and replace it if it fails the Elastic Load Balancing health checks. The default health checks for an Auto Scaling group are EC2 health checks only,\" confirming ELB health checks are off unless ELB is explicitly added to the type. So an EC2-only group behind a load balancer would indeed be a finding.\n\nPart (a), however, is not knowable here. The group's entire target group attachment list (TargetGroupARNs) comes from a value resolved at deployment time — e.g. a template parameter or cross-stack import. That value can resolve to a non-empty list (rule applies, breach) or to an empty list (no target group attached, so the group is not behind a load balancer and EC2-only health checks are the documented and acceptable configuration — \"Attach an Elastic Load Balancing load balancer to your Auto Scaling group\" makes clear ELB health checks are only meaningful once a load balancer or target group is attached). Because at least one possible resolution leaves the resource compliant, it is not the case that every value the input could take breaches the rule, so the \"known outcome regardless of input\" carve-out does not apply.\n\nThe deciding value is therefore a genuine analysis-time unknown rather than a merely absent setting, and the scanner should not report a breach it cannot establish."
+    },
+    {
+      "id": "REQ-07",
+      "decisionPointId": "DP-1",
+      "description": "Group lists more than one target group and its health check type is EC2 instance status only",
+      "expectedBehavior": "flag",
+      "rationale": "The group is attached to multiple target groups yet its health check type is EC2 only, and Amazon EC2 Auto Scaling ignores Elastic Load Balancing health check results unless ELB health checks are explicitly turned on, so unhealthy-but-running instances behind the target groups will never be replaced.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/getting-started-elastic-load-balancing.html",
+      "settledBy": "documentation",
+      "evidence": "Searched AWS docs for Auto Scaling HealthCheckType semantics and the interaction with attached target groups. The Auto Scaling User Guide \"Prepare to attach an Elastic Load Balancing load balancer\" states: \"By default, Amazon EC2 Auto Scaling does not consider an instance unhealthy and replace it if it fails the Elastic Load Balancing health checks. The default health checks for an Auto Scaling group are EC2 health checks only,\" and that ELB health checks must be configured on the group so it \"considers the instance unhealthy if it fails either the EC2 health checks or the Elastic Load Balancing health checks. If you attach multiple load balancer target groups or Classic Load Balancers to the group, all of them must report that an instance is healthy.\" \"About the health checks for your Auto Scaling group\" confirms: \"By default, Amazon EC2 Auto Scaling ignores the results of the Elastic Load Balancing health checks,\" and that ELB/VPC Lattice checks must be turned on, while EC2 status checks are the default type. The CFN/CDK reference confirms HealthCheckType valid values EC2, EBS, ELB, VPC_LATTICE, with EC2 the default and the note \"Only specify EC2 if you must clear a value that was previously set.\" Here the value is explicitly EC2-only while multiple target groups are attached, so the deployed state is exactly the one the rule prohibits: load-balanced instances whose ELB health results are discarded. No deployment-time unknown is involved."
+    },
+    {
+      "id": "REQ-09",
+      "decisionPointId": "DP-2",
+      "description": "Group lists a target group and its health check type is Elastic Load Balancing",
+      "expectedBehavior": "pass",
+      "rationale": "The group's health check type is explicitly Elastic Load Balancing (ELB), so Amazon EC2 Auto Scaling evaluates load balancer/target group health reports in addition to the always-on EC2 status checks — exactly the state the rule requires for a group attached to a target group.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "Searched AWS docs for Auto Scaling health check types and the CloudFormation HealthCheckType property. \"About the health checks for your Auto Scaling group\" (https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html) states that EC2 status checks are the default type, while \"Elastic Load Balancing health checks — checks whether the load balancer reports the instance as healthy... you must turn it on for your Auto Scaling group.\" The AWS::AutoScaling::AutoScalingGroup reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md) documents HealthCheckType as a comma-separated list of EC2, EBS, ELB, VPC_LATTICE, with EC2 always included and not disableable; specifying ELB therefore adds load balancer health reporting on top of EC2 checks. Here the group attaches a target group (TargetGroupARNs) and sets health check type to Elastic Load Balancing (ELB), so the deployed resource will terminate and replace instances the target group reports unhealthy — the protection the rule exists to enforce is present. No deployment-time unknown is involved; the deciding value is explicit. Nothing owed: no finding."
+    },
+    {
+      "id": "REQ-10",
+      "decisionPointId": "DP-2",
+      "description": "Group lists a target group and no health check type is specified at all",
+      "expectedBehavior": "flag",
+      "rationale": "With a target group attached but HealthCheckType omitted, Amazon EC2 Auto Scaling defaults to EC2 status checks only and ignores the load balancer's health check results, so the group runs without ELB health checks and breaches the rule.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.html",
+      "settledBy": "documentation",
+      "evidence": "Searched the CloudFormation reference for AWS::AutoScaling::AutoScalingGroup HealthCheckType and the EC2 Auto Scaling health-check user guide. The CFN reference states HealthCheckType valid values are EC2, EBS, ELB, VPC_LATTICE, and that \"EC2 is the default health check and cannot be disabled\" — i.e., when the property is omitted the group runs with EC2 status checks only. The user guide (health-checks-overview.html) confirms the behavioral consequence: \"By default, Amazon EC2 Auto Scaling ignores the results of the Elastic Load Balancing health checks,\" and attach-load-balancer-asg.html states \"By default, Amazon EC2 Auto Scaling only replaces instances that are unhealthy or unreachable based on Amazon EC2 health checks\"; ELB health checks must be explicitly turned on. Therefore attaching a TargetGroupARN alone does not enable ELB health checks. The documented default is exactly the unsafe state the rule targets — instances failing load balancer health checks but passing EC2 status checks would never be replaced — so the omission is a real breach of the resulting service configuration, not merely missing template text. No deployment-time-unknown value is involved."
+    },
+    {
+      "id": "REQ-11",
+      "decisionPointId": "DP-2",
+      "description": "Group lists a target group and its health check type names multiple services including Elastic Load Balancing, such as EC2 instance status together with Elastic Load Balancing",
+      "expectedBehavior": "pass",
+      "rationale": "The health check type is a comma-separated list of enabled check types, so a value such as \"EC2,ELB\" means Elastic Load Balancing health checks are turned on for the group (EC2 checks are always on and cannot be disabled), which is exactly what the rule requires of a load-balanced group.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on whether naming several health check types, one of them Elastic Load Balancing, counts as \"using ELB health checks\". Searched the AWS docs for the Auto Scaling group health check type property. The CloudFormation reference for AWS::AutoScaling::AutoScalingGroup (HealthCheckType) states: \"A comma-separated value string of one or more health check types. The valid values are EC2, EBS, ELB, and VPC_LATTICE. EC2 is the default health check and cannot be disabled. Only specify EC2 if you must clear a value that was previously set.\" The same wording appears in the CreateAutoScalingGroup/UpdateAutoScalingGroup API models and in the CDK (HealthChecks.withAdditionalChecks, where EC2 is implicitly included and additional types such as ELB are added). The EC2 Auto Scaling User Guide \"About the health checks for your Auto Scaling group\" confirms Amazon EC2 Auto Scaling \"can determine the health status of an InService instance by using one or more of the following health checks\", that EC2 status checks are the default type, and that Elastic Load Balancing health checks must be turned on for the group to run. Therefore a value listing multiple types including ELB (e.g. \"EC2,ELB\") has ELB health checks enabled — the group replaces instances the load balancer reports unhealthy — and the co-listed EC2 type is unavoidable rather than a weakening. The rule targets groups relying on EC2 status checks alone; this configuration does not, so no finding is owed."
+    },
+    {
+      "id": "REQ-12",
+      "decisionPointId": "DP-2",
+      "description": "Group lists a target group and its health check type names multiple services none of which is Elastic Load Balancing, such as EC2 instance status together with EBS",
+      "expectedBehavior": "flag",
+      "rationale": "The group is attached to a target group but its health check type list contains only non-ELB types (e.g. EC2 plus EBS), so Amazon EC2 Auto Scaling ignores the load balancer's health check results and will not replace instances the target group reports unhealthy.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/getting-started-elastic-load-balancing.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on whether a comma-separated health check type list that omits ELB still causes Auto Scaling to honor load balancer health results. Searched AWS docs for the Auto Scaling HealthCheckType property and for ELB health checks on attached load balancers. The CloudFormation/CDK property reference (CfnAutoScalingGroup healthCheckType) confirms the value is \"a comma-separated value string of one or more health check types\" with valid values EC2, EBS, ELB, and VPC_LATTICE, EC2 being implicit and non-disableable — so listing EC2 and EBS is a valid multi-type configuration that simply does not include ELB. The Auto Scaling User Guide (\"Prepare to attach an Elastic Load Balancing load balancer\") states: \"By default, Amazon EC2 Auto Scaling does not consider an instance unhealthy and replace it if it fails the Elastic Load Balancing health checks. The default health checks for an Auto Scaling group are EC2 health checks only,\" and \"To enable Amazon EC2 Auto Scaling to replace instances that are reported unhealthy by Elastic Load Balancing, you can configure your Auto Scaling group to use Elastic Load Balancing health checks.\" The health-checks-overview page repeats that Auto Scaling ignores ELB health check results until ELB health checks are turned on for the group. Because the configured list names services other than Elastic Load Balancing, ELB health checks remain off even though a target group is attached; adding EBS checks covers volume status, not load balancer target health. The state the service ends up in therefore breaches the rule, and the configuration is fully known at analysis time (no deferred input), so the rule owes a finding."
+    },
+    {
+      "id": "REQ-13",
+      "decisionPointId": "DP-2",
+      "description": "Group declares a VPC Lattice traffic source and its health check type is the VPC Lattice health check service",
+      "expectedBehavior": "pass",
+      "rationale": "A group whose only traffic source is a VPC Lattice target group and whose health check type is VPC_LATTICE already gets application-level health checks that AWS documents as working the same way as Elastic Load Balancing health checks, with Amazon EC2 Auto Scaling replacing instances VPC Lattice reports unhealthy, so the instance-status-checks-alone gap the rule targets does not exist.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "Searched the AWS docs for the Auto Scaling health check types and for VPC Lattice traffic sources. The CloudFormation/CDK property reference for AWS::AutoScaling::AutoScalingGroup HealthCheckType states the valid values are a comma-separated set of EC2, EBS, ELB and VPC_LATTICE, with EC2 always implicitly included and not disableable — so VPC_LATTICE is a first-class health check type alongside ELB, not an omission or an EC2-only setting. The Auto Scaling User Guide \"About the health checks for your Auto Scaling group\" (health-checks-overview.html) says that by default Amazon EC2 Auto Scaling ignores VPC Lattice health check results, but once turned on, \"when VPC Lattice reports a registered instance as Unhealthy, Amazon EC2 Auto Scaling marks the instance Unhealthy on its next periodic health check and replaces it. The process of registering instances and then checking their health is the same as how Elastic Load Balancing health checks work.\" The VPC Lattice target group page (ec2-auto-scaling-vpc-lattice.html) likewise states that VPC Lattice monitors registered instance health and routes traffic only to healthy instances, and that \"the behavior of the VPC Lattice health checks is similar to the behavior of the Elastic Load Balancing health checks,\" while noting the group default is EC2 health checks only. In this configuration the traffic source is a VPC Lattice target group — not an Elastic Load Balancing load balancer or ELB target group — and the group has explicitly turned on the matching VPC_LATTICE health check type. The deficiency the rule exists to catch (a group fronted by a load balancer that relies solely on EC2 instance status checks and therefore never replaces instances failing application-level checks) is not present: the health check type matches the attached traffic source and Auto Scaling will act on the load-balancing layer's health verdict. Nothing in the documentation requires the ELB type for a VPC Lattice attachment; requiring it here would demand a check for a load balancer the group is not attached to."
+    },
+    {
+      "id": "REQ-15",
+      "decisionPointId": "DP-2",
+      "description": "Group lists a target group and its health check type is supplied by a value only known at deployment time",
+      "expectedBehavior": "pass",
+      "rationale": "The health check type is supplied by a deployment-time input whose value the scanner cannot resolve, and since a permitted value such as \"ELB\" would satisfy the rule, no breach can be asserted at analysis time.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md",
+      "settledBy": "intrinsic-exception",
+      "evidence": "The verdict turns on the value of HealthCheckType, which here comes from an input resolved only at deployment (e.g. a template parameter / unresolved reference), while the group does list a target group so the rule is otherwise in scope. Searched the CloudFormation resource reference for AWS::AutoScaling::AutoScalingGroup HealthCheckType and the EC2 Auto Scaling user guide on load balancer health checks. The reference states HealthCheckType is \"a comma-separated value string of one or more health check types\" with valid values EC2, EBS, ELB, and VPC_LATTICE, where EC2 is the always-on default; the user guide (health-checks-overview.html, attach-load-balancer-asg.html) confirms that by default Amazon EC2 Auto Scaling ignores Elastic Load Balancing health check results and only replaces instances based on EC2 health checks, and that setting health-check-type to \"ELB\" turns ELB health checks on. So the rule's outcome depends entirely on which string the deployment-time input resolves to: \"ELB\" (or a comma-separated list containing ELB/VPC_LATTICE) complies, while \"EC2\" alone breaches. Because at least one permitted value satisfies the rule, the \"every possible value breaches\" carve-out does not apply, and the scanner cannot know the configuration the service will receive. This is a genuine analysis-time unknown rather than a merely absent value — an absent HealthCheckType would fall back to the documented EC2-only default and would be flagged, but here a value is present and unresolvable."
+    },
+    {
+      "id": "REQ-16",
+      "decisionPointId": "DP-2",
+      "description": "Group lists a target group and its health check type is set to an empty string",
+      "expectedBehavior": "flag",
+      "rationale": "An empty health check type contains no \"ELB\" entry, so the group runs with only the EC2 status checks that Amazon EC2 Auto Scaling applies by default and ignores its target group's health check results, which is exactly the state the rule forbids for a group attached to a target group.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on what health checking an Auto Scaling group actually performs when HealthCheckType is present but empty, while a target group is attached. Searched the CloudFormation reference for AWS::AutoScaling::AutoScalingGroup HealthCheckType: it is \"a comma-separated value string of one or more health check types\", valid values EC2, EBS, ELB, VPC_LATTICE, and \"EC2 is the default health check and cannot be disabled\" (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-autoscaling-autoscalinggroup.md). An empty string therefore names no type at all — in particular it does not include ELB — and the only checking in force is the always-on EC2 instance status check. The Amazon EC2 Auto Scaling User Guide confirms what that means when a load balancer or target group is attached: \"By default, Amazon EC2 Auto Scaling ignores the results of the Elastic Load Balancing health checks,\" and only after ELB health checks are turned on for the group does it mark ELB-reported unhealthy instances unhealthy and replace them (https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html). The CLI guidance reinforces that turning them on requires specifying ELB as the value of --health-check-type (https://docs.aws.amazon.com/autoscaling/ec2/userguide/examples-elastic-load-balancing-aws-cli.html). So the resource ends up in the precise state the rule targets: registered with a target group but replacing instances only on EC2 status checks. No default rescues the empty value — the documented default is the EC2-only behavior the rule calls insufficient. The empty string is a literal known at analysis time, not a deployment-time input, so the intrinsic exception does not apply."
+    },
+    {
+      "id": "REQ-17",
+      "decisionPointId": "DP-2",
+      "description": "Group lists a target group and its health check type is the Elastic Load Balancing value spelled in all lower case letters",
+      "expectedBehavior": "flag",
+      "rationale": "The health check type is only recognized as the exact upper-case token ELB, so a lower-case \"elb\" on a target-group-attached group does not enable Elastic Load Balancing health checks and the group runs on EC2 status checks only.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_CreateAutoScalingGroup.html",
+      "settledBy": "documentation",
+      "evidence": "The CreateAutoScalingGroup API reference enumerates the health check types as exactly EC2, EBS, ELB, and VPC_LATTICE and never states that the value is case-insensitive or normalized; every user-guide and CLI example (e.g. \"Add Elastic Load Balancing health checks\" — `--health-check-type \"ELB\"`) uses the upper-case token. Because the parameter's pattern accepts arbitrary text, a lower-case \"elb\" is not rejected as malformed by pattern validation but is also not a documented recognized type, so it does not turn on ELB health checks; the documented behavior in that state is the default described in \"Prepare to attach an Elastic Load Balancing load balancer\": \"The default health checks for an Auto Scaling group are EC2 health checks only.\" A group with a target group attached in that state fails the rule, so this configuration flags rather than passes."
+    },
+    {
+      "id": "REQ-18",
+      "decisionPointId": "DP-2",
+      "description": "Group declares no load balancer, target group, or traffic source attachment, and its health check type is Elastic Load Balancing",
+      "expectedBehavior": "pass",
+      "rationale": "The group has no load balancer, target group, or traffic source attachment, so it falls outside the rule's scope, and its health check type is already Elastic Load Balancing — the very setting the rule requires — so there is nothing to flag either way.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on two things: whether an ASG with no attachment is in scope, and whether a HealthCheckType of ELB satisfies the requirement. Searched AWS docs for Auto Scaling health check types and the CloudFormation AutoScalingGroup HealthCheckType property. The Amazon EC2 Auto Scaling User Guide \"About the health checks for your Auto Scaling group\" (https://docs.aws.amazon.com/autoscaling/ec2/userguide/health-checks-overview.html) states that Amazon EC2 status checks are the default health check type for an Auto Scaling group, and that Elastic Load Balancing health checks \"must be turned on for your Auto Scaling group\" — i.e. ELB checking is opt-in and is exactly what the rule demands. The CloudFormation reference for AWS::AutoScaling::AutoScalingGroup confirms HealthCheckType accepts a comma-separated list of EC2, EBS, ELB, VPC_LATTICE, with EC2 always implicitly included and ELB being the explicit opt-in value. Here HealthCheckType is ELB, so the deployed group will evaluate load balancer health reports rather than relying on EC2 status checks alone — the required end state, and no default needs to be inferred because the value is present. Separately, the rule's scope is ASGs \"attached to a load balancer or target group\"; this group declares no LoadBalancerNames, TargetGroupARNs, or TrafficSources, so the trigger condition is not met. Both the scope test and the substantive test point the same way, so the rule owes this configuration nothing. (Note: ELB health checks with no attachment is benign/no-op, not a security weakness the rule addresses.)"
+    },
+    {
+      "id": "REQ-19",
+      "decisionPointId": "DP-1",
+      "description": "Group declares an empty traffic source attachment collection and its health check type is EC2 instance status only",
+      "expectedBehavior": "pass",
+      "rationale": "An empty traffic source collection means the group has no load balancer or target group registered, so there are no Elastic Load Balancing health checks to consume and the group's EC2-only health check type is the correct, documented configuration for an unattached group.",
+      "docReference": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/getting-started-elastic-load-balancing.html",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on whether the rule's precondition — the group being \"attached to a load balancer or target group\" — is met when the traffic source attachment collection is declared but empty. Searched AWS docs for the AutoScaling group health check type and traffic source attachment semantics. The CloudFormation reference for AWS::AutoScaling::AutoScalingGroup documents HealthCheckType as a comma-separated string of EC2, EBS, ELB, VPC_LATTICE, where \"EC2 is the default health check and cannot be disabled,\" and documents TrafficSources as the collection of identifiers for load balancer target groups, Classic Load Balancers, and VPC Lattice target groups to associate with the group. An empty collection therefore associates nothing: no ELB target group or Classic Load Balancer is registered with the group. The Amazon EC2 Auto Scaling User Guide (\"Prepare to attach an Elastic Load Balancing load balancer\" and \"About the health checks for your Auto Scaling group\") states that ELB health checks are only meaningful after a load balancer is attached — \"Before you can turn on Elastic Load Balancing health checks for your Auto Scaling group, you must configure an Elastic Load Balancing load balancer and configure a health check for it,\" and Amazon EC2 Auto Scaling only replaces instances reported unhealthy by ELB \"after the load balancer is in the InService state.\" With no attachment, setting HealthCheckType to ELB would add no signal at all, and the documented default of EC2-only status checks is the intended configuration for such a group. Because the risk the rule addresses — instances that pass EC2 status checks while failing to serve traffic behind a load balancer — cannot arise for a group serving no load balancer traffic, the configuration is outside the rule's scope and the service-realized state is compliant. No finding is owed."
+    }
+  ],
+  "removedRequirements": [
+    {
+      "id": "REQ-08",
+      "description": "Group lists a classic load balancer name and its health check type is Elastic Load Balancing",
+      "reason": "Same DP-2 state (Elastic Load Balancing health check on an attached group) as REQ-09; the classic load balancer attachment form is already exercised by REQ-01.",
+      "conflictedWith": "REQ-09"
+    },
+    {
+      "id": "REQ-14",
+      "description": "Group lists a target group and its health check type is a string that is not one of the accepted health check service values, other than a case variation of the Elastic Load Balancing value",
+      "conflictedWith": "REQ-17",
+      "reason": "The rule's purpose is to guarantee that a load-balancer-attached Auto Scaling group actually has Elastic Load Balancing health checks in effect, not merely that its health check type looks like it names ELB. AWS recognizes only the exact token \"ELB\"; a group configured with lower-case \"elb\" is left running on EC2 status checks alone — precisely the silent failure the rule exists to catch. REQ-14's carve-out (\"other than a case variation of the Elastic Load Balancing value\") treats lower-case \"elb\" as an accepted configuration, which drifts from the stated purpose by excusing a group that has no ELB health checks. REQ-17 follows directly from the purpose and is the flagging requirement; keeping it preserves detection of a real misconfiguration, whereas keeping REQ-14's pass assertion would make the rule permissive in exactly the case it was written to detect. REQ-14's substantive obligation — flagging unrecognized health check type strings — remains covered by the case-sensitive implementation, so only the erroneous case-variation exemption and its fixture are lost. (research had settled it as: A group registered with a target group whose health check type is an unrecognized string has no Elastic Load Balancing health checks in effect, so instance replacement relies on EC2 status checks alone.)"
+    }
+  ]
+}

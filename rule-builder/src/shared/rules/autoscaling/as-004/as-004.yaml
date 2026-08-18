@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for AS-004 - Auto Scaling Groups attached to a load balancer or
+  target group must use Elastic Load Balancing health checks rather than
+  EC2 instance status checks alone.
+
+Resources:
+  As004Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  As004Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref As004Vpc
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+
+  As004LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: as-004-launch-template
+      LaunchTemplateData:
+        ImageId: ami-0123456789abcdef0
+        InstanceType: t3.micro
+
+  # Finding: INSTANCE_STATUS_HEALTH_CHECKS_ONLY
+  # Attached to a target group (ATTACHMENT_PROPERTIES) but HealthCheckType
+  # is omitted entirely, which the adapter treats as "instance status only".
+  As004AsgNoHealthCheckType:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: as-004-asg-no-health-check-type
+      MinSize: '1'
+      MaxSize: '2'
+      DesiredCapacity: '1'
+      VPCZoneIdentifier:
+        - !Ref As004Subnet
+      LaunchTemplate:
+        LaunchTemplateId: !Ref As004LaunchTemplate
+        Version: !GetAtt As004LaunchTemplate.LatestVersionNumber
+      TargetGroupARNs:
+        - arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/as-004-tg/0123456789abcdef
+
+  # Finding: INSTANCE_STATUS_HEALTH_CHECKS_ONLY
+  # Attached to a classic load balancer, with HealthCheckType explicitly
+  # set to "EC2" (instance status only, not ELB).
+  As004AsgExplicitEc2:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: as-004-asg-explicit-ec2
+      MinSize: '1'
+      MaxSize: '2'
+      DesiredCapacity: '1'
+      VPCZoneIdentifier:
+        - !Ref As004Subnet
+      LaunchTemplate:
+        LaunchTemplateId: !Ref As004LaunchTemplate
+        Version: !GetAtt As004LaunchTemplate.LatestVersionNumber
+      LoadBalancerNames:
+        - as-004-classic-lb
+      HealthCheckType: EC2
