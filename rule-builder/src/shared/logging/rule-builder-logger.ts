@@ -1,4 +1,6 @@
 import { BannerTheme, type Theme } from './theme.js';
+import { SrtLogger } from '../../../../src/shared/logging/srt-logger.js';
+import { formatErrorSummary } from '../../../../src/shared/error-handling/error-diagnostics.js';
 
 // Semantic logging API for the rule-builder workflow. Call sites speak intent ("phaseStart", "success");
 // the Theme owns every glyph, color, and rule. Swap the look by passing a different Theme — nothing else changes.
@@ -93,8 +95,9 @@ export class RuleBuilderLogger {
         this.write(this.theme.info(message));
     }
 
-    public error(message: string): void {
-        this.write(this.theme.error(message));
+    public error(error: unknown, logMessage = 'Rule builder failed'): void {
+        this.write(this.theme.error(formatErrorSummary(error)));
+        SrtLogger.logError(logMessage, error);
     }
 
     private elapsedSince(startedAt: number): number {

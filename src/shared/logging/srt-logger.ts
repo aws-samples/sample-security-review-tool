@@ -1,8 +1,9 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { Logger, createLogger, format } from 'winston';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { type Logger, createLogger, format } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { AppPaths } from '../app-config/app-paths.js';
+import { describeErrorChain } from '../error-handling/error-diagnostics.js';
 
 export type LogValue = string | number | boolean | undefined | null | object;
 export interface LogContext {
@@ -69,9 +70,14 @@ export class SrtLogger {
 
     public static logError(message: string, error: unknown, context?: LogContext): void {
         const instance = SrtLogger.getInstance();
-        const errorDetails = error instanceof Error
-            ? { errorName: error.name, error: error.message, stack: error.stack }
-            : { error: String(error) };
+        const errorChain = describeErrorChain(error);
+        const primaryError = errorChain[0];
+        const errorDetails = {
+            errorName: primaryError.name,
+            error: primaryError.message,
+            stack: primaryError.stack,
+            errorChain,
+        };
         instance.logger.error(message, { ...context, ...errorDetails });
     }
 

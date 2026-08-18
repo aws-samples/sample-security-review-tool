@@ -19,6 +19,6 @@ async function main(): Promise<void> {
 }
 
 main().catch(error => {
-    new RuleBuilderLogger().error(error.message);
+    new RuleBuilderLogger().error(error, 'Rule builder fixture assessment failed');
     process.exit(1);
 });

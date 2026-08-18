@@ -1,4 +1,5 @@
 import { DefaultModelRetryStrategy } from '@strands-agents/sdk';
+import { errorCauseChain } from '../../../../src/shared/error-handling/error-diagnostics.js';
 
 const MAX_ATTEMPTS = 3;
 
@@ -6,9 +7,17 @@ const MAX_ATTEMPTS = 3;
 // ModelError carrying this exact text, so matching the message is the only way to single it out.
 const DROPPED_STREAM_MESSAGE = 'Stream ended without completing a message';
 
-// Thrown as raw Bedrock exceptions rather than wrapped, so they are identified by name the same way
-// the SDK identifies its own. validationException is deliberately absent — a rejected request stays rejected.
-const TRANSIENT_BEDROCK_ERRORS = ['InternalServerException', 'ModelStreamErrorException', 'ServiceUnavailableException'];
+// Strands wraps Bedrock service exceptions in ModelError, so classification must inspect every cause.
+// Validation and access errors are deliberately absent because an unchanged request will remain rejected.
+const TRANSIENT_BEDROCK_ERRORS = new Set([
+    'InternalServerException',
+    'ModelErrorException',
+    'ModelNotReadyException',
+    'ModelStreamErrorException',
+    'ModelTimeoutException',
+    'ServiceUnavailableException',
+    'ThrottlingException',
+]);
 
 export class TransientErrorRetryStrategy extends DefaultModelRetryStrategy {
     constructor() {
@@ -16,7 +25,10 @@ export class TransientErrorRetryStrategy extends DefaultModelRetryStrategy {
     }
 
     protected override isRetryable(error: Error): boolean {
-        if (super.isRetryable(error)) return true;
-        return error.message === DROPPED_STREAM_MESSAGE || TRANSIENT_BEDROCK_ERRORS.includes(error.name);
+        return errorCauseChain(error).some(candidate => {
+            if (!(candidate instanceof Error)) return false;
+            if (super.isRetryable(candidate)) return true;
+            return candidate.message === DROPPED_STREAM_MESSAGE || TRANSIENT_BEDROCK_ERRORS.has(candidate.name);
+        });
     }
 }

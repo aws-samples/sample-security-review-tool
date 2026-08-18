@@ -173,6 +173,6 @@ unit tests and remediation run.
 }
 
 main().catch(error => {
-    logger.error(error.message);
+    logger.error(error);
     process.exit(1);
 });
