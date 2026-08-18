@@ -17,6 +17,9 @@ interface ModuleManifestEntry {
 
 const SINGLE_INTERPOLATION = /^\$\{([^${}]+)\}$/;
 
+const JSON_ENCODE_CALL = 'jsonencode(';
+const JSON_ENCODED_KEY = '__srt_json_encoded__';
+
 const NON_RESOURCE_NAMESPACES = new Set(['var', 'local', 'module', 'data', 'each', 'count', 'path', 'self', 'terraform']);
 
 export async function readTerraformSource(projectRootPath: string): Promise<TerraformResource[]> {
@@ -102,11 +105,43 @@ export class TerraformSourceReader {
   private async parseFile(filePath: string): Promise<Record<string, any> | null> {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
-      return await parse(path.basename(filePath), content);
+      const fileName = path.basename(filePath);
+      return await parse(fileName, this.exposeJsonEncodedValues(content)).catch(() => parse(fileName, content));
     } catch (error) {
       SrtLogger.logError(`Error parsing Terraform file ${filePath}`, error as Error);
       return null;
     }
+  }
+
+  private exposeJsonEncodedValues(text: string): string {
+    let index = text.indexOf(JSON_ENCODE_CALL);
+
+    while (index !== -1) {
+      const argument = index + JSON_ENCODE_CALL.length;
+      const end = this.closingParen(text, argument);
+      if (end === -1) return text;
+
+      text = `${text.slice(0, index)}{ ${JSON_ENCODED_KEY} = ${text.slice(argument, end)} }${text.slice(end + 1)}`;
+      index = text.indexOf(JSON_ENCODE_CALL, index);
+    }
+
+    return text;
+  }
+
+  private closingParen(text: string, from: number): number {
+    let depth = 1;
+    let quoted = false;
+
+    for (let index = from; index < text.length; index++) {
+      const character = text[index];
+      if (character === '\\') index++;
+      else if (character === '"') quoted = !quoted;
+      else if (quoted) continue;
+      else if (character === '(') depth++;
+      else if (character === ')' && --depth === 0) return index;
+    }
+
+    return -1;
   }
 
   private extractResources(body: Record<string, any>, addressPrefix: string, variableDefaults: Map<string, unknown>): TerraformResource[] {
@@ -150,7 +185,9 @@ export class TerraformSourceReader {
     return value;
   }
 
-  private resolveObject(value: Record<string, unknown>, variableDefaults: Map<string, unknown>): Record<string, unknown> {
+  private resolveObject(value: Record<string, unknown>, variableDefaults: Map<string, unknown>): unknown {
+    if (JSON_ENCODED_KEY in value) return JSON.stringify(value[JSON_ENCODED_KEY]);
+
     return Object.fromEntries(
       Object.entries(value).map(([key, entry]) => [key, this.resolve(entry, variableDefaults)])
     );

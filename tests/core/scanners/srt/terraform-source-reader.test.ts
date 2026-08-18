@@ -238,6 +238,52 @@ describe('TerraformSourceReader', () => {
     expect(addresses).toContain('module.storage.aws_s3_bucket.inner');
   });
 
+  it('reads a jsonencode policy document as the JSON string a plan would carry', async () => {
+    const projectDir = await writeProject({
+      'main.tf': `
+        resource "aws_iam_role_policy" "p" {
+          role = "r"
+          policy = jsonencode({
+            Version = "2012-10-17"
+            Statement = [
+              {
+                Effect   = "Allow"
+                Action   = ["s3:GetBucketAcl"]
+                Resource = "arn:aws:s3:::my-bucket"
+              }
+            ]
+          })
+        }
+      `
+    });
+
+    const [policy] = await readTerraformSource(projectDir);
+
+    expect(isUnresolved(policy.values.policy)).toBe(false);
+    expect(JSON.parse(policy.values.policy)).toEqual({
+      Version: '2012-10-17',
+      Statement: [{ Effect: 'Allow', Action: ['s3:GetBucketAcl'], Resource: 'arn:aws:s3:::my-bucket' }]
+    });
+  });
+
+  it('leaves a reference inside a jsonencode document unresolved', async () => {
+    const projectDir = await writeProject({
+      'main.tf': `
+        resource "aws_s3_bucket" "b" { bucket = "b" }
+        resource "aws_iam_role_policy" "p" {
+          role = "r"
+          policy = jsonencode({
+            Statement = [{ Effect = "Allow", Resource = aws_s3_bucket.b.arn }]
+          })
+        }
+      `
+    });
+
+    const policy = (await readTerraformSource(projectDir)).find(resource => resource.type === 'aws_iam_role_policy')!;
+
+    expect(isUnresolved(policy.values.policy)).toBe(true);
+  });
+
   it('returns nothing for a directory with no Terraform files', async () => {
     const projectDir = await writeProject({ 'README.md': 'no terraform here' });
 
