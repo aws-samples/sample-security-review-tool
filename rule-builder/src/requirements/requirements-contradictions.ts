@@ -38,7 +38,7 @@ export class ContradictionDetector {
 
     private buildUserPrompt(requirements: RuleRequirement[], ruleDescription: string): string {
         const listed = requirements
-            .map(requirement => `${requirement.id} → ${requirement.expectedBehavior}\n${requirement.description}`)
+            .map(requirement => `${requirement.id} → ${requirement.expectedBehavior} (${requirement.settledBy})\nConfiguration: ${requirement.description}\nReason: ${requirement.rationale}`)
             .join('\n\n');
 
         return `## Rule\n\n${ruleDescription}\n\n## Requirements\n\n${listed}\n\nWhich pairs, if any, share an input while demanding opposite outcomes?`;
@@ -56,6 +56,12 @@ Compare each requirement against the ones carrying the opposite outcome. For eac
 Only pairs with opposite outcomes can contradict. Two requirements that both pass, or both flag, are never a contradiction however much they overlap.
 
 This is a question about the described inputs, not about which outcome is correct. Do not decide which requirement is right; only report whether the same configuration falls under both.
+
+## Compare The Scanner's Input, Not A Possible Deployed State
+
+The input is the parsed infrastructure-as-code resource available during static analysis. Two requirements overlap only when the same template-time input satisfies both descriptions.
+
+An unresolved value that might become X at deployment does not also satisfy a description saying the value is known to be X. Likewise, an unresolved choice between two configuration mechanisms does not overlap either known branch merely because deployment will eventually choose one. Unknown and known states are different scanner inputs.
 
 ## What Sharing An Input Looks Like
 

@@ -14,6 +14,7 @@ import { DraftRequirementSchema, RequirementsOutputSchema } from './requirements
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
 
 const MAX_DRAFT_ATTEMPTS = 3;
+const MAX_CONTRADICTION_ATTEMPTS = 3;
 
 type RequirementsOutput = z.infer<typeof RequirementsOutputSchema>;
 type DraftRequirement = z.infer<typeof DraftRequirementSchema>;
@@ -145,16 +146,18 @@ export class RequirementsWorkflow {
     }
 
     private async settleContradictions(requirements: RuleRequirement[]): Promise<RuleRequirement[]> {
-        const contradictions = await this.detect(requirements);
-        if (contradictions.length === 0) return requirements;
+        let settled = requirements;
+        let contradictions = await this.detect(settled);
 
-        this.logger.warning(`${contradictions.length} pair(s) demand opposite outcomes for one configuration`);
-        const settled = await this.resolveJointly(requirements, contradictions);
+        for (let attempt = 1; contradictions.length > 0 && attempt <= MAX_CONTRADICTION_ATTEMPTS; attempt++) {
+            this.logger.warning(`${contradictions.length} pair(s) demand opposite outcomes for one configuration`);
+            settled = await this.resolveJointly(settled, contradictions);
+            contradictions = await this.detect(settled);
+        }
 
-        const remaining = await this.detect(settled);
-        if (remaining.length === 0) return settled;
+        if (contradictions.length === 0) return settled;
 
-        throw new Error(`${this.context.ruleId} still contradicts itself after joint resolution: ${remaining.map(pair => pair.ids.join(' vs ')).join(', ')}`);
+        throw new Error(`${this.context.ruleId} still contradicts itself after ${MAX_CONTRADICTION_ATTEMPTS} joint-resolution attempts: ${contradictions.map(pair => pair.ids.join(' vs ')).join(', ')}`);
     }
 
     private async detect(requirements: RuleRequirement[]): Promise<Contradiction[]> {
