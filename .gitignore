@@ -119,3 +119,6 @@ bun.lock
 
 # Rule implementer fixture runtime outputs
 /fixtures/
+
+# Rule builder resumable workflow checkpoints
+/rule-builder/.state/

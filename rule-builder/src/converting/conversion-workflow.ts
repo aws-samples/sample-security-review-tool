@@ -5,6 +5,7 @@ import { LegacyRuleRemover } from './legacy-rule-remover.js';
 import { DescriptionRewriter } from './description-rewriter.js';
 import { RuleLocator, RuleNotFoundError } from '../shared/rule-locator.js';
 import { RuleBuilderLogger } from '../shared/logging/rule-builder-logger.js';
+import { ConversionCheckpointStore } from './conversion-checkpoint-store.js';
 
 export class ConversionWorkflow {
     private readonly logger = new RuleBuilderLogger();
@@ -16,14 +17,15 @@ export class ConversionWorkflow {
         if (!legacy) return this.resume(options);
 
         const ruleId = this.controlRuleId(legacy.ruleId);
+        const converted = this.findConvertedRule(ruleId);
+        if (converted) return this.resumeWithLegacy(converted, legacy, options);
 
         this.logger.runStart(ruleId, `converting ${legacy.ruleId} · ${legacy.description}`);
-        const description = await this.rewriteDescription(legacy);
+        const checkpoint = new ConversionCheckpointStore(ruleId, legacy.service);
+        const description = await this.description(legacy.description, checkpoint);
+        const context = new RuleContext(ruleId, legacy.service, description);
 
-        await new BuildWorkflow(new RuleContext(ruleId, legacy.service, description)).run({
-            ...options,
-            afterImplementation: () => this.removeLegacyRule(legacy),
-        });
+        await this.continueBuild(context, options, legacy);
         this.logger.runComplete(ruleId);
     }
 
@@ -36,25 +38,27 @@ export class ConversionWorkflow {
         }
     }
 
-    /**
-     * Conversion deletes the legacy rule once the new one is implemented, so a second run
-     * has no legacy source to read the service and description from. The already converted
-     * rule carries both, which lets a conversion that failed after phase 3 be resumed.
-     */
     private async resume(options: BuildOptions): Promise<void> {
         const ruleId = this.controlRuleId(this.legacyRuleId);
-        const context = this.locateConvertedRule(ruleId);
+        const context = this.findConvertedRule(ruleId);
+        if (!context) this.failNeitherFound(ruleId);
 
         this.logger.runStart(ruleId, `resuming the conversion of ${this.legacyRuleId} · ${context.description}`);
-        await new BuildWorkflow(context).run(options);
+        await this.continueBuild(context, options);
         this.logger.runComplete(ruleId);
     }
 
-    private locateConvertedRule(ruleId: string): RuleContext {
+    private async resumeWithLegacy(context: RuleContext, legacy: LegacyRule, options: BuildOptions): Promise<void> {
+        this.logger.runStart(context.ruleId, `resuming the conversion of ${legacy.ruleId} · ${context.description}`);
+        await this.continueBuild(context, options, legacy);
+        this.logger.runComplete(context.ruleId);
+    }
+
+    private findConvertedRule(ruleId: string): RuleContext | null {
         try {
             return new RuleLocator(ruleId).locate();
         } catch (error) {
-            if (error instanceof RuleNotFoundError) this.failNeitherFound(ruleId);
+            if (error instanceof RuleNotFoundError) return null;
             throw error;
         }
     }
@@ -69,10 +73,25 @@ export class ConversionWorkflow {
         for (const filePath of removedPaths) this.logger.step(filePath);
     }
 
-    private async rewriteDescription(legacy: LegacyRule): Promise<string> {
-        const description = await this.logger.task('restating the description as intent', () => new DescriptionRewriter().rewrite(legacy));
-        this.logger.step(description);
-        return description;
+    private async description(sourceDescription: string, checkpoint: ConversionCheckpointStore): Promise<string> {
+        const saved = checkpoint.read(sourceDescription);
+        if (saved !== null) {
+            this.logger.step(`using saved description: ${saved}`);
+            return saved;
+        }
+
+        const updatedDescription = await this.logger.task('restating the description as intent', () => new DescriptionRewriter().rewrite(sourceDescription));
+        checkpoint.write(sourceDescription, updatedDescription);
+        this.logger.step(updatedDescription);
+        return updatedDescription;
+    }
+
+    private async continueBuild(context: RuleContext, options: BuildOptions, legacy?: LegacyRule): Promise<void> {
+        await new BuildWorkflow(context).run({
+            ...options,
+            ...(legacy && { afterImplementation: () => this.removeLegacyRule(legacy) }),
+        });
+        new ConversionCheckpointStore(context.ruleId, context.service).remove();
     }
 
     // Control ids carry no hyphen in the service prefix: legacy API-GW-002 becomes APIGW-002.
