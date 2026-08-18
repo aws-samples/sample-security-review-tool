@@ -1,14 +1,18 @@
-import rule001 from './001-cloudwatch-alarms.cf.js';
 
 export const codedeployRules = [
-  rule001
 ];
 
 export {
-  rule001 as cloudwatchAlarmsRule
 };
-import tfRule001 from './001-cloudwatch-alarms.tf.js';
 
 export const tfCodedeployRules = [
-  tfRule001,
+];
+
+import { RegisteredControl } from '../../controls/types.js';
+import { codedeploy001Control } from './codedeploy-001/codedeploy-001.control.js';
+import { Codedeploy001CfnAdapterFactory } from './codedeploy-001/codedeploy-001.adapter.cfn.js';
+import { Codedeploy001TfAdapterFactory } from './codedeploy-001/codedeploy-001.adapter.tf.js';
+
+export const codedeployControls: RegisteredControl[] = [
+  { control: codedeploy001Control, cfnAdapter: new Codedeploy001CfnAdapterFactory(), tfAdapter: new Codedeploy001TfAdapterFactory() },
 ];

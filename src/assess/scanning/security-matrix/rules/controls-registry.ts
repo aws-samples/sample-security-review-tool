@@ -7,8 +7,10 @@ import { apiGatewayControls } from './api-gateway/index.js';
 import { lexControls } from './lex/index.js';
 import { athenaControls } from './athena/index.js';
 import { autoscalingControls } from './autoscaling/index.js';
+import { codedeployControls } from './codedeploy/index.js';
 
 export const allRegisteredControls: RegisteredControl[] = [
+  ...codedeployControls,
   ...autoscalingControls,
   ...athenaControls,
   ...lexControls,

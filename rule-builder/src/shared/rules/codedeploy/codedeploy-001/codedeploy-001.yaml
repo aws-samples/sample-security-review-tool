@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for CODEDEPLOY-001. Triggers the NO_ALARM_MONITORING finding by
+  omitting any CloudWatch alarm configuration from the deployment group.
+
+Resources:
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codedeploy.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: fixture-codedeploy-app
+      ComputePlatform: Server
+
+  # Triggers NO_ALARM_MONITORING: the AlarmConfiguration property is entirely
+  # absent, so hasConfiguredAlarms() returns false immediately.
+  DeploymentGroupNoAlarmConfig:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName: !Ref CodeDeployApplication
+      DeploymentGroupName: fixture-no-alarm-config
+      ServiceRoleArn: !GetAtt DeploymentRole.Arn
+      DeploymentConfigName: CodeDeployDefault.OneAtATime

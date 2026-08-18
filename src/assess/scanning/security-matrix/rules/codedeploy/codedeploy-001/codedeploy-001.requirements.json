@@ -1,0 +1,191 @@
+{
+  "ruleId": "CODEDEPLOY-001",
+  "generatedAt": "2026-08-18T20:16:54.461Z",
+  "description": "CodeDeploy deployment groups must have at least one CloudWatch alarm configured to monitor deployments",
+  "cfnResources": [
+    "AWS::CodeDeploy::DeploymentGroup"
+  ],
+  "tfResources": [
+    "aws_codedeploy_deployment_group"
+  ],
+  "decisionPoints": [
+    {
+      "id": "DP-1",
+      "description": "Whether the deployment group carries an alarm monitoring configuration at all"
+    },
+    {
+      "id": "DP-2",
+      "description": "How many alarms the alarm monitoring configuration lists, and whether each listed entry actually identifies an alarm"
+    },
+    {
+      "id": "DP-3",
+      "description": "Whether the alarm monitoring configuration is switched on or off"
+    },
+    {
+      "id": "DP-4",
+      "description": "Whether the alarm monitoring settings can be resolved at analysis time or come from a deployment-time input"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-01",
+      "decisionPointId": "DP-1",
+      "description": "Deployment group is defined with application, service role and deployment style but no alarm monitoring configuration of any kind",
+      "expectedBehavior": "flag",
+      "rationale": "CodeDeploy associates no alarms with a deployment group unless they are explicitly listed, so a group with no alarm configuration deploys with zero alarm-based monitoring and cannot stop a deployment on an alarm — exactly the state the rule prohibits.",
+      "docReference": "https://docs.aws.amazon.com/codedeploy/latest/userguide/monitoring-create-alarms.html",
+      "settledBy": "documentation",
+      "evidence": "Searched the CloudFormation template reference for AWS::CodeDeploy::DeploymentGroup and its AlarmConfiguration/Alarm property types, and the CodeDeploy user guide page \"Monitoring deployments with CloudWatch alarms in CodeDeploy\". AlarmConfiguration is an optional property (Required: No) whose Alarms member is \"A list of alarms configured for the deployment or deployment group\" (max 10); no documentation describes any service-applied default alarm. The user guide states that \"you can configure a deployment group to stop a deployment whenever any CloudWatch alarm you associate with the deployment group is activated\" and \"You can associate up to ten CloudWatch alarms with a CodeDeploy deployment group\" — the alarm-stop behavior exists only for alarms explicitly associated, and additionally requires granting CloudWatch permissions to the service role. The CDK ServerDeploymentGroupProps/LambdaDeploymentGroupProps documentation independently confirms the effective default: `alarms?` — \"(optional, default: [])\", i.e. an empty alarm list. So omitting alarm configuration entirely is not an unresolved value; the deployed resource runs with an empty alarm set and no deployment monitoring, which breaches the rule. The configuration here (application, service role, deployment style only) contains no deploy-time-resolved input bearing on alarms, so the intrinsic exception does not apply."
+    },
+    {
+      "id": "REQ-02",
+      "decisionPointId": "DP-1",
+      "description": "Deployment group has an alarm monitoring configuration block that contains no properties at all",
+      "expectedBehavior": "flag",
+      "rationale": "An AlarmConfiguration block with no properties supplies no Alarms entries and leaves alarm monitoring disabled, so the deployment group runs with zero CloudWatch alarms watching its deployments — exactly the state the rule prohibits.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.html",
+      "settledBy": "documentation",
+      "evidence": "Searched the CloudFormation and SDK references for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration and its defaults. The property reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md) shows AlarmConfiguration has exactly three members — Alarms (Required: No, array of Alarm, max 10), Enabled (Boolean), IgnorePollAlarmFailure (Boolean, default false). The CDK/SDK docs for AlarmConfigurationProperty confirm all three are optional; no documentation anywhere states that CodeDeploy injects a default alarm or defaults Enabled to true. Only IgnorePollAlarmFailure has a documented default, and it is false. Therefore an empty AlarmConfiguration block resolves to an alarm configuration with an empty alarm list and monitoring not enabled — functionally identical to having no alarm configuration at all. The rule requires at least one CloudWatch alarm configured to monitor deployments; the deployed resource will have none, so the finding is owed. The presence of the (empty) block is not a mitigating fact: the deciding value is Alarms, and its absence yields an empty list rather than a service-supplied alarm. No deployment-time-resolved input is involved, so the intrinsic exception does not apply."
+    },
+    {
+      "id": "REQ-03",
+      "decisionPointId": "DP-2",
+      "description": "Deployment group has an alarm monitoring configuration that is switched on and whose alarm list is empty",
+      "expectedBehavior": "flag",
+      "rationale": "Turning the alarm configuration on while leaving its alarm list empty still leaves zero CloudWatch alarms associated with the deployment group, so nothing monitors or can stop a failing deployment — the \"enabled\" flag only activates a list that carries the alarms, and an empty list carries none.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md",
+      "settledBy": "documentation",
+      "evidence": "Searched the CloudFormation template reference for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration and the CodeDeploy API reference for AlarmConfiguration. Both state that `Alarms` is \"A list of alarms configured for the deployment or deployment group. A maximum of 10 alarms can be added\" (Required: No), and that `Enabled` merely \"Indicates whether the alarm configuration is enabled\" (Required: No). The actual monitoring is carried entirely by the Alarms list; Enabled is a switch over that list and adds no implicit or default alarms. The CDK ServerDeploymentGroupProps doc confirms the alarms collection defaults to an empty list (\"default: []\") and that \"CodeDeploy will stop (and optionally roll back) a deployment if during it any of the alarms trigger\" — i.e., behavior only exists per alarm present. Therefore a configuration with Enabled=true and Alarms=[] deploys a deployment group whose effective alarm count is zero: no alarm evaluates during deployment, and no rollback-on-alarm behavior can occur. The rule requires at least one CloudWatch alarm, so this deployed state breaches it. No unresolved deployment-time value is involved: the empty list is a concretely known configuration, not a deferred input."
+    },
+    {
+      "id": "REQ-04",
+      "decisionPointId": "DP-2",
+      "description": "Deployment group has an alarm monitoring configuration that is switched on and lists exactly one alarm identified by name",
+      "expectedBehavior": "pass",
+      "rationale": "The deployment group's alarm configuration is enabled and contains one named CloudWatch alarm, which satisfies the rule's requirement of at least one alarm actively monitoring deployments.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md",
+      "settledBy": "documentation",
+      "evidence": "Searched CloudFormation/reference docs for \"CodeDeploy deployment group alarmConfiguration alarms enabled\" and \"AWS::CodeDeploy::DeploymentGroup AlarmConfiguration Enabled Alarms Name\". The AWS::CodeDeploy::DeploymentGroup AlarmConfiguration reference states that `Alarms` is \"A list of alarms configured for the deployment or deployment group. A maximum of 10 alarms can be added\" (each Alarm has a `Name` identifying the CloudWatch alarm), and `Enabled` \"Indicates whether the alarm configuration is enabled.\" The configuration under review has Enabled true and exactly one alarm entry identified by name, so at deployment the group runs with an active alarm-based monitoring/rollback gate — CodeDeploy will evaluate that alarm during deployments (CDK docs likewise note CodeDeploy stops/rolls back a deployment if any associated alarm triggers). The rule's threshold is \"at least one alarm\", and one named alarm meets it; the 10-alarm maximum is the only quantity constraint and is not exceeded. No documentation suggests a single named alarm is insufficient or that an enabled configuration with one alarm is ignored, so the rule owes no finding."
+    },
+    {
+      "id": "REQ-05",
+      "decisionPointId": "DP-2",
+      "description": "Deployment group has an alarm monitoring configuration that is switched on and lists several alarms, each identified by name",
+      "expectedBehavior": "pass",
+      "rationale": "The deployment group has AlarmConfiguration.Enabled set to true with a non-empty Alarms list of named CloudWatch alarms, so CodeDeploy will actively monitor those alarms during deployments — exactly the state the rule requires.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md",
+      "settledBy": "documentation",
+      "evidence": "Searched the CloudFormation Template Reference for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md and the parent aws-resource-codedeploy-deploymentgroup.md). The docs state AlarmConfiguration \"configures CloudWatch alarms for an AWS CodeDeploy deployment group\", that `Alarms` is \"A list of alarms configured for the deployment or deployment group\" (max 10, each Alarm identified by `Name` referencing an existing CloudWatch alarm), and that `Enabled` \"Indicates whether the alarm configuration is enabled.\" CDK docs add that \"CodeDeploy will stop (and optionally roll back) a deployment if during it any of the alarms trigger.\" Here the configuration is present, Enabled is true, and the Alarms list contains several named alarms — so the service will poll those alarms and gate deployments on them. Nothing is left to a default and no value is deferred to deployment time; the deployed state satisfies \"at least one CloudWatch alarm configured to monitor deployments.\" No finding is owed."
+    },
+    {
+      "id": "REQ-06",
+      "decisionPointId": "DP-2",
+      "description": "Deployment group has an alarm monitoring configuration that is switched on and lists an alarm entry whose name is an empty string",
+      "expectedBehavior": "flag",
+      "rationale": "The single alarm entry carries an empty name, and since the Name value is what identifies the existing CloudWatch alarm CodeDeploy is to associate with the deployment group, an empty string names no alarm and leaves the enabled alarm configuration with nothing actually monitoring deployments.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarm.html",
+      "settledBy": "documentation",
+      "evidence": "Searched CloudFormation and CodeDeploy API references for the AlarmConfiguration/Alarm shapes and the CodeDeploy user guide on alarm monitoring. The AWS::CodeDeploy::DeploymentGroup Alarm reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarm.html) states the only property, Name, is \"The name of the alarm. Maximum length is 255 characters. Each alarm name can be used only once in a list of alarms.\" — i.e. the entry's sole purpose is to reference a CloudWatch alarm by name. The AlarmConfiguration reference and API_AlarmConfiguration show Alarms is a list of such Alarm objects (max 10) and Enabled merely \"indicates whether the alarm configuration is enabled\"; nothing in either page supplies a default or implicit alarm when a name is absent/empty. The user guide \"Monitoring deployments with CloudWatch alarms in CodeDeploy\" (https://docs.aws.amazon.com/codedeploy/latest/userguide/monitoring-create-alarms.html) confirms the mechanism works by associating existing CloudWatch alarms with the deployment group so that \"if any of the specified alarms are activated, the deployment stops\" — an association that requires a real alarm name. An empty string cannot identify any CloudWatch alarm, so the deployed state is an enabled alarm configuration with zero effective alarms, which fails the rule's requirement of at least one alarm monitoring deployments. The empty name is a literal present in the configuration, not a deploy-time-resolved input, so the intrinsic-value exception does not apply."
+    },
+    {
+      "id": "REQ-07",
+      "decisionPointId": "DP-2",
+      "description": "Deployment group has an alarm monitoring configuration that is switched on and lists an alarm whose name references a CloudWatch alarm resource declared in the same template",
+      "expectedBehavior": "pass",
+      "rationale": "The deployment group's AlarmConfiguration is enabled and its Alarms list contains a named CloudWatch alarm, so CodeDeploy will actively monitor (and can stop or roll back) deployments against that alarm — exactly the state the rule requires.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md",
+      "settledBy": "documentation",
+      "evidence": "Searched CloudFormation/reference docs for \"AWS::CodeDeploy::DeploymentGroup AlarmConfiguration Alarms enabled\" and for the CodeDeploy alarm-monitoring behavior. The AlarmConfiguration property reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md) documents `Alarms` as \"A list of alarms configured for the deployment or deployment group\" (max 10) and `Enabled` as \"Indicates whether the alarm configuration is enabled.\" The DeploymentGroup resource page shows the canonical compliant pattern `AlarmConfiguration: Alarms: - Name: !Ref myAlarm`, i.e. an alarm name referencing a CloudWatch alarm resource in the same template. CDK docs (LambdaDeploymentGroupProps.alarms) confirm the effect: \"CodeDeploy will stop (and optionally roll back) a deployment if during it any of the alarms trigger.\" Here Enabled is switched on and at least one alarm name is listed, so the deployed resource ends up with active alarm-based deployment monitoring. Neither `Enabled: false` nor an empty alarm list applies, and the alarm name resolves to a template-declared CloudWatch alarm, so nothing is unknown at analysis time. The rule's condition — at least one CloudWatch alarm configured to monitor deployments — is satisfied, so no finding is owed."
+    },
+    {
+      "id": "REQ-08",
+      "decisionPointId": "DP-3",
+      "description": "Deployment group has an alarm monitoring configuration listing one named alarm, with the configuration explicitly switched off",
+      "expectedBehavior": "flag",
+      "rationale": "With AlarmConfiguration.Enabled set to false, CodeDeploy does not evaluate the listed alarm during deployments, so the deployment group effectively has no alarm monitoring even though an alarm name is present.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md",
+      "settledBy": "documentation",
+      "evidence": "The verdict turns on what CodeDeploy does with an AlarmConfiguration whose Alarms list contains a named alarm but whose Enabled flag is explicitly false. Searched the CloudFormation reference for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md): 'Alarms' is 'A list of alarms configured for the deployment or deployment group' and 'Enabled' 'Indicates whether the alarm configuration is enabled' — i.e. Enabled is the switch that determines whether the configured alarm list is actually applied to deployments (the CDK API mirrors this wording). Also read the CodeDeploy user guide 'Monitoring deployments with CloudWatch alarms in CodeDeploy' (https://docs.aws.amazon.com/codedeploy/latest/userguide/monitoring-create-alarms.html), which describes the intended runtime effect of an enabled alarm configuration: 'you can configure a deployment group to stop a deployment whenever any CloudWatch alarm you associate with the deployment group is activated... If any of the specified alarms are activated, the deployment stops'. That behaviour is what the alarm configuration switch governs; with Enabled explicitly false the alarm configuration is off, so the named alarm is inert and no alarm monitors the deployment. The value is explicit in the template (not deployment-time resolved), so no intrinsic exception applies, and the documented meaning of Enabled settles the outcome: the resource ends up in a state with no active deployment alarm monitoring, breaching the rule."
+    },
+    {
+      "id": "REQ-09",
+      "decisionPointId": "DP-3",
+      "description": "Deployment group has an alarm monitoring configuration listing one named alarm, with no on/off setting given",
+      "expectedBehavior": "flag",
+      "rationale": "A deployment group that lists an alarm but omits the alarm configuration's on/off flag has no documented default making that monitoring active, so it cannot be treated as having alarm-based deployment monitoring in effect.",
+      "docReference": null,
+      "settledBy": "strict-default",
+      "evidence": "The verdict turns on whether an alarm listed under the deployment group's alarm monitoring configuration actually monitors deployments when the configuration's enable flag is omitted. Searched CloudFormation and API/SDK references for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration and read the full property page (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md). It documents three members: Alarms (\"A list of alarms configured for the deployment or deployment group. A maximum of 10 alarms can be added\", Required: No), Enabled (\"Indicates whether the alarm configuration is enabled\", Required: No, with no stated default), and IgnorePollAlarmFailure, which explicitly states \"The default value is false\". The CDK L1 docs (CfnDeploymentGroup.AlarmConfigurationProperty) and the CodeDeploy SDK type docs repeat the same wording — a default is documented for IgnorePollAlarmFailure but deliberately not for Enabled. The CodeDeploy user guide page \"Monitoring deployments with CloudWatch alarms in CodeDeploy\" (https://docs.aws.amazon.com/codedeploy/latest/userguide/monitoring-create-alarms.html) describes associating up to ten alarms so that a deployment stops when any is activated, but says nothing about the behavior when the alarm configuration's enable flag is left unset. So while the template does name an alarm, no documentation establishes that the alarm configuration is active in that state, and the effective runtime configuration — alarm monitoring on or off — is unresolved. This is not a deployment-time-unknown input; it is an undocumented service behavior, so the strict tie-break applies and the rule owes a finding rather than a silent pass that could leave deployments unmonitored."
+    },
+    {
+      "id": "REQ-10",
+      "decisionPointId": "DP-3",
+      "description": "Deployment group has an alarm monitoring configuration that is explicitly switched off and lists no alarms",
+      "expectedBehavior": "flag",
+      "rationale": "An alarm configuration with Enabled set to false and an empty alarm list means CodeDeploy associates no alarms with the deployment group and does not evaluate alarm state during deployments, so no deployment monitoring exists.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md",
+      "settledBy": "documentation",
+      "evidence": "Searched CloudFormation/API reference for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration and the CodeDeploy user guide on monitoring deployments with CloudWatch alarms. The AlarmConfiguration reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md) defines Alarms as \"A list of alarms configured for the deployment or deployment group\" (optional, max 10) and Enabled as \"Indicates whether the alarm configuration is enabled.\" The user guide (https://docs.aws.amazon.com/codedeploy/latest/userguide/monitoring-create-alarms.html) states that to have deployments stop on alarm activation you must associate CloudWatch alarms with the deployment group (\"you can configure a deployment group to stop a deployment whenever any CloudWatch alarm you associate with the deployment group is activated\"); there is no documented service-applied default alarm. Here the deciding values are present and known at analysis time: Enabled=false and an empty Alarms list. Both independently defeat the rule — no alarms are associated, and even if some were, the configuration is explicitly disabled so CodeDeploy would not act on alarm state. The resulting deployed state therefore has zero alarms monitoring deployments, which breaches a rule requiring at least one, so the rule owes a finding. Settled by documentation describing what Alarms/Enabled control rather than by a strict default."
+    },
+    {
+      "id": "REQ-11",
+      "decisionPointId": "DP-4",
+      "description": "Deployment group's alarm monitoring on/off setting is taken from a deployment-time input value that cannot be resolved during analysis, while one named alarm is listed",
+      "expectedBehavior": "pass",
+      "rationale": "The deployment group does list a named CloudWatch alarm, and the only value that could turn that monitoring off — the alarm configuration's Enabled flag — comes from a deployment-time input whose value is unknowable during analysis, so a breach cannot be asserted.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.html",
+      "settledBy": "intrinsic-exception",
+      "evidence": "What the verdict turns on: the resource supplies one named alarm in AlarmConfiguration.Alarms, so the \"at least one alarm\" half of the rule is plainly met; the only thing that could defeat it is AlarmConfiguration.Enabled being false, and that value is supplied by a deployment-time input (e.g. a CloudFormation parameter) that the scanner cannot resolve.\n\nSearched CloudFormation/reference docs for \"AWS::CodeDeploy::DeploymentGroup AlarmConfiguration Enabled\" and for CodeDeploy alarm configuration enablement semantics. The AlarmConfiguration property reference (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.html) documents Alarms as \"A list of alarms configured for the deployment or deployment group. A maximum of 10 alarms can be added\" (Required: No) and Enabled as \"Indicates whether the alarm configuration is enabled\" (Required: No, Boolean). Notably it documents a default only for IgnorePollAlarmFailure (\"The default value is false\") and states no default for Enabled; the CodeDeploy API type (SDK docs for Aws::CodeDeploy::Types::AlarmConfiguration) likewise gives no default for enabled. So documentation does not settle the effective state, but that is moot here: Enabled is not absent, it is parameterised.\n\nBecause the flag is an unresolved deployment-time input, it may be supplied as true (alarm monitoring active, rule satisfied) or false (monitoring inert). Not every possible value breaches the rule, so the \"all values breach\" carve-out does not apply, and the deciding configuration is genuinely unknown at analysis time. Under the deployment-time-input exception the scanner must not assert a finding: pass, settled as intrinsic-exception. The doc reference is cited because it is the property definition that identifies Enabled as the deciding, non-defaulted toggle, not because it resolves the value."
+    },
+    {
+      "id": "REQ-12",
+      "decisionPointId": "DP-4",
+      "description": "Deployment group's list of alarms is taken entirely from a deployment-time input value that cannot be resolved during analysis",
+      "expectedBehavior": "pass",
+      "rationale": "The alarm list resolves only at deployment time, so the scanner cannot know whether the deployment group ends up with one or more alarms, and at least one possible input value satisfies the rule.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md",
+      "settledBy": "intrinsic-exception",
+      "evidence": "Searched CloudFormation reference for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration and its Alarm sub-property (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md). The docs state Alarms is \"A list of alarms configured for the deployment or deployment group. A maximum of 10 alarms can be added\", Required: No, with no service-applied default alarm — i.e., an omitted or empty list means no alarms, which would breach the rule. Here, however, the entire Alarms list is supplied by a deployment-time input (e.g. a template parameter / unresolved reference) whose value is not knowable during static analysis. The documented value space for Alarms permits a non-empty list of up to 10 alarm names, so the input can legitimately resolve to one or more alarms and satisfy the rule; it is not a case where every possible value breaches. The deciding value is therefore a genuine analysis-time unknown, and the scanner cannot assert a breach: the configuration is treated as an intrinsic exception and the rule should not fire."
+    },
+    {
+      "id": "REQ-13",
+      "decisionPointId": "DP-4",
+      "description": "Whether the deployment group's alarm monitoring configuration is present at all depends on a condition driven by a deployment-time input that cannot be resolved during analysis",
+      "expectedBehavior": "pass",
+      "rationale": "The presence of the deployment group's alarm configuration hinges on a condition fed by a deployment-time input, so one resolution of that input attaches alarms and another omits them; the scanner cannot know which state the deployment group ends up in and therefore cannot assert a breach.",
+      "docReference": null,
+      "settledBy": "intrinsic-exception",
+      "evidence": "What the verdict turns on: whether the scanner can know, at analysis time, if the deployment group ends up with at least one CloudWatch alarm. Here the entire AlarmConfiguration block is gated by a condition whose value comes from a deployment-time input.\n\nSearches performed: (1) \"AWS::CodeDeploy::DeploymentGroup AlarmConfiguration enabled default\" (cloudformation/reference) returned the AlarmConfiguration property type page, confirming AlarmConfiguration and its Alarms list are both optional (Alarms: Required: No, max 10) and that no service-side default supplies alarms — i.e., if the block is absent the deployment group runs with no alarm monitoring. (2) \"CodeDeploy deployment group alarm configuration monitor deployments CloudWatch alarms\" returned the CodeDeploy user guide page \"Monitoring deployments with CloudWatch alarms in CodeDeploy\", which describes alarm association as an opt-in (\"you can configure a deployment group to stop a deployment whenever any CloudWatch alarm you associate with the deployment group is activated\", up to ten alarms), and CDK's ServerDeploymentGroupProps/LambdaDeploymentGroupProps documenting Alarms Default: [] — an empty alarm set by default.\n\nSo the absent case is genuinely unsafe (no default alarms), and the present case satisfies the rule. That means the two possible resolutions of the deployment-time input lead to opposite verdicts: the outcome is not known regardless of the value, so the \"all values breach\" carve-out does not apply. The deciding value is unresolvable during analysis, which is exactly the deployment-time-unknown exception: the scanner cannot assert that this deployment group will lack alarms. Verdict pass, recorded as intrinsic-exception. The docs consulted establish that omission is unsafe but say nothing that resolves the condition itself, hence no doc settles this configuration."
+    },
+    {
+      "id": "REQ-14",
+      "decisionPointId": "DP-2",
+      "description": "Deployment group has an alarm monitoring configuration that is switched on and lists a single alarm entry that carries no alarm name at all",
+      "expectedBehavior": "flag",
+      "rationale": "The alarm list's only entry has no Name, and since Name is the sole property that identifies which CloudWatch alarm to watch, the enabled alarm configuration references zero real alarms and the deployment group monitors nothing.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarm.html",
+      "settledBy": "documentation",
+      "evidence": "Searched the CloudFormation template reference for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration and its Alarm sub-property, plus the CDK CfnDeploymentGroup.AlarmProperty API reference. The Alarm property type has exactly one property, `Name` (\"The name of the alarm. Maximum length is 255 characters. Each alarm name can be used only once in a list of alarms.\"), and it is documented as *Required: No* — so an Alarm entry with no Name is syntactically accepted but carries no identifier of any CloudWatch alarm. There is no documented default alarm name; nothing in the AlarmConfiguration docs (Alarms, Enabled, IgnorePollAlarmFailure) supplies a fallback alarm when Name is omitted. Enabled being true only \"indicates whether the alarm configuration is enabled\"; it does not create or infer an alarm. Therefore the resource ends up in a state where alarm monitoring is switched on but resolves to no monitored alarm, which fails the rule's requirement of at least one CloudWatch alarm actually configured. The missing name is a static, analysis-time-visible absence (not a deploy-time resolved input), so the intrinsic-exception path does not apply."
+    },
+    {
+      "id": "REQ-15",
+      "decisionPointId": "DP-4",
+      "description": "Deployment group has an alarm monitoring configuration that is switched on and lists one alarm whose name comes from a deployment-time input value that cannot be resolved during analysis",
+      "expectedBehavior": "pass",
+      "rationale": "The alarm configuration is enabled and its Alarms list contains one entry, so the deployment group is monitored by at least one CloudWatch alarm regardless of which name the deployment-time input resolves to.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.html",
+      "settledBy": "documentation",
+      "evidence": "The rule turns on whether the deployment group has an enabled alarm configuration containing at least one alarm — a structural count, not the identity of a particular alarm. I searched the CloudFormation Template Reference for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.html and the AWS::CodeDeploy::DeploymentGroup page). The docs state AlarmConfiguration.Alarms is \"A list of alarms configured for the deployment or deployment group. A maximum of 10 alarms can be added,\" and Enabled \"Indicates whether the alarm configuration is enabled.\" The DeploymentGroup reference example itself shows the canonical pattern of supplying an alarm whose Name is an unresolved reference (AlarmConfiguration: Alarms: - Name: !Ref myAlarm), confirming that a referenced/parameterized alarm name is a normal, valid way to attach an alarm.\n\nHere Enabled is switched on and exactly one Alarm element is present, so the deployed resource will have one alarm attached to the deployment group. The only unknown is the alarm's name string; every value that input could take still yields one alarm in the enabled configuration, so the rule's condition (at least one alarm) is satisfied for all possible resolutions. Because the outcome is known regardless of the input's value, this is decided on the merits rather than treated as an analysis-time unknown, and the documented semantics of Alarms/Enabled settle it as compliant."
+    },
+    {
+      "id": "REQ-16",
+      "decisionPointId": "DP-4",
+      "description": "Deployment group whose alarm monitoring on/off setting comes from a deployment-time input that cannot be resolved during analysis, while the alarm list itself is stated literally in the template with no alarm entries",
+      "expectedBehavior": "flag",
+      "rationale": "The alarm list is stated literally with zero entries, so no CloudWatch alarm monitors this deployment group no matter which value the deployment-time enable flag resolves to — enabling an empty alarm configuration still monitors nothing.",
+      "docReference": "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.html",
+      "settledBy": "documentation",
+      "evidence": "The rule requires at least one CloudWatch alarm on the deployment group. The deciding value is therefore the contents of AlarmConfiguration.Alarms, which is stated literally here and contains no entries; the unresolvable input governs only AlarmConfiguration.Enabled. Searched CloudFormation/SDK references for AWS::CodeDeploy::DeploymentGroup AlarmConfiguration (https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-properties-codedeploy-deploymentgroup-alarmconfiguration.md and the CodeDeploy API AlarmConfiguration type): Alarms is \"a list of alarms configured for the deployment or deployment group. A maximum of 10 alarms can be added. Required: No\", and Enabled merely \"indicates whether the alarm configuration is enabled\" — it does not itself supply or default any alarms, and there is no documented default alarm that CodeDeploy adds when the list is empty. So both possible resolutions of the unknown flag lead to the same end state: a deployment group with zero alarms monitoring it. Because the outcome is known regardless of which value the deployment-time input takes, the intrinsic/unresolved-value exception does not apply and the configuration is decided on its merits: it breaches the rule."
+    }
+  ]
+}
