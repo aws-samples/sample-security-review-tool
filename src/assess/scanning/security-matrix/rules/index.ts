@@ -33,7 +33,6 @@ import { quicksightRules } from './quicksight/index.js';
 import { mskRules } from './msk/index.js';
 import { elbRules } from './elastic-load-balancing/index.js';
 import { elasticBeanstalkRules } from './elastic-beanstalk/index.js';
-import { batchRules } from './batch/index.js';
 import { mediastoreRules } from './mediastore/index.js';
 import { mediapackageRules } from './mediapackage/index.js';
 import { medialiveRules } from './medialive/index.js';
@@ -78,7 +77,6 @@ export const allCloudFormationRules = [
   ...mskRules,
   ...elbRules,
   ...elasticBeanstalkRules,
-  ...batchRules,
   ...mediastoreRules,
   ...mediapackageRules,
   ...medialiveRules,
@@ -124,7 +122,6 @@ import { tfQuicksightRules } from './quicksight/index.js';
 import { tfMskRules } from './msk/index.js';
 import { tfElbRules } from './elastic-load-balancing/index.js';
 import { tfElasticBeanstalkRules } from './elastic-beanstalk/index.js';
-import { tfBatchRules } from './batch/index.js';
 import { tfMediastoreRules } from './mediastore/index.js';
 import { tfMediapackageRules } from './mediapackage/index.js';
 import { tfMedialiveRules } from './medialive/index.js';
@@ -174,7 +171,6 @@ export const allTerraformRules: BaseTerraformRule[] = [
   ...tfMskRules,
   ...tfElbRules,
   ...tfElasticBeanstalkRules,
-  ...tfBatchRules,
   ...tfMediastoreRules,
   ...tfMediapackageRules,
   ...tfMedialiveRules,
