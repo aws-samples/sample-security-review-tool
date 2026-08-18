@@ -30,5 +30,6 @@ export const JointResolutionSchema = z.object({
     premise: z.string().describe('The single question both configurations turn on, and the answer the documentation gives it'),
     resolutions: z.array(ResolutionSchema.extend({
         requirementId: z.string().describe('The id of the requirement this verdict belongs to'),
+        description: z.string().nullable().describe('The configuration restated so the shared input falls under only one of the pair, or null to keep it as written'),
     })).describe('One verdict per configuration, both following from the same answer to the premise'),
 });

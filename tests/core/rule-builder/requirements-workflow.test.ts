@@ -1,8 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Contradiction } from "../../../rule-builder/src/requirements/requirements-contradictions.js";
 import { RequirementsWorkflow } from "../../../rule-builder/src/requirements/requirements-workflow.js";
+import { ScenarioResolver } from "../../../rule-builder/src/requirements/scenario-resolver.js";
 import { RuleContext } from "../../../rule-builder/src/shared/rule-context.js";
 import type { RuleRequirement } from "../../../rule-builder/src/shared/types/requirements.js";
+
+const resolveTogether = vi.fn();
+
+vi.mock("../../../rule-builder/src/requirements/scenario-resolver.js", () => ({
+    ScenarioResolver: vi.fn(() => ({ resolveTogether })),
+}));
 
 interface TestableWorkflow {
     settleContradictions(
@@ -36,6 +43,22 @@ function contradiction(firstId: string, secondId: string): Contradiction {
         ids: [firstId, secondId],
         sharedInput:
             "one template-time configuration satisfies both descriptions",
+    };
+}
+
+function verdict(
+    requirementId: string,
+    expectedBehavior: "flag" | "pass",
+    description: string | null,
+) {
+    return {
+        requirementId,
+        description,
+        expectedBehavior,
+        rationale: "the premise decides both outcomes",
+        docReference: "https://docs.aws.amazon.com/example.html",
+        settledBy: "documentation" as const,
+        evidence: "the premise was answered from the documentation",
     };
 }
 
@@ -114,5 +137,46 @@ describe("RequirementsWorkflow contradiction settlement", () => {
         );
         expect(detect).toHaveBeenCalledTimes(4);
         expect(resolveJointly).toHaveBeenCalledTimes(3);
+    });
+});
+
+describe("RequirementsWorkflow joint resolution", () => {
+    beforeEach(() => {
+        resolveTogether.mockReset();
+        vi.mocked(ScenarioResolver).mockClear();
+    });
+
+    // Without this the descriptions never change, so the detector re-reports the
+    // same pair every attempt and settlement can only converge by a verdict flip.
+    it("narrows the description the joint resolution restates and keeps the one it returns null for", async () => {
+        const subject = workflow();
+        const requirements = [
+            requirement("REQ-05", "pass"),
+            requirement("REQ-09", "flag"),
+        ];
+        resolveTogether.mockResolvedValue({
+            premise: "any attachment counts, whichever resource declares it",
+            resolutions: [
+                verdict(
+                    "REQ-05",
+                    "pass",
+                    "no load balancer or target group attachment reaches the group by any means",
+                ),
+                verdict("REQ-09", "flag", null),
+            ],
+        });
+
+        const settled = await subject.resolveJointly(requirements, [
+            contradiction("REQ-05", "REQ-09"),
+        ]);
+
+        expect(settled.map((item) => item.description)).toEqual([
+            "no load balancer or target group attachment reaches the group by any means",
+            "configuration REQ-09",
+        ]);
+        expect(settled.map((item) => item.expectedBehavior)).toEqual([
+            "pass",
+            "flag",
+        ]);
     });
 });

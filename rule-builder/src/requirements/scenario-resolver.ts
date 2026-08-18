@@ -95,5 +95,13 @@ Deciding them independently is what produced the conflict: each verdict was defe
 
 Return the premise and its answer, then one verdict per configuration.
 
+## Removing The Overlap
+
+Opposite verdicts for one input stay a contradiction however well reasoned they are. So where the overlap comes from one description being broader than the premise's answer allows, restate that description so the shared input falls under only one of the pair. Answering the premise in the rationale alone does not remove the overlap: the descriptions are what the next reader compares.
+
+Usually one description needs the narrowing and the other is already precise. Restate only the one that is wrong, and leave the other's description null.
+
+A restated description obeys the same rules as the original: the configuration alone, stated format-agnostically, with no IaC property names, resource types, or intrinsic functions, and no claim about whether it passes or fails. Narrow its scope; do not turn it into a different scenario.
+
 ${DECIDING_RULES}
 `;

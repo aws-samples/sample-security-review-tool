@@ -181,8 +181,10 @@ export class RequirementsWorkflow {
                 const requirement = byId.get(resolution.requirementId);
                 if (!requirement) continue;
 
-                byId.set(requirement.id, this.merge(requirement, resolution));
+                const description = resolution.description ?? requirement.description;
+                byId.set(requirement.id, this.merge({ ...requirement, description }, resolution));
                 this.logger.substep(`${requirement.id} → ${resolution.expectedBehavior} (${resolution.settledBy})`);
+                if (description !== requirement.description) this.logger.substep(`${requirement.id} restated: ${description}`);
             }
         }
 
