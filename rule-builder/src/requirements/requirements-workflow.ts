@@ -123,7 +123,6 @@ export class RequirementsWorkflow {
 
         return Promise.all(scenarios.map(async scenario => {
             const resolution = await this.logger.concurrentTask(scenario.id, () => resolver.resolve(this.context.description, scenario));
-            this.logResolution(scenario.id, resolution);
             return this.merge(scenario, resolution);
         }));
     }
@@ -139,10 +138,6 @@ export class RequirementsWorkflow {
             settledBy: resolution.settledBy,
             evidence: resolution.evidence,
         };
-    }
-
-    private logResolution(id: string, resolution: Resolution): void {
-        this.logger.step(`${id} → ${resolution.expectedBehavior} (${resolution.settledBy})`);
     }
 
     private async settleContradictions(requirements: RuleRequirement[]): Promise<RuleRequirement[]> {
@@ -183,7 +178,6 @@ export class RequirementsWorkflow {
 
                 const description = resolution.description ?? requirement.description;
                 byId.set(requirement.id, this.merge({ ...requirement, description }, resolution));
-                this.logger.substep(`${requirement.id} → ${resolution.expectedBehavior} (${resolution.settledBy})`);
                 if (description !== requirement.description) this.logger.substep(`${requirement.id} restated: ${description}`);
             }
         }
@@ -222,9 +216,7 @@ export class RequirementsWorkflow {
     }
 
     private async researchAddition(scenario: DraftRequirement): Promise<Resolution> {
-        const resolution = await this.logger.task(`researching ${scenario.id}`, () => new ScenarioResolver().resolve(this.context.description, scenario));
-        this.logResolution(scenario.id, resolution);
-        return resolution;
+        return this.logger.task(`researching ${scenario.id}`, () => new ScenarioResolver().resolve(this.context.description, scenario));
     }
 
     private async dropUnrealizable(draft: RequirementsOutput, requirements: RuleRequirement[]): Promise<RuleRequirement[]> {
