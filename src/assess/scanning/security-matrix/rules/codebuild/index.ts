@@ -1,14 +1,18 @@
-import rule009 from './009-s3-bucket-permissions.cf.js';
 
 export const codebuildRules = [
-  rule009
 ];
 
 export {
-  rule009 as s3BucketPermissionsRule
 };
-import tfRule001 from './009-s3-bucket-permissions.tf.js';
 
 export const tfCodebuildRules = [
-  tfRule001,
+];
+
+import { RegisteredControl } from '../../controls/types.js';
+import { codebuild009Control } from './codebuild-009/codebuild-009.control.js';
+import { Codebuild009CfnAdapterFactory } from './codebuild-009/codebuild-009.adapter.cfn.js';
+import { Codebuild009TfAdapterFactory } from './codebuild-009/codebuild-009.adapter.tf.js';
+
+export const codebuildControls: RegisteredControl[] = [
+  { control: codebuild009Control, cfnAdapter: new Codebuild009CfnAdapterFactory(), tfAdapter: new Codebuild009TfAdapterFactory() },
 ];

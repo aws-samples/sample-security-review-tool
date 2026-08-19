@@ -8,8 +8,10 @@ import { lexControls } from './lex/index.js';
 import { athenaControls } from './athena/index.js';
 import { autoscalingControls } from './autoscaling/index.js';
 import { codedeployControls } from './codedeploy/index.js';
+import { codebuildControls } from './codebuild/index.js';
 
 export const allRegisteredControls: RegisteredControl[] = [
+  ...codebuildControls,
   ...codedeployControls,
   ...autoscalingControls,
   ...athenaControls,

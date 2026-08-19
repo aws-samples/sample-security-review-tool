@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Fixture for CODEBUILD-009 - CodeBuild project service role missing
+  s3:GetBucketAcl / s3:GetBucketLocation permissions on an associated S3 bucket.
+
+Resources:
+  # Service role used by the CodeBuild project below. Its inline policy only
+  # grants s3:GetObject on the bucket -- it is missing both s3:GetBucketAcl
+  # and s3:GetBucketLocation, so the project should trigger
+  # MISSING_BUCKET_INSPECTION_PERMISSIONS.
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: codebuild-009-build-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InsufficientBucketAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: arn:aws:s3:::my-artifact-bucket/*
+
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: codebuild-009-fixture-project
+      ServiceRole: BuildRole
+      Artifacts:
+        Type: S3
+        Location: my-artifact-bucket
+      Source:
+        Type: S3
+        Location: my-artifact-bucket/source.zip
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
