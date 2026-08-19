@@ -1,6 +1,7 @@
 import * as os from 'os';
 import * as fs from 'fs';
 import { SrtLogger } from '../../src/shared/logging/srt-logger.js';
+import { bridgeStrandsLoggingToSrt } from '../../src/shared/logging/strands-log-bridge.js';
 import { BedrockConfig } from '../../src/config/aws/bedrock-config.js';
 import { RuleContext } from './shared/rule-context.js';
 import { RuleLocator } from './shared/rule-locator.js';
@@ -14,6 +15,7 @@ const logsFolderPath = `${os.homedir()}/.srt/logs`;
 fs.mkdirSync(logsFolderPath, { recursive: true });
 
 SrtLogger.initialize(logsFolderPath);
+bridgeStrandsLoggingToSrt();
 BedrockConfig.initialize('default', 'us-east-1');
 
 const logger = new RuleBuilderLogger();
